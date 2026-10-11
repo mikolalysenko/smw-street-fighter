@@ -137,6 +137,23 @@ static void arcade_center(FcCanvas c,int y,const char *s,bool big) {
   int width=0;for(const char *p=s;*p;p++)width+=big?(*p=='W'?19:13):8;
   arcade_text(c,(c.w-width)/2,y,s,big);
 }
+void fc_title(FcCanvas c,unsigned tick,unsigned high_score) {
+  /* Exact SF2 title art beside the original SMW lettering. */
+  fc_sprite(c,0,FC_POSE_TITLE_II,0,192,36,1,2,3,0);
+  fc_sprite(c,0,FC_POSE_TITLE_SUBTITLE,0,32,111,1,4,5,0);
+  if(tick%90<65)arcade_center(c,139,"PRESS START",false);
+  char text[32];snprintf(text,sizeof(text),"HI SCORE %07u",high_score);
+  arcade_center(c,19,text,false);
+}
+void fc_score_hud(FcCanvas c,unsigned score,unsigned high_score,bool boss) {
+  char text[32];
+  if(boss) {
+    snprintf(text,sizeof(text),"%07u",score);arcade_center(c,31,text,false);
+  } else {
+    snprintf(text,sizeof(text),"1P %07u",score);arcade_text(c,c.w-90,3,text,false);
+    snprintf(text,sizeof(text),"HI %07u",high_score);arcade_text(c,c.w-90,17,text,false);
+  }
+}
 static void life_bar(FcCanvas c,int x,int y,int w,int hp,int maximum,bool reverse) {
   if(maximum<1)maximum=1;if(hp<0)hp=0;if(hp>maximum)hp=maximum;
   fc_rect(c,x-2,y-2,w+4,13,0x080808);frame(c,x-1,y-1,w+2,11,0xffffee);

@@ -44,14 +44,14 @@ def main():
     shutil.copy2(ROOT/'references/smw/LICENSE.txt',out/'SMW-LICENSE.txt')
     shutil.copy2(ROOT/'docs/ASSETS.md',out/'ASSETS.md')
     (out/'README.txt').write_text(
-        'Super Mario Fighter 2 The World Warriors\n\n'
+        'Super Mario World II - The World Warrior\n\n'
         'Run in this folder: python3 -m http.server 8765 --bind 127.0.0.1\n'
         'Open http://localhost:8765, click Play, then Fullscreen.\n'
         'Keep the local server running while playing. Do not open index.html directly.\n'
         'Keyboard and gamepad controls are listed below the game.\n'
-        'The original SMW save points persist per browser; Export Save backs up SRAM.\n'
+        'Original SMW progress and the high score persist per browser; Export Save backs up both.\n'
         'Build '+build+'\n')
-    shutil.make_archive(str(ROOT/'dist/super-mario-fighter-2-web'),'zip',root_dir=out.parent,base_dir=out.name)
+    shutil.make_archive(str(ROOT/'dist/super-mario-world-ii-web'),'zip',root_dir=out.parent,base_dir=out.name)
     print('Built dist/web. Start with: make serve-web')
 
 if __name__=='__main__':main()

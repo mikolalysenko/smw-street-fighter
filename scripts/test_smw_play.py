@@ -26,7 +26,7 @@ try:
 finally:source.unlink(missing_ok=True)
 objects=[str(p) for p in sorted(tree.rglob('*.o')) if p.name not in ('main.o','main-test.o','main-play-test.o')]
 binary=tree/'test-smw-play'
-test='test_smw_bosses.c' if '--bosses' in sys.argv else 'test_smw_presentation.c' if '--presentation' in sys.argv else 'test_smw_movement.c' if '--movement' in sys.argv else 'test_smw_play.c'
+test='test_smw_title.c' if '--title' in sys.argv else 'test_smw_bosses.c' if '--bosses' in sys.argv else 'test_smw_presentation.c' if '--presentation' in sys.argv else 'test_smw_movement.c' if '--movement' in sys.argv else 'test_smw_play.c'
 subprocess.run(cc+['-O1','-g','-I'+str(tree/'src')]+flags+[str(ROOT/'tests'/test),str(tree/'main-play-test.o')]+objects+['-o',str(binary)]+libs+['-lm'],check=True)
 config=(ROOT/'config/smw.ini').read_text().replace('DisableFrameDelay = 0','DisableFrameDelay = 1').replace('OutputMethod = SDL','OutputMethod = SDL-Software').replace('WindowScale = 4','WindowScale = 1')
 cases=([os.environ['WW_TEST_BOSS']] if 'WW_TEST_BOSS' in os.environ else
@@ -42,6 +42,8 @@ for boss in cases:
         if boss:env['WW_TEST_BOSS']=boss
         try:
             subprocess.run([str(runtime/binary.name)],env=env,check=True,timeout=60)
+            if '--title' in sys.argv:
+                subprocess.run([str(runtime/binary.name)],env={**env,'WW_TEST_RELOAD':'1'},check=True,timeout=60)
         finally:
             for capture in runtime.glob('*.bmp'):
                 shutil.copy2(capture,tree/capture.name)

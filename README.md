@@ -1,4 +1,4 @@
-# Super Mario Fighter 2 The World Warriors
+# Super Mario World II — The World Warrior
 
 A C/SDL2 and WebAssembly crossover: Super Mario World's original levels,
 scenery, enemies, music and platforming, with ripped Street Fighter II fighter
@@ -19,7 +19,7 @@ Open **http://localhost:8765**, click Play, and use the keyboard or a gamepad.
 The original SMW engine, PPU and music run in WASM. WebGPU presents the pixel
 framebuffer; Canvas 2D is the fallback. Fullscreen is available below the game.
 Reload the page after rebuilding; the status shows the loaded build timestamp.
-Original SMW save points persist in browser storage, with an Export Save button.
+Original SMW save points and your high score persist in browser storage, with an Export Save button.
 This saves normal game progress, not an instant snapshot of the current room.
 
 Copy `dist/web/` to Linux/Bazzite and serve that folder on localhost to play
@@ -27,7 +27,7 @@ without recompiling. See [BAZZITE.md](docs/BAZZITE.md) for the TV setup.
 
 ## Play on this Mac
 
-Open `dist/Super Mario Fighter 2 The World Warriors.app`, or:
+Open `dist/Super Mario World II - The World Warrior.app`, or:
 
 ```sh
 cd /Users/mikolalysenko/smw-street-fighter
@@ -46,8 +46,15 @@ Resume / Character Select / Quit Game during play. On death, the SF2 continue
 screen shows the defeated fighter and a ten-second countdown. Start/Jump retries
 the level; Back or letting the countdown expire returns to the map. Continues
 are unlimited and retain the selected fighter.
-Character selection plays the original SF2 selection music; the title retains
-SMW's original presentation. Course clear shows the selected fighter.
+Character selection plays the original SF2 selection music. The title combines
+SMW's original lettering, scenery, demo and music with SF2's gold/red II and
+blue “The World Warrior” subtitle. Course clear shows the selected fighter.
+
+The title and gameplay HUD show your high score. SMW's normal points from
+enemies, pickups and the course-clear tally count; combat kills award the native
+enemy points too. New records save immediately, survive new games and continues,
+and travel with Export Save in the same `smw.srm` as level progress. The title
+demo cannot set a record. Native builds keep it in `saves/smw.srm`.
 
 | Action | Xbox/Steam gamepad | Keyboard |
 | --- | --- | --- |

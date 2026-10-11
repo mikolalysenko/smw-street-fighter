@@ -1,5 +1,7 @@
 #include "ww_smw.h"
 #include "ww_targets.h"
+#include "ww_title.h"
+#include "ww_score.h"
 #include "fight.h"
 #include "draw.h"
 #include "audio.h"
@@ -24,7 +26,7 @@ void ww_init(void) {
   fc_init(&fight,FC_RYU);fight.meter=100;initialized=true;
   chosen=was_level=false;menu=choice=pause_choice=0;previous=0;
   death_prompt=continue_pending=fighter_drawn=false;death_ticks=retry_ticks=clear_ticks=0;
-  ww_targets_reset();
+  ww_targets_reset();ww_title_reset();
   const char *sprites=getenv("WW_SPRITES");
   fc_assets_load(sprites?sprites:"sf2/sprites.dat");
   const char *audio=getenv("WW_AUDIO_DIR");
@@ -58,6 +60,7 @@ static FcBody body(void) {
 static void quit(void) { SDL_Event e={0};e.type=SDL_QUIT;SDL_PushEvent(&e); }
 bool ww_before_frame(uint32_t *inputs) {
   if(!initialized)return true;
+  ww_title_tick();
   uint32_t b=decode(*inputs),edge=b&~previous;previous=b;
   bool in_level=misc_game_mode==0x14;
   if(death_prompt) {
@@ -201,6 +204,7 @@ void ww_player_draw(void) {
 void ww_render(uint8_t *pixels,size_t pitch,int width,int height) {
   if(!initialized)return;
   FcCanvas c={(uint32_t*)pixels,width,height,(int)(pitch/4)};
+  if(ww_title_render(c,ww_high_score()))return;
   if(death_prompt && death_ticks>=30){fc_continue(c,fight.character,death_ticks);return;}
   if(menu==1){fc_selection(c,choice,fight.tick,true);return;}
   if(misc_game_mode!=0x14) {
@@ -223,6 +227,8 @@ void ww_render(uint8_t *pixels,size_t pitch,int width,int height) {
   }
   fc_effects(c,&fight,mirror_current_layer1_xpos,mirror_current_layer1_ypos);
   fc_battle_hud(c,&fight,ww_opponent());
+  if(fight.hp>0 && !ww_opponent()->ko_timer)
+    fc_score_hud(c,ww_score(),ww_high_score(),ww_opponent()->active);
   if(timer_end_level && !misc_currently_active_boss_end_cutscene)fc_level_clear(c,fight.character);
   if(menu==2)fc_pause(c,pause_choice);
 }

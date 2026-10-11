@@ -12,21 +12,25 @@ for required in ('smw','smw_assets.dat','sf2/sprites.dat','sf2/audio/ko.wav'):
     if not (build/required).exists():
         raise SystemExit('Run make original-assets and make smw before packaging.')
 if platform.system()=='Darwin':
-    dest=ROOT/'dist/Super Mario Fighter 2 The World Warriors.app/Contents'
+    dest=ROOT/'dist/Super Mario World II - The World Warrior.app/Contents'
     (dest/'MacOS').mkdir(parents=True,exist_ok=True)
     resources=dest/'Resources';resources.mkdir(exist_ok=True)
     # Keep progress from the earlier app name when first building this bundle.
-    old_saves=ROOT/'dist/World Warrior SMW.app/Contents/Resources/saves'
-    if old_saves.is_dir() and not (resources/'saves').exists():
-        shutil.copytree(old_saves,resources/'saves')
+    for old_name in ('Super Mario Fighter 2 The World Warriors','World Warrior SMW'):
+        old_saves=ROOT/'dist'/f'{old_name}.app/Contents/Resources/saves'
+        if old_saves.is_dir() and not (resources/'saves').exists():
+            shutil.copytree(old_saves,resources/'saves')
     shutil.copy2(build/'smw',dest/'MacOS/world-warrior-smw')
     (dest/'Info.plist').write_bytes(plistlib.dumps({
         'CFBundleExecutable':'world-warrior-smw','CFBundleIdentifier':'local.worldwarrior.smw',
-        'CFBundleName':'Super Mario Fighter 2 The World Warriors','CFBundlePackageType':'APPL','CFBundleVersion':'0.4',
+        'CFBundleName':'Super Mario World II - The World Warrior','CFBundlePackageType':'APPL','CFBundleVersion':'0.5',
         'NSHighResolutionCapable':False}))
 else:
-    dest=ROOT/'dist/super-mario-fighter-2-linux'
+    dest=ROOT/'dist/super-mario-world-ii-linux'
     dest.mkdir(parents=True,exist_ok=True);resources=dest
+    old_saves=ROOT/'dist/super-mario-fighter-2-linux/saves'
+    if old_saves.is_dir() and not (resources/'saves').exists():
+        shutil.copytree(old_saves,resources/'saves')
     shutil.copy2(build/'smw',dest/'world-warrior-smw')
     launcher=dest/'play.sh'
     launcher.write_text('#!/bin/sh\nset -eu\ncd "$(dirname "$0")"\nexec ./world-warrior-smw --config tv.ini "$@"\n')

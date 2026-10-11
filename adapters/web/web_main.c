@@ -18,6 +18,7 @@
 #include "variables.h"
 #include "ww_smw.h"
 #include "ww_targets.h"
+#include "ww_score.h"
 #include "audio.h"
 
 bool g_debug_flag,g_want_dump_memmap_flags;
@@ -102,6 +103,7 @@ EMSCRIPTEN_KEEPALIVE int ww_web_state(int field) {
     case 14: {int n=0;for(int i=0;i<FC_MAX_SHOTS;i++)n+=f->shots[i].ttl>0;return n;}
     case 15:return player_current_state;case 16:return fc_audio_selection_active();
     case 17:return f->crouching_attack;
+    case 18:return ww_score();case 19:return ww_high_score();
     default:return 0;
   }
 }

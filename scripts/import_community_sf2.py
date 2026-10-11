@@ -82,9 +82,27 @@ def main():
     im=Image.open(source / 'Game/assets/images/ui/character_selection.png').convert('RGBA').crop((0,0,192,112))
     pixels=b''.join(struct.pack('<I',(0xff000000|(r<<16)|(g<<8)|b) if a>=128 else 0) for r,g,b,a in im.getdata())
     records.append(struct.pack('<7H',0,16,60,192,112,0,0)+pixels)
-    def ui(pose, name, rect):
+    def ui(pose, name, rect, component=False):
         im=Image.open(source/'Game/assets/images/ui'/name).convert('RGBA').crop(rect)
         w,h=im.size
+        if component:
+            # The II touches neither word, but the bounding rectangle also
+            # catches two small fragments of STREET/FIGHTER. Keep its connected
+            # silhouette, including the original gold/red fill and dark shadow.
+            remaining={(x,y) for y in range(h) for x in range(w) if im.getpixel((x,y))[3]}
+            parts=[]
+            while remaining:
+                pending=[remaining.pop()];part=set(pending)
+                while pending:
+                    x,y=pending.pop()
+                    for point in ((x-1,y),(x+1,y),(x,y-1),(x,y+1)):
+                        if point in remaining:
+                            remaining.remove(point);part.add(point);pending.append(point)
+                parts.append(part)
+            keep=max(parts,key=len)
+            for y in range(h):
+                for x in range(w):
+                    if (x,y) not in keep:im.putpixel((x,y),(0,0,0,0))
         pixels=b''.join(struct.pack('<I',(0xff000000|(r<<16)|(g<<8)|b) if a>=128 else 0) for r,g,b,a in im.getdata())
         records.append(struct.pack('<7H',0,pose,1,w,h,0,0)+pixels)
     # Fixed cells from the original SF2 font sheets; glyphs retain their
@@ -96,6 +114,8 @@ def main():
         ui(18,'Font_Big.png',(j*17+(2 if i==22 else 0),0,j*17+(26 if i==22 else 17),15))
     ui(19,'fight_ui.png',(137,0,173,18))
     ui(26,'vs_mode-game_over.png',(71,116,125,170))
+    ui(27,'logo2.png',(269,53,337,132),component=True)
+    ui(28,'logo2.png',(20,1484,261,1496))
     (out / 'sprites.dat').write_bytes(b'WWA1'+struct.pack('<H',len(records))+b''.join(records))
     # These are original ripped effects, including the FM menu sound.
     sounds = {

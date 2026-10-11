@@ -28,9 +28,12 @@ def prepare():
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(source / name, target)
     for file in ('fight.c', 'fight.h', 'draw.c', 'draw.h', 'audio.c', 'audio.h', 'assets.c', 'assets.h'):
-        shutil.copy2(ROOT / 'src' / file, dest / 'src' / file)
-    for file in ('ww_smw.c', 'ww_smw.h', 'ww_targets.c', 'ww_targets.h'):
-        shutil.copy2(ROOT / 'adapters/smw' / file, dest / 'src' / file)
+        # Upstream Make does not track header dependencies. Refresh shared
+        # source timestamps too, so new pose IDs cannot leave a stale reader.
+        shutil.copyfile(ROOT / 'src' / file, dest / 'src' / file)
+    for file in ('ww_smw.c', 'ww_smw.h', 'ww_targets.c', 'ww_targets.h',
+                 'ww_title.c', 'ww_title.h', 'ww_score.c', 'ww_score.h'):
+        shutil.copyfile(ROOT / 'adapters/smw' / file, dest / 'src' / file)
     def patch(file, changes):
         path = dest / file
         text = path.read_text()
@@ -39,7 +42,7 @@ def prepare():
         path.write_text(text)
     patch('src/main.c', [
         ('static const char kWindowTitle[] = "SMW";',
-         'static const char kWindowTitle[] = "Super Mario Fighter 2 The World Warriors";'),
+         'static const char kWindowTitle[] = "Super Mario World II - The World Warrior";'),
         ('int main(int argc, char** argv) {',
          'int main(int argc, char** argv) {\n'
          '  char *ww_base = SDL_GetBasePath();\n'
@@ -87,7 +90,12 @@ def prepare():
          'void CheckPowerUpSpecificPlayerAttacks() {  // 00d062\n  if (ww_enabled()) return;'),
     ])
     patch('src/smw_rtl.c', [
-        ('#include "smw_rtl.h"', '#include "smw_rtl.h"\n#include "ww_smw.h"'),
+        ('#include "smw_rtl.h"', '#include "smw_rtl.h"\n#include "ww_smw.h"\n#include "ww_title.h"\n#include "ww_score.h"'),
+        ('  for (int i = 0; i <= 224; i++) {',
+         '  ww_title_begin(g_ppu);\n  for (int i = 0; i <= 224; i++) {'),
+        ('  }\n}\n\nvoid SmwRunOneFrameOfGame(void)',
+         '  }\n  ww_title_end(g_ppu);\n}\n\nvoid SmwRunOneFrameOfGame(void)'),
+        ('  SmwVectorNMI();\n}', '  SmwVectorNMI();\n  ww_update_high_score();\n}'),
         ('    ppu_runLine(g_ppu, i);',
          '    // Only the status-bar scanlines: preserve layer-3 tides, smashers and messages.\n'
          '    uint8 ww_main = g_ppu->screenEnabled[0], ww_sub = g_ppu->screenEnabled[1];\n'

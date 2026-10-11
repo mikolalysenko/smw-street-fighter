@@ -8,6 +8,7 @@ const SAVE_KEY='world-warrior-smw-sram-v1';
 const STEP=1000*801/48000;
 let game,presenter,audioContext,audioTime=0,started=false,running=false;
 let held=new Set(),pending=0,last=0,accumulator=0,frames=0,muted=false;
+let savedHighScore=0;
 const sounds=new Set();
 
 function keyboardButtons() { let b=0;for(const code of held)b|=keyMap[code]||0;return b; }
@@ -70,7 +71,10 @@ function animate(now) {
         play.onclick=()=>location.reload();save();clearAudio();return;
       }
       renderAudio();accumulator-=STEP;
-      if(++frames%300===0)save();
+      const highScore=game._ww_web_state(19);
+      if(++frames%300===0 || highScore!==savedHighScore) {
+        save();savedHighScore=highScore;
+      }
     }
     const pointer=game._ww_web_pixels();
     presenter.draw(game.HEAPU8.subarray(pointer,pointer+256*224*4));
@@ -121,7 +125,7 @@ try {
     printErr:message=>console.warn(message),
   });
   if(!game._ww_web_init())throw new Error('Engine initialization failed');
-  restore();game._ww_web_step(0);
+  restore();game._ww_web_step(0);savedHighScore=game._ww_web_state(19);
   const pointer=game._ww_web_pixels();presenter.draw(game.HEAPU8.subarray(pointer,pointer+256*224*4));
   play.disabled=false;play.textContent='PLAY';
   $('#export').disabled=false;

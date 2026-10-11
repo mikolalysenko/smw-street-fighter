@@ -11,6 +11,8 @@ void fc_effects(FcCanvas c,const FcFight *f,float camera_x,float camera_y);
 void fc_hud(FcCanvas c,const FcFight *f);
 void fc_battle_hud(FcCanvas c,const FcFight *f,const FcOpponent *opponent);
 void fc_selection(FcCanvas c,int choice,unsigned tick,bool compact);
+void fc_title(FcCanvas c,unsigned tick,unsigned high_score);
+void fc_score_hud(FcCanvas c,unsigned score,unsigned high_score,bool boss);
 void fc_pause(FcCanvas c,int choice);
 void fc_continue(FcCanvas c,int character,int ticks);
 void fc_level_clear(FcCanvas c,int character);

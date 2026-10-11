@@ -29,9 +29,9 @@ effects/voices. `config/community-assets.json` pins the source revision and
 SHA-256 of each downloaded file. `config/sf2-sprites.json` records each selected
 frame rectangle and the prototype's animation duration.
 
-`scripts/import_community_sf2.py` packs 371 frame records (including repeated
+`scripts/import_community_sf2.py` packs 373 frame records (including repeated
 frames, crouching attacks, portraits, original fonts, KO lettering, countdown
-lamps, victory poses and map), 20 effects and the selection/continue music.
+lamps, victory poses, map and original title II/subtitle), 20 effects and the selection/continue music.
 It does not generate replacement
 art. Ryu, Honda, Chun-Li and Guile render at half arcade size to fit Mario's
 levels. Cropping, nearest-neighbor scaling, foot anchors and animation timings
@@ -63,6 +63,12 @@ sound engine. Native and browser builds use the same imported audio.
 
 Supers and their gauge are new Alpha-inspired mechanics using SF2 animation
 frames and voices. No original Alpha super animation/audio extraction is claimed.
+
+The crossover title reads SMW's original BG3 lettering and palettes directly
+from the running engine and repositions it with nearest-neighbor scaling. The
+SF2 II and “The World Warrior” art are transparent crops of the pinned
+`logo2.png`; disconnected fragments of the neighboring words are discarded.
+The start prompt and high score use the original SF2 font sheet.
 
 ## Paths and notices
 

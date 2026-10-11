@@ -54,4 +54,16 @@ const px=g.HEAPU8.subarray(g._ww_web_pixels(),g._ww_web_pixels()+256*224*4);
 assert(new Set(px).size>32,'Original PPU and fighter pixels rendered');
 assert.equal(gamepadButtons({connected:true,mapping:'standard',axes:[1,0],buttons:[{pressed:true}]}),129);
 assert.equal(keyMap.KeyA,512);assert.equal(keyMap.KeyC,256);
-console.log('WASM: original title, early selection/music, real level, walk, crouching punch/kick, air Hadouken, air Shoryuken, super, pixels, audio and save RAM passed.');
+const highScore=state(19);
+assert(highScore>0 && highScore===state(18),'Actual gameplay points set the high score');
+const saved=g.HEAPU8.slice(g._ww_web_sram(),g._ww_web_sram()+g._ww_web_sram_size());
+const reopened=await createGame({wasmBinary:wasm,getPreloadedPackage:()=>pkg.buffer.slice(pkg.byteOffset,pkg.byteOffset+pkg.byteLength)});
+assert.equal(reopened._ww_web_init(),1);
+// Browser restoration happens after init, as in app.mjs. No score state may
+// be cached before the saved bytes arrive from localStorage.
+reopened.HEAPU8.set(saved,reopened._ww_web_sram());
+for(let i=0;i<900;i++) {
+  assert.equal(reopened._ww_web_step(0),1);
+  assert.equal(reopened._ww_web_state(19),highScore,'High score survives a fresh WASM instance and demo scoring');
+}
+console.log('WASM: title, early selection/music, real level, movement, crouching/air attacks, super, audio and persistent high score passed.');
