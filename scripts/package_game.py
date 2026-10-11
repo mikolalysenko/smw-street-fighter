@@ -18,7 +18,7 @@ if platform.system()=='Darwin':
     shutil.copy2(build/'smw',dest/'MacOS/world-warrior-smw')
     (dest/'Info.plist').write_bytes(plistlib.dumps({
         'CFBundleExecutable':'world-warrior-smw','CFBundleIdentifier':'local.worldwarrior.smw',
-        'CFBundleName':'World Warrior SMW','CFBundlePackageType':'APPL','CFBundleVersion':'0.2',
+        'CFBundleName':'World Warrior SMW','CFBundlePackageType':'APPL','CFBundleVersion':'0.3',
         'NSHighResolutionCapable':False}))
 else:
     dest=ROOT/'dist/world-warrior-smw-linux'

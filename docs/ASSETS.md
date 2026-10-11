@@ -29,21 +29,32 @@ effects/voices. `config/community-assets.json` pins the source revision and
 SHA-256 of each downloaded file. `config/sf2-sprites.json` records each selected
 frame rectangle and the prototype's animation duration.
 
-`scripts/import_community_sf2.py` packs 228 frame records (including repeated
-frames, portraits and map) and copies 19 WAVs. It does not generate replacement
+`scripts/import_community_sf2.py` packs 338 frame records (including repeated
+frames, portraits, original fonts, KO lettering, victory poses and map),
+20 effects and the selection music loop. It does not generate replacement
 art. Ryu, Honda, Chun-Li and Guile render at half arcade size to fit Mario's
 levels. Cropping, nearest-neighbor scaling, foot anchors and animation timings
 are adaptations. These sheets are SF2-family community rips, not a verified
 frame-for-frame `sf2ua` extraction; variants and palette differences are possible.
-Chun-Li's standing/walking/punch clips currently reuse guard frames because this
-source lacks the first portion of her sheet.
+Chun-Li's missing idle and walk clips come from the original SF2 animations at
+[The Fighters Generation](https://www.fightersgeneration.com/characters/chunli-a2.html).
+Her standing punch comes from
+[vomira/street-fighter](https://github.com/vomira/street-fighter), commit
+`973a13fb1101a12406ac0bb14b531d3010b5c508`.
+`config/animation-assets.json` pins these files by URL and SHA-256. GIF frames
+retain their common canvas origin so feet do not shift between walking frames.
 
 Ripped audio includes Hadouken, Shoryuken, Tatsumaki, Honda's voice, Sonic Boom,
 Chun-Li's voice and scream, general impacts, block, menu and KO effects. The
 main game loads `sf2/audio/`; it does not use the dojo's synthesized fallback.
-The imported announcer clips are available but not yet sequenced into a full
-arcade KO announcement. SMW's own background music and environmental sounds
-continue through its original sound engine.
+The boss KO announcement is the pinned Street Fighter sample in
+[Citedy/game-sounds](https://github.com/Citedy/game-sounds), commit
+`cc18cd9734f8ec3b2b853a294e56698d746ffadb`; its URL and SHA-256 are in
+`config/ko-asset.json`. This clip is a later Street Fighter voice, not claimed
+as an SF2 World Warrior announcer extraction. The SF2 `player_select.ogg` is
+converted to a PCM loop at import time. ffmpeg performs both conversions.
+SMW's music is muted during selection, then continues through the original
+sound engine. Native and browser builds use the same imported audio.
 
 Supers and their gauge are new Alpha-inspired mechanics using SF2 animation
 frames and voices. No original Alpha super animation/audio extraction is claimed.

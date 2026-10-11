@@ -48,7 +48,7 @@ Links use the pinned revisions so future upstream changes cannot move the target
 ## Implemented architecture
 
 ```text
-Keyboard / SDL controller
+Keyboard / SDL controller / browser Gamepad API
            |
            v
 60 Hz combat core (src/fight.c)
@@ -62,7 +62,9 @@ original test stage          original terrain, enemies, map
      |                               |
      +----------+--------------------+
                 |
-ripped SF2 fighter sprites / custom HUD + ripped SF2 WAV audio
+ripped SF2 fighter sprites / SF2 HUD art + imported WAV audio
+                |
+       SDL2 native or WASM + WebGPU presentation
 ```
 
 The combat layer uses pixels and fixed 60 Hz steps. SMW stores speeds in
@@ -77,12 +79,25 @@ does not mutate either reference checkout. The wrapper still runs the original
 our overlay renders a fighter. Health damage hooks replace shrinking/death from
 ordinary enemy contact; pits, time and crushing still use SMW's death transition.
 
-A positive enemy whitelist prevents supers from erasing keys, goal tapes,
-platforms, friendly sprites and bosses. Whitelisted enemies use SMW's status 2
-death with launch velocity and a score popup. Normal enemy HP is currently one
-in this adapter; the dojo has tougher targets for testing multi-hit moves.
-Extended sprite hazards can hurt through the original engine but are not yet
-targets for combat projectiles. Projectiles do not collide with terrain yet.
+`ww_targets.c` adapts all 12 normal, 10 extended and 20 cluster sprite slots.
+Normal actors have one HP and an explosion replaces their species-specific
+death code. Essential keys, exits, rides and switches keep functioning after
+a visual hit. Full sprite initialization invalidates old per-slot hit masks.
+Wooden plungers have their complete 80-pixel hull; the layer-three crusher
+retracts on destruction. Terrain impacts leave Map16 routes intact.
+
+Boss health adapts all seven Koopalings, Reznor, Big Boo and Bowser. Defeat
+enters each native death state instead of erasing its controller. Reznor's
+platforms remain until the native exit timer completes. Iggy/Larry's transformed
+hitboxes use signed camera coordinates; an unsigned camera offset originally
+placed them 65,536 pixels away. Bowser's offscreen death clamps his starting Y
+so the unsigned native rise-to-death test can finish. Aggregate boss health
+emits the KO sound once and supplies the opposing health bar.
+
+Air attacks preserve SMW's held-jump arc and normal horizontal control.
+Walking animation uses distance traveled, and jump/normal clips no longer
+loop on the global clock. The Continue menu lets the native death finish,
+then re-enters the current overworld node through SMW's normal midpoint loader.
 
 The three-segment gauge, super flash and multi-hit rushes are new,
 Alpha-inspired behavior. World Warrior itself is only the fighter-move
@@ -111,11 +126,11 @@ intro/message boxes, and keeping the fighter visible during super startup.
 1. Play through ordinary level exits, slopes, doors, pipes, checkpoints and the
    overworld. The replay covers a narrow combat slice, not complete progression.
 2. Audit swimming, climbing, Yoshi, carried shells, stars, vertical rooms and
-   pickups. Add enemy/boss adapters individually. The current positive whitelist
-   deliberately leaves bosses, keys, friendly sprites and platforms alone.
-3. Add foreground occlusion and terrain collision for projectiles. Complete
-   Chun-Li's basic animation clips and refine the foot anchors and all timings.
-4. Expand the roster and add actual afterimage trails and more super animations.
+   pickups throughout the full game. Essential sprite interactions currently
+   survive combat hits to preserve progression.
+3. Add foreground occlusion and further animation refinements. Projectiles
+   deliberately pass through scenery with one visual impact.
+4. Expand the roster and add more super animations.
    The imported Alpha-inspired attacks currently use SF2 pose clips.
 5. Test on the actual Bazzite machine with its TV and controller, including
    Steam Input, sound output, latency, refresh rate and reconnect behavior.
@@ -129,8 +144,12 @@ facing directions, input expiry, charge thresholds, cancels, hit deduplication,
 super piercing, meter costs, health, guard, knockback, KO and 50,000 stress inputs
 under ASan/UBSan. Sprite tests check transparency, flipping, clipping and rejection
 of malformed/truncated data. The bridge tests link the actual patched SMW objects
-and exercise clipping, enemy filtering, slot reuse, damage, transitions and menus.
-The asset-backed replay adds the real boot, level and framebuffer checks above.
+and exercise all 201 normal sprite IDs, extended/cluster targets, essential
+objects, slot reuse, damage, transitions and menus. Asset-backed replays cover
+the real boot and PPU, all ten boss rooms, ten jump/attack combinations,
+Continue and goal clear. The audio test verifies the KO sample and selection
+loop. The WASM test boots the compiled browser engine through Node and verifies
+air specials, movement, audio, pixels and SRAM without replacing the C engine.
 
 No full-game completion, physical gamepad/TV test or Linux execution has been
 completed. The Linux workflow is configuration, not a reported CI result. The

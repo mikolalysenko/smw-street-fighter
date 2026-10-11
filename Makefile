@@ -9,7 +9,7 @@ SDL_LIBS = $(shell $(SDL_CONFIG) --libs)
 CORE = src/fight.c
 MEDIA = src/draw.c src/audio.c src/assets.c
 
-.PHONY: all dojo run tv test sanitize smoke capture smw test-smw test-play assets original-assets package clean
+.PHONY: all dojo run tv test sanitize smoke capture smw test-smw test-play test-bosses test-movement test-audio assets original-assets package clean web serve-web test-web
 all: smw
 dojo: build/world-warrior-dojo
 build:
@@ -55,5 +55,18 @@ test-smw: smw
 	$(PYTHON) scripts/test_smw_bridge.py
 test-play: smw
 	$(PYTHON) scripts/test_smw_play.py
+test-bosses: smw
+	$(PYTHON) scripts/test_smw_play.py --bosses
+test-movement: smw
+	$(PYTHON) scripts/test_smw_play.py --movement
+test-audio: | build
+	$(CC) $(CPPFLAGS) $(CFLAGS) -DFC_AUDIO_MANUAL $(SDL_CFLAGS) src/audio.c tests/test_audio.c -o build/test-audio $(SDL_LIBS) -lm
+	SDL_AUDIODRIVER=dummy ./build/test-audio
+web:
+	$(PYTHON) scripts/build_web.py
+serve-web:
+	$(PYTHON) -m http.server 8765 --bind 127.0.0.1 --directory dist/web
+test-web:
+	node tests/test_web.mjs
 clean:
 	rm -rf build

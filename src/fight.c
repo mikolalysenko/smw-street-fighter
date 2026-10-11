@@ -35,6 +35,13 @@ static void sparks(FcFight *f,float x,float y,uint32_t color,int count) {
     }
   }
 }
+void fc_explode(FcFight *f,float x,float y,bool large) {
+  int slot=0;
+  for(int i=1;i<FC_MAX_BLASTS;i++)if(f->blasts[i].ttl<f->blasts[slot].ttl)slot=i;
+  f->blasts[slot]=(FcBlast){x,y,24,large};
+  sparks(f,x,y,0xfff4b0,large?24:12);
+  sparks(f,x,y,0xff7a24,large?24:12);
+}
 void fc_ko(FcFight *f) {
   if(f->ko_timer) return;
   f->hp=0; f->move=FC_IDLE; f->guarding=false; f->buffered=FC_IDLE;
@@ -163,11 +170,12 @@ static void hit(FcFight *f,FcTarget *t,int damage,bool super) {
 }
 static void shot(FcFight *f,bool super) {
   for(int i=0;i<FC_MAX_SHOTS;i++) if(!f->shots[i].ttl) {
-    float h=super?24+f->super_level*5:12;
+    float h=super?48+f->super_level*8:20;
+    float w=super?48:20;
     f->shots[i]=(FcShot){
-      {f->body.box.x+(f->facing>0?f->body.box.w:-20),
-       f->body.box.y+f->body.box.h/2-h/2,super?32:16,h},
-      f->facing*(super?5.6f:3.8f),95,super?3*f->super_level:1,super?64:1,super,0};
+      {f->body.box.x+f->body.box.w/2+(f->facing>0?0:-w),
+       f->body.box.y+f->body.box.h-h+(super?12:2),w,h},
+      f->facing*(super?5.6f:3.8f),95,super?3*f->super_level:1,super?64:1,super,0,false};
     return;
   }
 }
@@ -184,6 +192,13 @@ const char *fc_move_name(const FcFight *f) {
   return "";
 }
 void fc_tick(FcFight *f,uint32_t buttons,FcBody body,FcTarget *targets,int count) {
+  float dx=body.box.x-f->body.box.x,dy=body.box.y-f->body.box.y;
+  if(dx<0)dx=-dx;
+  f->moving=f->body_valid && body.grounded && dx>0.1f && dx<16;
+  if(f->moving)f->walk_distance+=dx;else f->walk_distance=0;
+  f->vertical_motion=f->body_valid?dy:0;
+  f->air_tick=body.grounded?0:(!f->body_valid || f->body.grounded?1:f->air_tick+1);
+  f->body_valid=true;
   f->events=0; f->body=body; ++f->tick;
   uint32_t edge=buttons&~f->previous; f->previous=buttons;
   if(!fc_busy(f) && body.facing) f->facing=body.facing;
@@ -201,6 +216,7 @@ void fc_tick(FcFight *f,uint32_t buttons,FcBody body,FcTarget *targets,int count
   dec(&f->invuln); dec(&f->combo_timer); dec(&f->mash_timer);
   if(!f->combo_timer) f->combo=0;
   if(!f->mash_timer) f->mash_count=0;
+  for(int i=0;i<FC_MAX_BLASTS;i++)dec(&f->blasts[i].ttl);
   for(int i=0;i<FC_MAX_SPARKS;i++) if(f->sparks[i].ttl) {
     FcSpark *s=&f->sparks[i]; --s->ttl; s->x+=s->vx; s->y+=s->vy; s->vy+=0.18f;
   }
@@ -227,43 +243,51 @@ void fc_tick(FcFight *f,uint32_t buttons,FcBody body,FcTarget *targets,int count
       int t=f->move_tick,begin=4,end=7,total=17,damage=1;
       float reach=18,height=18;
       bool super=f->move==FC_SUPER_MOVE,melee=true;
-      f->override_x=true; f->velocity_x=0;
+      /* Normals keep platform movement. Airborne projectiles keep momentum. */
+      f->override_x=false;
       switch(f->move) {
         case FC_ROUNDHOUSE:begin=7;end=12;total=26;reach=29;damage=2;break;
         case FC_PROJECTILE:
-          melee=false;total=30;if(t==8)shot(f,false);break;
+          melee=false;total=25;
+          if(body.grounded && t<=10){f->override_x=true;f->velocity_x=0;}
+          if(t==6)shot(f,false);break;
         case FC_RISING:
+          f->override_x=true;f->velocity_x=0;
           begin=2;end=20;total=34;height=42;damage=2;
           if(t==2) { f->override_y=true;f->velocity_y=-5.4f; }
           if(t<=18) f->velocity_x=f->facing*1.2f;
           break;
         case FC_SPIN:
+          f->override_x=true;f->velocity_x=0;
           begin=4;end=31;total=40;reach=30;damage=1;
           if(t==4 && body.grounded) { f->override_y=true;f->velocity_y=-3; }
           if(t<31)f->velocity_x=f->facing*2.2f;
           break;
         case FC_RUSH:
+          f->override_x=true;f->velocity_x=0;
           begin=7;end=29;total=39;reach=23;damage=3;
           if(t>=begin && t<=end)f->velocity_x=f->facing*4.0f;
           break;
         case FC_FLURRY:
+          if(body.grounded){f->override_x=true;f->velocity_x=0;}
           begin=3;end=37;total=46;reach=30;damage=1;
           if(t%8==0)f->melee_mask=0;
           break;
         case FC_SUPER_MOVE:
-          begin=2;end=44+f->super_level*8;total=end+12;reach=38;damage=2;
+          f->override_x=body.grounded;f->velocity_x=0;
+          begin=1;end=44+f->super_level*8;total=end+8;reach=56;height=64;damage=3;
           if(f->character==FC_RYU) { melee=false;if(t==3)shot(f,true); }
           else if(f->character==FC_GUILE) {
             reach=64;height=52;
             if(t==3 || t==17 || (t==31 && f->super_level>1))shot(f,true);
-          } else if(t<=end)f->velocity_x=f->facing*(f->character==FC_HONDA?5.2f:3.6f);
+          } else if(t<=end){f->override_x=true;f->velocity_x=f->facing*(f->character==FC_HONDA?5.2f:3.6f);}
           if(t%8==0)f->melee_mask=0;
           break;
         default:break;
       }
       if(melee && t>=begin && t<=end) {
-        FcBox box={body.box.x+(f->facing>0?body.box.w-3:3-reach),
-          body.box.y+body.box.h-height,reach,height};
+        FcBox box={body.box.x+(f->facing>0?body.box.w-8:8-reach),
+          body.box.y+body.box.h-height,reach,height+(super?12:4)};
         for(int i=0;i<count && i<FC_MAX_TARGETS;i++) {
           uint64_t bit=UINT64_C(1)<<i;
           if(targets[i].active && targets[i].hp>0 && !(f->melee_mask&bit) && fc_overlap(box,targets[i].box)) {

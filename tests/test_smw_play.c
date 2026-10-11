@@ -1,6 +1,7 @@
 /* End-to-end replay through the real SMW main loop, level loader and PPU.
  * Built only by test_smw_play.py; never part of the shipped executable. */
 #include "ww_smw.h"
+#include "audio.h"
 #include "smw_rtl.h"
 #include "variables.h"
 #include "funcs.h"
@@ -52,7 +53,7 @@ static void save(uint8_t *pixels,size_t pitch,int w,int h,const char *name) {
 }
 void ww_test_render(uint8_t *pixels,size_t pitch,int w,int h) {
   const FcFight *f=ww_fight_state();
-  if(misc_game_mode==0x14 && !ww_enabled() && !capture_selection++)save(pixels,pitch,w,h,"selection.bmp");
+  if(fc_audio_selection_active() && !capture_selection++)save(pixels,pitch,w,h,"selection.bmp");
   if(level_ticks==90 && !capture_play++)save(pixels,pitch,w,h,"original-level.bmp");
   if(f->flash && !capture_super++)save(pixels,pitch,w,h,"super.bmp");
   if(f->hp==0 && !capture_ko++)save(pixels,pitch,w,h,"ko.bmp");

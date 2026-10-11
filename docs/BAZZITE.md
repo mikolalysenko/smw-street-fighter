@@ -1,8 +1,28 @@
 # Downstairs TV / Bazzite
 
-The main game is native C/SDL2 with controller controls and fullscreen launch.
+The game has native C/SDL2 and WASM browser builds with controller controls.
 It has been built on this Mac; Linux and the downstairs hardware still need a
-first playtest. There is no dependency on a browser or the NAS at runtime.
+first playtest. Prepared builds do not need the NAS at runtime.
+
+## Browser build
+
+Copy the complete `dist/web/` directory from this Mac to the Bazzite machine.
+In that directory, run:
+
+```sh
+python3 -m http.server 8765 --bind 127.0.0.1
+```
+
+Open `http://localhost:8765` in a browser, click Play, then Fullscreen. The
+browser uses WebGPU when available and falls back to Canvas 2D. WASM runs the
+same original SMW game code in either case. Serve it over localhost or HTTPS
+for browser GPU and controller APIs. Opening `index.html` directly is not
+supported. The page has keyboard and Xbox-position gamepad controls.
+
+The same folder works across CPU architectures. Browser save points persist
+per browser/site; Export Save downloads the original 2 KiB SMW SRAM file.
+The downstairs browser, controller, audio output and TV latency still need
+a physical playtest.
 
 ## Build in a Distrobox
 
@@ -15,7 +35,7 @@ Bazzite machine, or clone it once a Git remote exists. In Desktop Mode:
 distrobox create --name world-warrior-dev --image docker.io/library/ubuntu:24.04
 distrobox enter world-warrior-dev
 sudo apt-get update
-sudo apt-get install -y build-essential libsdl2-dev python3 python3-venv cmake git
+sudo apt-get install -y build-essential libsdl2-dev python3 python3-venv cmake git ffmpeg
 cd /absolute/path/to/smw-street-fighter
 git submodule update --init
 make original-assets

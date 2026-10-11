@@ -12,12 +12,19 @@ enum { FC_RYU, FC_HONDA, FC_CHUNLI, FC_GUILE, FC_ROSTER_COUNT };
 typedef enum { FC_IDLE, FC_JAB, FC_ROUNDHOUSE, FC_PROJECTILE,
   FC_RISING, FC_SPIN, FC_RUSH, FC_FLURRY, FC_SUPER_MOVE } FcMove;
 enum { FC_SND_SWING=1, FC_SND_HIT=2, FC_SND_HURT=4, FC_SND_KO=8,
-  FC_SND_SPECIAL=16, FC_SND_SUPER=32, FC_SND_BLOCK=64, FC_SND_SELECT=128 };
+  FC_SND_SPECIAL=16, FC_SND_SUPER=32, FC_SND_BLOCK=64, FC_SND_SELECT=128,
+  FC_SND_BOSS_KO=256 };
 #define FC_MAX_TARGETS 64
 #define FC_MAX_SHOTS 12
 #define FC_MAX_SPARKS 64
+#define FC_MAX_BLASTS 24
 typedef struct { float x,y,w,h; } FcBox;
 typedef struct { FcBox box; int facing; bool grounded; } FcBody;
+typedef struct {
+  const char *name;
+  int hp, max_hp, ko_timer;
+  bool active;
+} FcOpponent;
 typedef struct {
   FcBox box;
   int hp;
@@ -37,8 +44,10 @@ typedef struct {
   int ttl, damage, pierce;
   bool super;
   uint64_t hit_mask;
+  bool scenery_hit;
 } FcShot;
 typedef struct { float x,y,vx,vy; int ttl; uint32_t color; } FcSpark;
+typedef struct { float x,y; int ttl; bool large; } FcBlast;
 typedef struct { uint32_t tick; uint8_t direction; } FcDirection;
 typedef struct {
   int character, hp, meter, facing;
@@ -55,7 +64,11 @@ typedef struct {
   FcDirection motion[32];
   FcShot shots[FC_MAX_SHOTS];
   FcSpark sparks[FC_MAX_SPARKS];
+  FcBlast blasts[FC_MAX_BLASTS];
   FcBody body;
+  float walk_distance, vertical_motion;
+  int air_tick;
+  bool moving, body_valid, victory;
 } FcFight;
 
 void fc_init(FcFight *f, int character);
@@ -65,6 +78,7 @@ void fc_tick(FcFight *f, uint32_t buttons, FcBody body, FcTarget *targets, int c
 bool fc_hurt(FcFight *f, int damage, int from_direction);
 void fc_ko(FcFight *f);
 void fc_meter(FcFight *f, int amount);
+void fc_explode(FcFight *f, float x, float y, bool large);
 bool fc_overlap(FcBox a, FcBox b);
 bool fc_motion(const FcFight *f, const uint8_t *sequence, int count, int window);
 bool fc_busy(const FcFight *f);

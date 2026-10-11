@@ -115,9 +115,33 @@ static void test_stress(void) {
     assert(f.meter>=0 && f.meter<=300 && f.hp>=0 && f.hp<=125);
   }
 }
+static void test_air_attacks_and_animation(void) {
+  FcFight f;FcBody b={{100,100,16,32},1,false};
+  const uint32_t attacks[]={FC_PUNCH,FC_KICK,FC_SPECIAL,FC_UP|FC_SPECIAL,FC_SUPER};
+  for(int character=0;character<FC_ROSTER_COUNT;character++)for(int a=0;a<5;a++) {
+    fc_init(&f,character);f.meter=300;
+    FcTarget target={{116,100,24,32},30,true,false,0,0};
+    int impulse=0,shots=0,hits=0;
+    for(int t=0;t<100;t++) {
+      fc_tick(&f,FC_JUMP|(t==0?attacks[a]:0),b,&target,1);
+      impulse|=f.override_y && f.velocity_y<0;hits|=target.hit;
+      for(int j=0;j<FC_MAX_SHOTS;j++)shots|=f.shots[j].ttl>0;
+    }
+    assert(hits);
+    if(a==3 && (character==FC_RYU || character==FC_GUILE))assert(impulse);
+    if(a==2 && (character==FC_RYU || character==FC_GUILE))assert(shots || hits);
+  }
+  fc_init(&f,0);b.grounded=true;fc_tick(&f,FC_RIGHT,b,NULL,0);
+  assert(!f.moving);b.box.x+=3;fc_tick(&f,FC_RIGHT,b,NULL,0);
+  assert(f.moving && f.walk_distance==3);
+  fc_tick(&f,FC_RIGHT,b,NULL,0);assert(!f.moving); /* Pushing against a wall. */
+  b.grounded=false;b.box.y-=3;fc_tick(&f,FC_JUMP,b,NULL,0);assert(f.air_tick==1);
+  b.box.y-=3;fc_tick(&f,FC_JUMP,b,NULL,0);assert(f.air_tick==2 && f.vertical_motion<0);
+  b.grounded=true;fc_tick(&f,0,b,NULL,0);assert(!f.air_tick);
+}
 int main(void) {
   test_motions();test_super_meter();test_hits();test_projectiles();test_reactions();
-  test_charge_and_roster();test_cancel_and_buffer();test_stress();
-  puts("Combat: 8 suites passed (motions, meter, hits, projectiles, reactions, roster, cancels, stress).");
+  test_charge_and_roster();test_cancel_and_buffer();test_air_attacks_and_animation();test_stress();
+  puts("Combat: 9 suites passed, including all fighters' air attacks and movement-driven animation.");
   return 0;
 }

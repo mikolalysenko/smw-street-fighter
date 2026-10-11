@@ -1,12 +1,29 @@
 # World Warrior in Dinosaur Land
 
-A native C/SDL2 crossover prototype: Super Mario World's original levels,
+A C/SDL2 and WebAssembly crossover: Super Mario World's original levels,
 scenery, enemies, music and platforming, with ripped Street Fighter II fighter
 sprites, voices and impacts. Select Ryu, E. Honda, Chun-Li or Guile and use
 specials and a three-level, Alpha-inspired super gauge.
 
 The actual SMW game is the default build. The earlier placeholder dojo is only
-a combat test fixture. This is a native game, not a SNES ROM patch.
+a combat test fixture. The native and browser builds share the same game engine.
+
+## Play in a browser
+
+```sh
+make web          # Requires Emscripten and the prepared original assets
+make serve-web
+```
+
+Open **http://localhost:8765**, click Play, and use the keyboard or a gamepad.
+The original SMW engine, PPU and music run in WASM. WebGPU presents the pixel
+framebuffer; Canvas 2D is the fallback. Fullscreen is available below the game.
+Reload the page after rebuilding; the status shows the loaded build timestamp.
+Original SMW save points persist in browser storage, with an Export Save button.
+This saves normal game progress, not an instant snapshot of the current room.
+
+Copy `dist/web/` to Linux/Bazzite and serve that folder on localhost to play
+without recompiling. See [BAZZITE.md](docs/BAZZITE.md) for the TV setup.
 
 ## Play on this Mac
 
@@ -23,7 +40,10 @@ Start a one-player game using Enter or controller Start. Pick your fighter at
 character select; use the normal SMW overworld to enter a level. Each life starts
 with one super bar. Hits refill it; supers spend one to three complete bars.
 Health refills on level entry and meter carries between levels. Start opens
-Resume / Character Select / Quit Game during play.
+Resume / Character Select / Quit Game during play. On death, choose Retry Level
+or Return to Map. Continues are unlimited and retain the selected fighter.
+Character selection plays the original SF2 selection music; the title retains
+SMW's original presentation. Course clear shows the selected fighter.
 
 | Action | Xbox/Steam gamepad | Keyboard |
 | --- | --- | --- |
@@ -59,13 +79,20 @@ cancel into supers. These are forgiving platformer adaptations, not arcade
 frame data. Sonic Hurricane is a later-series move adapted to this prototype.
 
 Enemy contact causes health loss, hitstop, hit stun, knockback and SF2 hurt
-sounds. KO uses ripped SF2 screams. Ordinary whitelisted enemies die with launch
-knockback from attacks; stomps and the original level logic still work.
+sounds. Death uses ripped fighter screams. Punches, kicks, specials and supers
+also work in the air, including pressing jump and attack together.
+
+All normal sprite IDs and extended/cluster hazards accept attacks, including
+Chucks, Thwomps, wooden castle plungers and the layer-three crusher. Enemies
+explode. Keys, exits, switches and essential platforms take a visual hit but
+retain their function. Terrain shows a single impact without erasing routes.
+Boss rooms have opposing health bars, a KO announcement and their original
+defeat/exit sequences, including Bowser's ending.
 
 ## Build from a fresh checkout
 
 Requirements: C/C++ compilers, Make, SDL2 development files, Git, Python 3 with
-venv support, and CMake. On macOS: `brew install sdl2 cmake` and Xcode command
+venv support, CMake and ffmpeg. On macOS: `brew install sdl2 cmake ffmpeg` and Xcode command
 line tools. Linux/Bazzite instructions are in [BAZZITE.md](docs/BAZZITE.md).
 
 ```sh
@@ -102,13 +129,19 @@ An automated replay boots the original game, reaches Yoshi's Island 2, and
 checks an attack, super, Goomba contact damage and KO using deterministic enemy
 fixtures. This is not a full-game completion test.
 
-Boss combat, foreground occlusion of the fighter, terrain collision for
-projectiles, and complete swimming/climbing/Yoshi/powerup behavior remain.
-The fighter keeps Mario's smaller terrain collision box. Chun-Li's basic
-standing/walking/punch sequences currently reuse guard frames from an incomplete
-sheet; her special, jump, hurt and KO frames are original rips. Other animation
-clips also use adapted timings and anchors. The original title/overworld still
-show Mario. Snapshot/replay hotkeys are disabled because they omit combat state.
+Foreground occlusion and complete swimming/climbing/Yoshi/powerup behavior
+remain. The fighter keeps Mario's compact terrain collision box. Animation
+timings and anchors are adapted for platforming; jumps use separate airborne
+strike clips and walking advances with actual movement. Projectiles pass
+through scenery, and essential objects survive explosions to preserve routes.
+The original title/overworld still show Mario. Snapshot/replay hotkeys are
+disabled because they omit combat state.
+
+Real-engine replays verify Hadoukens, supers, KO and native endings in all seven
+Koopaling rooms, Reznor, Big Boo and Bowser. Movement tests cover ten jump/attack
+combinations, Continue and goal-tape clear. A Node test boots the shipped WASM
+module and checks original menus/music, movement, air specials, supers, audio
+and save RAM. These checks are not a full-game completion test.
 
 Linux CI is configured but has not run in this local repository. The physical
 Bazzite machine, controller and downstairs TV have not been tested.
@@ -134,6 +167,10 @@ make test        # Combat, sprite loader/rendering, ROM/tool checks
 make sanitize    # Combat and sprite tests under ASan/UBSan
 make test-smw    # Actual SMW RAM/clipping/damage/menu hooks; no assets needed
 make test-play   # Original game boot + level/combat replay; assets required
+make test-bosses # Ten actual boss rooms, attacks, KO and native endings
+make test-movement # Jump/air attacks, Continue and original goal tape
+make test-audio  # KO voice, death sample and selection music loop
+make test-web    # Built WASM module through the original game flow
 ```
 
 The replay produces `selection.bmp`, `original-level.bmp`, `super.bmp` and

@@ -23,7 +23,7 @@ bool fc_assets_load(const char *path) {
     p->w=read16(f);p->h=read16(f);p->ax=read16(f);p->ay=read16(f);
     if(p->character<0 || p->character>=FC_ROSTER_COUNT || p->pose<0 || p->pose>=FC_POSE_COUNT ||
        p->ticks<1 || p->ticks>600 || p->w<1 || p->w>512 || p->h<1 || p->h>512 ||
-       p->ax<0 || p->ax>p->w || p->ay<0 || p->ay>p->h)goto fail;
+       p->ax<0 || p->ax>512 || p->ay<0 || p->ay>512)goto fail;
     p->pixels=malloc((size_t)p->w*p->h*4);if(!p->pixels)goto fail;
     for(int j=0;j<p->w*p->h;j++) {
       int lo=read16(f),hi=read16(f);if(lo<0||hi<0)goto fail;
@@ -41,7 +41,10 @@ void fc_sprite(FcCanvas c,int character,int pose,unsigned tick,int x,int feet,
   unsigned duration=0;
   for(unsigned i=0;i<count;i++)if(frames[i].character==character && frames[i].pose==pose)duration+=(unsigned)frames[i].ticks;
   if(!duration)return;
-  if(pose==FC_POSE_KO && tick>=duration)tick=duration-1;else tick%=duration;
+  bool once=pose==FC_POSE_KO || pose==FC_POSE_JUMP || pose==FC_POSE_WIN ||
+    pose==FC_POSE_PUNCH || pose==FC_POSE_KICK || pose==FC_POSE_AIR_PUNCH ||
+    pose==FC_POSE_AIR_KICK || pose==FC_POSE_RISE || pose==FC_POSE_FIRE;
+  if(once && tick>=duration)tick=duration-1;else tick%=duration;
   const Frame *p=NULL;
   for(unsigned i=0;i<count;i++)if(frames[i].character==character && frames[i].pose==pose) {
     if(tick<(unsigned)frames[i].ticks){p=&frames[i];break;}tick-=(unsigned)frames[i].ticks;

@@ -5,6 +5,7 @@ import shlex
 import shutil
 import subprocess
 import tempfile
+import sys
 
 ROOT=Path(__file__).resolve().parents[1]
 tree=ROOT/'build/smw'
@@ -25,14 +26,22 @@ try:
 finally:source.unlink(missing_ok=True)
 objects=[str(p) for p in sorted(tree.rglob('*.o')) if p.name not in ('main.o','main-test.o','main-play-test.o')]
 binary=tree/'test-smw-play'
-subprocess.run(cc+['-O1','-g','-I'+str(tree/'src')]+flags+[str(ROOT/'tests/test_smw_play.c'),str(tree/'main-play-test.o')]+objects+['-o',str(binary)]+libs+['-lm'],check=True)
+test='test_smw_bosses.c' if '--bosses' in sys.argv else 'test_smw_movement.c' if '--movement' in sys.argv else 'test_smw_play.c'
+subprocess.run(cc+['-O1','-g','-I'+str(tree/'src')]+flags+[str(ROOT/'tests'/test),str(tree/'main-play-test.o')]+objects+['-o',str(binary)]+libs+['-lm'],check=True)
 config=(ROOT/'config/smw.ini').read_text().replace('DisableFrameDelay = 0','DisableFrameDelay = 1').replace('OutputMethod = SDL','OutputMethod = SDL-Software').replace('WindowScale = 4','WindowScale = 1')
-with tempfile.TemporaryDirectory(prefix='play-test-',dir=tree) as folder:
-    runtime=Path(folder)
-    shutil.copy2(binary,runtime/binary.name)
-    for name in ('smw_assets.dat','sf2'):
-        (runtime/name).symlink_to(tree/name)
-    (runtime/'test-play.ini').write_text(config)
-    subprocess.run([str(runtime/binary.name)],env={**os.environ,'SDL_VIDEODRIVER':'dummy','SDL_AUDIODRIVER':'dummy'},check=True,timeout=60)
-    for capture in runtime.glob('*.bmp'):
-        shutil.copy2(capture,tree/capture.name)
+cases=([os.environ['WW_TEST_BOSS']] if 'WW_TEST_BOSS' in os.environ else
+       ['1f6','0e5','1f2','0d9','0cc','0d3','1eb','0d5','0e4','1c7']) if '--bosses' in sys.argv else [None]
+for boss in cases:
+    with tempfile.TemporaryDirectory(prefix='play-test-',dir=tree) as folder:
+        runtime=Path(folder)
+        shutil.copy2(binary,runtime/binary.name)
+        for name in ('smw_assets.dat','sf2'):
+            (runtime/name).symlink_to(tree/name)
+        (runtime/'test-play.ini').write_text(config)
+        env={**os.environ,'SDL_VIDEODRIVER':'dummy','SDL_AUDIODRIVER':'dummy'}
+        if boss:env['WW_TEST_BOSS']=boss
+        try:
+            subprocess.run([str(runtime/binary.name)],env=env,check=True,timeout=60)
+        finally:
+            for capture in runtime.glob('*.bmp'):
+                shutil.copy2(capture,tree/capture.name)

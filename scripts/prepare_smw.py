@@ -29,7 +29,7 @@ def prepare():
         shutil.copy2(source / name, target)
     for file in ('fight.c', 'fight.h', 'draw.c', 'draw.h', 'audio.c', 'audio.h', 'assets.c', 'assets.h'):
         shutil.copy2(ROOT / 'src' / file, dest / 'src' / file)
-    for file in ('ww_smw.c', 'ww_smw.h'):
+    for file in ('ww_smw.c', 'ww_smw.h', 'ww_targets.c', 'ww_targets.h'):
         shutil.copy2(ROOT / 'adapters/smw' / file, dest / 'src' / file)
     def patch(file, changes):
         path = dest / file
@@ -55,6 +55,9 @@ def prepare():
         ('  g_renderer_funcs.EndDraw();',
          '  ww_render(pixel_buffer, pitch, g_snes_width, g_snes_height);\n  g_renderer_funcs.EndDraw();'),
         ('  SDL_DestroyWindow(window);', '  fc_audio_shutdown();\n  SDL_DestroyWindow(window);'),
+        ('static void SDLCALL AudioCallback(void *userdata, Uint8 *stream, int len) {',
+         'static void SDLCALL AudioCallback(void *userdata, Uint8 *stream, int len) {\n'
+         '  if (fc_audio_selection_active()) { SDL_memset(stream, 0, len); return; }'),
         ('static void HandleCommand(uint32 j, bool pressed) {',
          'static void HandleCommand(uint32 j, bool pressed) {\n'
          '  // Legacy snapshots/replays omit combat state; do not create corrupt saves.\n'
@@ -74,6 +77,11 @@ def prepare():
          'void PlayerDraw() { ww_player_draw(); }\n\nvoid WW_OriginalPlayerDraw() {  // 00e2bd'),
         ('void CheckPowerUpSpecificPlayerAttacks() {  // 00d062',
          'void CheckPowerUpSpecificPlayerAttacks() {  // 00d062\n  if (ww_enabled()) return;'),
+    ])
+    patch('src/smw_07.c', [
+        ('#include "consts.h"', '#include "ww_targets.h"\n#include "consts.h"'),
+        ('void InitializeNormalSpriteRAMTables(uint8 k) {',
+         'void InitializeNormalSpriteRAMTables(uint8 k) {\n  ww_target_spawned(k);'),
     ])
     for config in ('smw.ini', 'tv.ini'):
         shutil.copy2(ROOT / 'config' / config, dest / config)

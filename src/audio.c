@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-enum { RATE=48000, SOUND_COUNT=19, VOICE_COUNT=12 };
+enum { RATE=48000, SOUND_COUNT=21, VOICE_COUNT=12 };
 typedef struct { float *data; int length; } Sample;
 typedef struct { int sound,position; bool active; } Voice;
 static SDL_AudioDeviceID device;
@@ -13,11 +13,17 @@ static Sample samples[SOUND_COUNT];
 static Voice voices[VOICE_COUNT];
 static int next_voice;
 static int character,move;
+static bool loaded;
+static SDL_atomic_t selection;
+static int music_position;
 
-static void mix(void *unused,Uint8 *stream,int length) {
-  (void)unused;float *out=(float*)stream;int frames=length/(int)(2*sizeof(float));
+void fc_audio_mix(float *out,int frames) {
   for(int i=0;i<frames;i++) {
     float v=0;
+    if(SDL_AtomicGet(&selection) && samples[20].length) {
+      if(music_position>=samples[20].length)music_position=0;
+      v=samples[20].data[music_position++]*0.7f;
+    }
     for(int j=0;j<VOICE_COUNT;j++)if(voices[j].active) {
       Voice *voice=&voices[j];Sample *s=&samples[voice->sound];
       if(voice->position<s->length)v+=s->data[voice->position++];else voice->active=false;
@@ -26,6 +32,11 @@ static void mix(void *unused,Uint8 *stream,int length) {
     out[i*2]=out[i*2+1]=v*0.5f;
   }
 }
+#if !defined(__EMSCRIPTEN__) && !defined(FC_AUDIO_MANUAL)
+static void mix(void *unused,Uint8 *stream,int length) {
+  (void)unused;fc_audio_mix((float*)stream,length/(int)(2*sizeof(float)));
+}
+#endif
 static Sample synth(int sound) {
   const float durations[]={0.12f,0.20f,0.27f,0.85f,0.38f,0.70f,0.14f,0.09f};
   Sample s={NULL,(int)(durations[sound]*RATE)};
@@ -73,38 +84,50 @@ static bool load_sample(const char *dir,const char *name,Sample *dest) {
   return true;
 }
 void fc_audio_init(const char *directory) {
-  if(device)return;
+  if(loaded)return;
   static const char *names[]={"swing","hit","hurt","ko","special","super","block","select",
-    "hadouken","shoryuken","tatsumaki","honda","sonic","bird","chun_hurt","chun_ko","confirm","you","lose"};
+    "hadouken","shoryuken","tatsumaki","honda","sonic","bird","chun_hurt","chun_ko","confirm","you","lose","boss_ko","player_select"};
   for(int i=0;i<SOUND_COUNT;i++) {
     if(!directory && i<8)samples[i]=synth(i);
     load_sample(directory,names[i],&samples[i]);
   }
+  loaded=true;
+#if !defined(__EMSCRIPTEN__) && !defined(FC_AUDIO_MANUAL)
   SDL_AudioSpec wanted={0};wanted.freq=RATE;wanted.format=AUDIO_F32SYS;
   wanted.channels=2;wanted.samples=512;wanted.callback=mix;
   device=SDL_OpenAudioDevice(NULL,0,&wanted,NULL,0);
   if(device)SDL_PauseAudioDevice(device,0);
   else fprintf(stderr,"Audio unavailable: %s\n",SDL_GetError());
+#endif
 }
 void fc_audio_context(const FcFight *f) { character=f->character;move=f->move; }
+bool fc_audio_selection_active(void) { return SDL_AtomicGet(&selection)!=0; }
+void fc_audio_selection(bool active) {
+  if(active==fc_audio_selection_active())return;
+  if(device)SDL_LockAudioDevice(device);
+  music_position=0;SDL_AtomicSet(&selection,active);
+  if(device)SDL_UnlockAudioDevice(device);
+}
 void fc_audio_play(uint32_t events) {
-  if(!device || !events)return;
-  SDL_LockAudioDevice(device);
-  for(int i=0;i<8;i++)if(events&(1u<<i)) {
-    int sound=i;
+  if(!loaded || !events)return;
+  if(device)SDL_LockAudioDevice(device);
+  for(int i=0;i<9;i++)if(events&(1u<<i)) {
+    int sound=i==8?19:i;
     if(character==FC_CHUNLI && i==2)sound=14;
     if(character==FC_CHUNLI && i==3)sound=15;
     if(i==4 || i==5) {
       sound=character==FC_HONDA?11:character==FC_GUILE?12:character==FC_CHUNLI?13:
         move==FC_RISING?9:move==FC_SPIN?10:8;
     }
-    if(!samples[sound].data)sound=i;
+    if(!samples[sound].data && i<8)sound=i;
+    if(!samples[sound].data)continue;
     voices[next_voice]=(Voice){sound,0,true};next_voice=(next_voice+1)%VOICE_COUNT;
   }
-  SDL_UnlockAudioDevice(device);
+  if(device)SDL_UnlockAudioDevice(device);
 }
 void fc_audio_shutdown(void) {
-  if(device)SDL_CloseAudioDevice(device);device=0;
+  if(device)SDL_CloseAudioDevice(device);device=0;loaded=false;
   for(int i=0;i<SOUND_COUNT;i++){free(samples[i].data);samples[i]=(Sample){0};}
   SDL_memset(voices,0,sizeof(voices));next_voice=0;
+  SDL_AtomicSet(&selection,0);music_position=0;
 }

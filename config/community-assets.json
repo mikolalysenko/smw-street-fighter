@@ -409,6 +409,22 @@
     {
       "path": "Game/assets/sfx/voices/zangief_laugh.wav",
       "sha256": "32a7e540ae7897405cac79a54f0d6dcab30ac652ab7fc20247d4e9badb60b03e"
+    },
+    {
+      "path": "Game/assets/images/ui/Font_Big.png",
+      "sha256": "3c134c6770269800857b80b99a6df78da6e8ed10c8335786787b0f052a3c6338"
+    },
+    {
+      "path": "Game/assets/images/ui/Font_name.png",
+      "sha256": "3415f1dbe3b616c855087f66fbfd20ddc9fd38296d8b590bff6e264244958d22"
+    },
+    {
+      "path": "Game/assets/images/ui/fight_ui.png",
+      "sha256": "231e6dc109d9e41cb40d87bf2d953f5d8196e5055921c02fec31f15ad2ca7d11"
+    },
+    {
+      "path": "Game/assets/music/player_select.ogg",
+      "sha256": "a61d46389d4f34abd922d486d44f027f05f01944f362fafd8093a437e5841f17"
     }
   ]
 }
