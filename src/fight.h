@@ -69,6 +69,7 @@ typedef struct {
   float walk_distance, vertical_motion;
   int air_tick;
   bool moving, body_valid, victory;
+  bool crouching_attack, buffered_crouch;
 } FcFight;
 
 void fc_init(FcFight *f, int character);

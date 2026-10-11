@@ -79,7 +79,7 @@ EMSCRIPTEN_KEEPALIVE int ww_web_step(uint32 inputs) {
 }
 EMSCRIPTEN_KEEPALIVE uint8 *ww_web_pixels(void) { return screen; }
 EMSCRIPTEN_KEEPALIVE float *ww_web_audio(void) {
-  if(fc_audio_selection_active())memset(music,0,sizeof(music));
+  if(fc_audio_music_active())memset(music,0,sizeof(music));
   else RtlRenderAudio(music,801,2);
   fc_audio_mix(audio,801);
   for(int i=0;i<801*2;i++) {
@@ -101,6 +101,7 @@ EMSCRIPTEN_KEEPALIVE int ww_web_state(int field) {
     case 12:return player_in_air_flag;case 13:return (int8)player_yspeed;
     case 14: {int n=0;for(int i=0;i<FC_MAX_SHOTS;i++)n+=f->shots[i].ttl>0;return n;}
     case 15:return player_current_state;case 16:return fc_audio_selection_active();
+    case 17:return f->crouching_attack;
     default:return 0;
   }
 }

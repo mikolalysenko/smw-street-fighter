@@ -145,6 +145,7 @@ static FcMove request(FcFight *f,uint32_t b,uint32_t edge) {
   return FC_IDLE;
 }
 static void start(FcFight *f,FcMove move) {
+  f->crouching_attack=f->buffered_crouch && f->body.grounded && (move==FC_JAB || move==FC_ROUNDHOUSE);
   f->move=move; f->move_tick=0; f->move_hit=false;
   f->melee_mask=0; f->guarding=false; f->buffered=FC_IDLE; f->buffer_timer=0;
   f->motion_count=0;
@@ -204,7 +205,7 @@ void fc_tick(FcFight *f,uint32_t buttons,FcBody body,FcTarget *targets,int count
   if(!fc_busy(f) && body.facing) f->facing=body.facing;
   record_input(f,buttons);
   FcMove req=request(f,buttons,edge);
-  if(req) { f->buffered=req; f->buffer_timer=7; }
+  if(req) { f->buffered=req; f->buffer_timer=7; f->buffered_crouch=!!(buttons&FC_DOWN); }
   /* Hitstop and the super flash freeze both combat and the host's physics.
    * Buffered inputs survive the freeze; velocities survive until consumed. */
   f->frozen=false;
@@ -285,6 +286,9 @@ void fc_tick(FcFight *f,uint32_t buttons,FcBody body,FcTarget *targets,int count
           break;
         default:break;
       }
+      if(f->crouching_attack && body.grounded && f->move<=FC_ROUNDHOUSE) {
+        height=f->move==FC_JAB?14:9;f->override_x=true;f->velocity_x=0;
+      }
       if(melee && t>=begin && t<=end) {
         FcBox box={body.box.x+(f->facing>0?body.box.w-8:8-reach),
           body.box.y+body.box.h-height,reach,height+(super?12:4)};
@@ -295,7 +299,7 @@ void fc_tick(FcFight *f,uint32_t buttons,FcBody body,FcTarget *targets,int count
           }
         }
       }
-      if(t>=total) { f->move=FC_IDLE;f->move_tick=0; }
+      if(t>=total) { f->move=FC_IDLE;f->move_tick=0;f->crouching_attack=false; }
     }
   }
   dec(&f->buffer_timer);

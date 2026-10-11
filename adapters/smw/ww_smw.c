@@ -16,13 +16,14 @@ static bool initialized,chosen,was_level;
 static int menu,choice,pause_choice;
 static uint32_t previous;
 static bool death_prompt,continue_pending;
-static int death_choice,death_ticks,retry_ticks,clear_ticks;
+static int death_ticks,retry_ticks,clear_ticks;
+static bool fighter_drawn;
 void WW_OriginalPlayerDraw(void);
 
 void ww_init(void) {
   fc_init(&fight,FC_RYU);fight.meter=100;initialized=true;
   chosen=was_level=false;menu=choice=pause_choice=0;previous=0;
-  death_prompt=continue_pending=false;death_choice=death_ticks=retry_ticks=clear_ticks=0;
+  death_prompt=continue_pending=fighter_drawn=false;death_ticks=retry_ticks=clear_ticks=0;
   ww_targets_reset();
   const char *sprites=getenv("WW_SPRITES");
   fc_assets_load(sprites?sprites:"sf2/sprites.dat");
@@ -32,6 +33,13 @@ void ww_init(void) {
 }
 const FcFight *ww_fight_state(void) { return &fight; }
 bool ww_enabled(void) { return initialized && chosen && misc_game_mode==0x14; }
+bool ww_hide_native_hud(void) {
+  return initialized && chosen && misc_game_mode>=0x0f && misc_game_mode<=0x17;
+}
+void ww_begin_frame(void) {
+  /* Message boxes/native pause reuse the previous frame's OAM. */
+  if(misc_game_mode!=0x14 || !(misc_display_message || flag_pause))fighter_drawn=false;
+}
 static uint32_t decode(uint32_t b) {
   return ((b&(1u<<6))?FC_LEFT:0)|((b&(1u<<7))?FC_RIGHT:0)|
     ((b&(1u<<4))?FC_UP:0)|((b&(1u<<5))?FC_DOWN:0)|
@@ -54,18 +62,38 @@ bool ww_before_frame(uint32_t *inputs) {
   bool in_level=misc_game_mode==0x14;
   if(death_prompt) {
     ++death_ticks;
-    if(edge&(FC_UP|FC_DOWN))death_choice^=1;
-    if(death_ticks>30 && (edge&(FC_JUMP|FC_START|FC_PUNCH))) {
-      continue_pending=death_choice==0;death_prompt=false;retry_ticks=0;
+    if(death_ticks>30 && ((edge&(FC_JUMP|FC_START|FC_PUNCH|FC_BACK)) || death_ticks>=630)) {
+      continue_pending=death_ticks<630 && !(edge&FC_BACK);
+      death_prompt=false;retry_ticks=0;fc_audio_music(FC_MUSIC_NONE);
       fc_audio_play(FC_SND_SELECT);
     }
     *inputs=0;b=0;edge=0;
     if(death_prompt && !in_level)return false;
   }
+  /* The original file menu finishes in mode 0b for both new and saved games.
+   * Freeze there so the fighter is chosen before the map/first level loads. */
+  if(!chosen && menu!=1 && (misc_game_mode==0x0b || misc_game_mode==0x0e || in_level)) {
+    menu=1;edge=0;
+  }
+  if(menu==1) {
+    fc_audio_music(FC_MUSIC_SELECT);++fight.tick;
+    if(edge&(FC_LEFT|FC_RIGHT|FC_UP|FC_DOWN)) {
+      int delta=(edge&FC_LEFT)?3:(edge&FC_RIGHT)?1:2;
+      choice=(choice+delta)%FC_ROSTER_COUNT;fc_audio_play(FC_SND_SELECT);
+    }
+    if(edge&(FC_JUMP|FC_START|FC_PUNCH)) {
+      int hp=fight.hp*fc_roster[choice].vitality/fc_roster[fight.character].vitality;
+      int meter=fight.meter;fc_init(&fight,choice);fight.hp=hp;fight.meter=meter;
+      fight.previous=b;chosen=true;menu=0;fc_audio_context(&fight);fc_audio_play(FC_SND_SELECT);
+      fc_audio_music(FC_MUSIC_NONE);
+    }
+    if(edge&FC_BACK){if(chosen){menu=2;fc_audio_music(FC_MUSIC_NONE);}else quit();}
+    *inputs=0;return false;
+  }
   if(!in_level) {
     if(was_level){fc_clear_actions(&fight);ww_targets_reset();}
     was_level=false;menu=0;
-    fc_audio_selection(false);
+    if(!death_prompt)fc_audio_music(FC_MUSIC_NONE);
     if(continue_pending) {
       /* Re-enter the same overworld node through the original loader. It
        * restores the midpoint, level objects and exits just like a retry. */
@@ -82,25 +110,6 @@ bool ww_before_frame(uint32_t *inputs) {
     continue_pending=false;clear_ticks=0;
     int meter=fight.hp>0?fight.meter:100;
     fc_init(&fight,choice);fight.meter=meter;
-    if(!chosen)menu=1;
-  }
-  fc_audio_selection(menu==1);
-  if(menu==1) {
-    ++fight.tick;
-    if(edge&(FC_LEFT|FC_RIGHT|FC_UP|FC_DOWN)) {
-      int delta=(edge&FC_LEFT)?3:(edge&FC_RIGHT)?1:2;
-      choice=(choice+delta)%FC_ROSTER_COUNT;fc_audio_play(FC_SND_SELECT);
-    }
-    if(edge&(FC_JUMP|FC_START|FC_PUNCH)) {
-      /* Switching fighter in a paused level keeps the health percentage. */
-      int hp=fight.hp*fc_roster[choice].vitality/fc_roster[fight.character].vitality;
-      int meter=fight.meter;fc_init(&fight,choice);fight.hp=hp;fight.meter=meter;
-      fight.previous=b;chosen=true;menu=0;fc_audio_context(&fight);fc_audio_play(FC_SND_SELECT);
-      fc_audio_selection(false);
-    }
-    if(edge&FC_BACK){if(chosen)menu=2;else quit();}
-    fc_audio_selection(menu==1);
-    return false;
   }
   if(menu==2) {
     if(edge&(FC_UP|FC_DOWN))pause_choice=(pause_choice+((edge&FC_DOWN)?1:2))%3;
@@ -140,6 +149,7 @@ bool ww_before_frame(uint32_t *inputs) {
   *inputs&=~(2u|4u|8u|(1u<<8)|(1u<<9)|(1u<<10)|(1u<<11));
   if(b&(FC_LEFT|FC_RIGHT))*inputs|=2;
   if(fight.override_x || fight.guarding)*inputs&=~(0xc0u|2u);
+  if(fight.crouching_attack && player.grounded)*inputs|=1u<<5;
   /* Held jump still controls SMW's variable jump arc during air attacks. */
   if(fight.stun)*inputs&=~1u;
   return !fight.frozen;
@@ -161,7 +171,7 @@ bool ww_damage(void) {
 void ww_on_death(void) {
   if(!ww_enabled())return;
   fight.body=body();fc_ko(&fight);fc_audio_play(fight.events);fight.events=0;
-  death_prompt=true;death_choice=death_ticks=0;
+  death_prompt=true;death_ticks=0;fc_audio_music(FC_MUSIC_CONTINUE);
   /* Arcade continues are unlimited. Keep vanilla game-over bookkeeping
    * from discarding the current node before the player makes a choice. */
   if((int8)player_current_life_count<1)player_current_life_count=1;
@@ -177,8 +187,12 @@ void ww_velocity(void) {
 }
 void ww_player_draw(void) {
   if(!ww_enabled()){WW_OriginalPlayerDraw();return;}
-  /* Run palette/star/pose side effects, suppress only the OAM writes made by
-   * PlayerDraw. Original terrain and enemy rendering stay on the SNES PPU. */
+  /* PlayerDraw also draws Yoshi. Keep that OAM before replacing Mario.
+   * Platforms call this early, then set hide=ff to skip a second draw. */
+  if(player_hide_player_tile_flags!=0xff) {
+    fighter_drawn=true;
+    PlayerGFXRt_01EA70();
+  }
   uint8 old_oam[512],old_sizes[128];
   memcpy(old_oam,oam_buf,sizeof(old_oam));memcpy(old_sizes,sprites_oamtile_size_buffer,sizeof(old_sizes));
   WW_OriginalPlayerDraw();
@@ -187,15 +201,16 @@ void ww_player_draw(void) {
 void ww_render(uint8_t *pixels,size_t pitch,int width,int height) {
   if(!initialized)return;
   FcCanvas c={(uint32_t*)pixels,width,height,(int)(pitch/4)};
+  if(death_prompt && death_ticks>=30){fc_continue(c,fight.character,death_ticks);return;}
+  if(menu==1){fc_selection(c,choice,fight.tick,true);return;}
   if(misc_game_mode!=0x14) {
-    if(death_prompt)fc_continue(c,death_choice,death_ticks);
     return;
   }
-  if(menu==1){fc_selection(c,choice,fight.tick,true);return;}
   if(!chosen)return;
   int x=(int16)(player_xpos-mirror_current_layer1_xpos)+8;
   int feet=(int16)(player_ypos-mirror_current_layer1_ypos)+32;
-  if(player_hide_player_tile_flags!=0xff) {
+  if(player_riding_yoshi_flag)feet+=(int8)player_relative_yposition_during_screen_shake-8;
+  if(fighter_drawn) {
     FcFight drawing=fight;
     drawing.body.grounded=!player_in_air_flag;
     if(timer_end_level) {
@@ -209,6 +224,5 @@ void ww_render(uint8_t *pixels,size_t pitch,int width,int height) {
   fc_effects(c,&fight,mirror_current_layer1_xpos,mirror_current_layer1_ypos);
   fc_battle_hud(c,&fight,ww_opponent());
   if(timer_end_level && !misc_currently_active_boss_end_cutscene)fc_level_clear(c,fight.character);
-  if(death_prompt)fc_continue(c,death_choice,death_ticks);
   if(menu==2)fc_pause(c,pause_choice);
 }

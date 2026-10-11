@@ -7,6 +7,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 static int tick,map_ticks,level_frames,phase=-1,phase_tick,home_x,home_y,peak;
 static int moving,attack_seen,shot_seen,rise_seen,death_ticks,continued;
 static int capture_walk,capture_air,capture_continue,capture_clear;
@@ -30,6 +31,11 @@ uint32_t ww_test_input(void) {
         SetSprXYPos(10,player_xpos+12,player_ypos);
       }
       return continued<60?1u<<7:0;
+    }
+    const char *action=getenv("WW_TEST_CONTINUE");
+    if(action && (!strcmp(action,"map") || !strcmp(action,"timeout"))) {
+      if(death_ticks>650 && misc_game_mode==0x0e)return death_ticks%30==0?1:0;
+      return !strcmp(action,"map") && death_ticks==50?4:0;
     }
     return death_ticks==50?8:0;
   }

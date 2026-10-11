@@ -74,7 +74,7 @@ Hadouken, Honda's headbutt, Guile's charge move and a super. Walk into an enemy
 for the hurt reaction, then test a pit KO and re-entry. Check input/audio latency
 at the TV's actual refresh rate. These hardware checks have not been performed.
 
-`make package` creates `dist/world-warrior-smw-linux/` on Linux, including a
+`make package` creates `dist/super-mario-fighter-2-linux/` on Linux, including a
 fullscreen `play.sh`, data and source notices. This is currently a native local
 bundle that uses system SDL2, not a self-contained AppImage or Flatpak. A portable
 release and Steam artwork can follow the first hardware playtest.

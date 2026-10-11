@@ -139,9 +139,21 @@ static void test_air_attacks_and_animation(void) {
   b.box.y-=3;fc_tick(&f,FC_JUMP,b,NULL,0);assert(f.air_tick==2 && f.vertical_motion<0);
   b.grounded=true;fc_tick(&f,0,b,NULL,0);assert(!f.air_tick);
 }
+static void test_crouching_attacks(void) {
+  for(int id=0;id<FC_ROSTER_COUNT;id++)for(int kick=0;kick<2;kick++) {
+    FcFight f;fc_init(&f,id);
+    FcTarget targets[]={{{118,124,12,8},10,true,false,0,0},{{118,100,12,10},10,true,false,0,0}};
+    tick(&f,FC_DOWN|(kick?FC_KICK:FC_PUNCH),targets,2);
+    assert(f.crouching_attack);
+    /* Releasing Down must not change a crouching attack to a standing pose. */
+    for(int t=0;t<12;t++){tick(&f,0,targets,2);assert(f.crouching_attack);}
+    assert(targets[0].hp<10 && targets[1].hp==10);
+    frames(&f,40,targets,2);assert(f.move==FC_IDLE && !f.crouching_attack);
+  }
+}
 int main(void) {
   test_motions();test_super_meter();test_hits();test_projectiles();test_reactions();
-  test_charge_and_roster();test_cancel_and_buffer();test_air_attacks_and_animation();test_stress();
-  puts("Combat: 9 suites passed, including all fighters' air attacks and movement-driven animation.");
+  test_charge_and_roster();test_cancel_and_buffer();test_air_attacks_and_animation();test_crouching_attacks();test_stress();
+  puts("Combat: 10 suites passed, including all fighters' air/crouching attacks and movement-driven animation.");
   return 0;
 }

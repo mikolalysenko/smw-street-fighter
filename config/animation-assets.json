@@ -13,5 +13,25 @@
     "name": "chunli-punch.png",
     "url": "https://raw.githubusercontent.com/vomira/street-fighter/973a13fb1101a12406ac0bb14b531d3010b5c508/assets/chun-li-punch-right.png",
     "sha256": "530b34693964834f43b0f788d1b031df06e020ef63c646c78b15246464e359f3"
+  },
+  {
+    "name": "continue-ryu.gif",
+    "url": "https://sfgalleries.net/art/sf2/sf2ww/series2/ryu.gif",
+    "sha256": "9227d62a2261cd1362333b113213fb0622430e2b429a81943e85eaac51867f13"
+  },
+  {
+    "name": "continue-ehonda.gif",
+    "url": "https://sfgalleries.net/art/sf2/sf2ww/series2/ehonda.gif",
+    "sha256": "f239fd2c4774f1e27a05b657f1a821e83762f5fb279b76573af152f7afcb8a18"
+  },
+  {
+    "name": "continue-chunli.gif",
+    "url": "https://sfgalleries.net/art/sf2/sf2ww/series2/chunli.gif",
+    "sha256": "8bd42a48bdc1b74bb952d8c3869337077da98155d1e442b6e80ec38f2c7e2bb7"
+  },
+  {
+    "name": "continue-guile.gif",
+    "url": "https://sfgalleries.net/art/sf2/sf2ww/series2/guile.gif",
+    "sha256": "b9f83e4821f7d8fae741bbe604dd8aa74d7750d89b7b2ac2f2f71dc0ffb104c6"
   }
 ]

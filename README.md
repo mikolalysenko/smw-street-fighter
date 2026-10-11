@@ -1,4 +1,4 @@
-# World Warrior in Dinosaur Land
+# Super Mario Fighter 2 The World Warriors
 
 A C/SDL2 and WebAssembly crossover: Super Mario World's original levels,
 scenery, enemies, music and platforming, with ripped Street Fighter II fighter
@@ -27,7 +27,7 @@ without recompiling. See [BAZZITE.md](docs/BAZZITE.md) for the TV setup.
 
 ## Play on this Mac
 
-Open `dist/World Warrior SMW.app`, or:
+Open `dist/Super Mario Fighter 2 The World Warriors.app`, or:
 
 ```sh
 cd /Users/mikolalysenko/smw-street-fighter
@@ -37,11 +37,15 @@ make tv
 ```
 
 Start a one-player game using Enter or controller Start. Pick your fighter at
-character select; use the normal SMW overworld to enter a level. Each life starts
+character select after choosing a save file, before the intro or overworld loads.
+This also applies when resuming an existing save. Use the normal SMW overworld to
+enter a level. Each life starts
 with one super bar. Hits refill it; supers spend one to three complete bars.
 Health refills on level entry and meter carries between levels. Start opens
-Resume / Character Select / Quit Game during play. On death, choose Retry Level
-or Return to Map. Continues are unlimited and retain the selected fighter.
+Resume / Character Select / Quit Game during play. On death, the SF2 continue
+screen shows the defeated fighter and a ten-second countdown. Start/Jump retries
+the level; Back or letting the countdown expire returns to the map. Continues
+are unlimited and retain the selected fighter.
 Character selection plays the original SF2 selection music; the title retains
 SMW's original presentation. Course clear shows the selected fighter.
 
@@ -51,6 +55,7 @@ SMW's original presentation. Course clear shows the selected fighter.
 | Jump / confirm | A | Z |
 | Punch | X | X |
 | Kick | B | C |
+| Crouching punch / kick | Down + X / B | Down + X / C |
 | Special | Y | A |
 | Secondary special | Up or Down + Y | Up or Down + A |
 | Super | RB | S |
@@ -81,6 +86,10 @@ frame data. Sonic Hurricane is a later-series move adapted to this prototype.
 Enemy contact causes health loss, hitstop, hit stun, knockback and SF2 hurt
 sounds. Death uses ripped fighter screams. Punches, kicks, specials and supers
 also work in the air, including pressing jump and attack together.
+Holding Down gives each fighter original crouching punch/kick poses and low
+hitboxes. Moving platforms preserve fighter visibility, and the original Yoshi
+renders both on foot and while ridden. Health and super gauges float over the
+level, without an opaque HUD strip.
 
 All normal sprite IDs and extended/cluster hazards accept attacks, including
 Chucks, Thwomps, wooden castle plungers and the layer-three crusher. Enemies
@@ -129,8 +138,9 @@ An automated replay boots the original game, reaches Yoshi's Island 2, and
 checks an attack, super, Goomba contact damage and KO using deterministic enemy
 fixtures. This is not a full-game completion test.
 
-Foreground occlusion and complete swimming/climbing/Yoshi/powerup behavior
-remain. The fighter keeps Mario's compact terrain collision box. Animation
+Foreground occlusion and dedicated swimming/climbing/riding attack poses
+remain. Yoshi's original rendering and mounting work; the fighter keeps Mario's
+compact terrain collision box. Animation
 timings and anchors are adapted for platforming; jumps use separate airborne
 strike clips and walking advances with actual movement. Projectiles pass
 through scenery, and essential objects survive explosions to preserve routes.
@@ -139,9 +149,11 @@ disabled because they omit combat state.
 
 Real-engine replays verify Hadoukens, supers, KO and native endings in all seven
 Koopaling rooms, Reznor, Big Boo and Bowser. Movement tests cover ten jump/attack
-combinations, Continue and goal-tape clear. A Node test boots the shipped WASM
-module and checks original menus/music, movement, air specials, supers, audio
-and save RAM. These checks are not a full-game completion test.
+combinations, all Continue choices and goal-tape clear. Presentation tests cover
+platform redraws, Yoshi standing/riding, message boxes, and character selection
+before both new and saved games. A Node test boots the shipped WASM module and
+checks original menus/music, movement, crouching attacks, air specials, supers,
+audio and save RAM. These checks are not a full-game completion test.
 
 Linux CI is configured but has not run in this local repository. The physical
 Bazzite machine, controller and downstairs TV have not been tested.
@@ -169,7 +181,8 @@ make test-smw    # Actual SMW RAM/clipping/damage/menu hooks; no assets needed
 make test-play   # Original game boot + level/combat replay; assets required
 make test-bosses # Ten actual boss rooms, attacks, KO and native endings
 make test-movement # Jump/air attacks, Continue and original goal tape
-make test-audio  # KO voice, death sample and selection music loop
+make test-presentation # Moving platforms, Yoshi and new/resumed file selection
+make test-audio  # KO voice, death sample and selection/continue music
 make test-web    # Built WASM module through the original game flow
 ```
 

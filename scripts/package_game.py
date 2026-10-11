@@ -12,16 +12,20 @@ for required in ('smw','smw_assets.dat','sf2/sprites.dat','sf2/audio/ko.wav'):
     if not (build/required).exists():
         raise SystemExit('Run make original-assets and make smw before packaging.')
 if platform.system()=='Darwin':
-    dest=ROOT/'dist/World Warrior SMW.app/Contents'
+    dest=ROOT/'dist/Super Mario Fighter 2 The World Warriors.app/Contents'
     (dest/'MacOS').mkdir(parents=True,exist_ok=True)
     resources=dest/'Resources';resources.mkdir(exist_ok=True)
+    # Keep progress from the earlier app name when first building this bundle.
+    old_saves=ROOT/'dist/World Warrior SMW.app/Contents/Resources/saves'
+    if old_saves.is_dir() and not (resources/'saves').exists():
+        shutil.copytree(old_saves,resources/'saves')
     shutil.copy2(build/'smw',dest/'MacOS/world-warrior-smw')
     (dest/'Info.plist').write_bytes(plistlib.dumps({
         'CFBundleExecutable':'world-warrior-smw','CFBundleIdentifier':'local.worldwarrior.smw',
-        'CFBundleName':'World Warrior SMW','CFBundlePackageType':'APPL','CFBundleVersion':'0.3',
+        'CFBundleName':'Super Mario Fighter 2 The World Warriors','CFBundlePackageType':'APPL','CFBundleVersion':'0.4',
         'NSHighResolutionCapable':False}))
 else:
-    dest=ROOT/'dist/world-warrior-smw-linux'
+    dest=ROOT/'dist/super-mario-fighter-2-linux'
     dest.mkdir(parents=True,exist_ok=True);resources=dest
     shutil.copy2(build/'smw',dest/'world-warrior-smw')
     launcher=dest/'play.sh'

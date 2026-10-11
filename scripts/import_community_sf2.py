@@ -41,13 +41,18 @@ def main():
     mapping = json.loads((ROOT / 'config/sf2-sprites.json').read_text())
     for character, entry in enumerate(mapping['characters']):
         animations=list(enumerate(entry['poses']))
-        animations += [(20,entry['victory']),(21,entry['air_punch']),(22,entry['air_kick'])]
+        animations += [(20,entry['victory']),(21,entry['air_punch']),(22,entry['air_kick']),
+                       (23,entry['crouch_punch']),(24,entry['crouch_kick']),(25,entry['continue_portrait'])]
         for pose, animation in animations:
             name = animation['sheet']
             if name.endswith('.gif'):
                 gif=Image.open(source/'Game/assets/images/sprites/characters'/name)
                 for gif_frame in ImageSequence.Iterator(gif):
                     im=gif_frame.convert('RGBA');w,h=im.size
+                    if pose==25:
+                        # The original WW portraits use a green color key.
+                        key=im.getpixel((0,0))[:3]
+                        im.putdata([(r,g,b,0 if (r,g,b)==key else a) for r,g,b,a in im.getdata()])
                     ticks=max(1,round(gif_frame.info.get('duration',100)*60/1000))
                     pixels=b''.join(struct.pack('<I',(0xff000000|(r<<16)|(g<<8)|b) if a>=128 else 0) for r,g,b,a in im.getdata())
                     records.append(struct.pack('<7H',character,pose,ticks,w,h,w//2,h)+pixels)
@@ -90,6 +95,7 @@ def main():
         j=i+(i>=23)
         ui(18,'Font_Big.png',(j*17+(2 if i==22 else 0),0,j*17+(26 if i==22 else 17),15))
     ui(19,'fight_ui.png',(137,0,173,18))
+    ui(26,'vs_mode-game_over.png',(71,116,125,170))
     (out / 'sprites.dat').write_bytes(b'WWA1'+struct.pack('<H',len(records))+b''.join(records))
     # These are original ripped effects, including the FM menu sound.
     sounds = {
@@ -115,13 +121,14 @@ def main():
     elif shutil.which('afconvert'):
         subprocess.run(['afconvert','-f','WAVE','-d','LEI16@48000','-c','1',str(mp3),str(wav)],check=True)
     else:raise SystemExit('Install ffmpeg to convert the pinned KO announcer clip.')
-    music=source/'Game/assets/music/player_select.ogg'
     # Ogg decoding is done once at import time; the native and WASM hosts
     # share the resulting PCM loop and never need an extra runtime decoder.
     if not shutil.which('ffmpeg'):raise SystemExit('Install ffmpeg to import the original SF2 selection music.')
-    subprocess.run(['ffmpeg','-y','-hide_banner','-loglevel','error','-i',str(music),
-                    '-ac','1','-ar','48000',str(out/'audio/player_select.wav')],check=True)
-    print(f'Packed {len(records)} original sprite frames, {len(sounds)+1} effects and SF2 selection music into {out}')
+    for name in ('player_select','continue'):
+        music=source/'Game/assets/music'/f'{name}.ogg'
+        subprocess.run(['ffmpeg','-y','-hide_banner','-loglevel','error','-i',str(music),
+                        '-ac','1','-ar','48000',str(out/'audio'/f'{name}.wav')],check=True)
+    print(f'Packed {len(records)} original sprite frames, {len(sounds)+1} effects and SF2 menu music into {out}')
 
 
 if __name__ == '__main__':

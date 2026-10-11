@@ -11,6 +11,8 @@ bool ww_damage(void);
 void ww_on_death(void);
 void ww_velocity(void);
 void ww_player_draw(void);
+void ww_begin_frame(void);
+bool ww_hide_native_hud(void);
 bool ww_enabled(void);
 const FcFight *ww_fight_state(void);
 #endif

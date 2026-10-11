@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-enum { RATE=48000, SOUND_COUNT=21, VOICE_COUNT=12 };
+enum { RATE=48000, SOUND_COUNT=22, VOICE_COUNT=12 };
 typedef struct { float *data; int length; } Sample;
 typedef struct { int sound,position; bool active; } Voice;
 static SDL_AudioDeviceID device;
@@ -14,15 +14,17 @@ static Voice voices[VOICE_COUNT];
 static int next_voice;
 static int character,move;
 static bool loaded;
-static SDL_atomic_t selection;
+static SDL_atomic_t music_track;
 static int music_position;
 
 void fc_audio_mix(float *out,int frames) {
   for(int i=0;i<frames;i++) {
     float v=0;
-    if(SDL_AtomicGet(&selection) && samples[20].length) {
-      if(music_position>=samples[20].length)music_position=0;
-      v=samples[20].data[music_position++]*0.7f;
+    int track=SDL_AtomicGet(&music_track);
+    if(track && samples[19+track].length) {
+      Sample *s=&samples[19+track];
+      if(music_position>=s->length && track==FC_MUSIC_SELECT)music_position=0;
+      if(music_position<s->length)v=s->data[music_position++]*0.7f;
     }
     for(int j=0;j<VOICE_COUNT;j++)if(voices[j].active) {
       Voice *voice=&voices[j];Sample *s=&samples[voice->sound];
@@ -86,7 +88,7 @@ static bool load_sample(const char *dir,const char *name,Sample *dest) {
 void fc_audio_init(const char *directory) {
   if(loaded)return;
   static const char *names[]={"swing","hit","hurt","ko","special","super","block","select",
-    "hadouken","shoryuken","tatsumaki","honda","sonic","bird","chun_hurt","chun_ko","confirm","you","lose","boss_ko","player_select"};
+    "hadouken","shoryuken","tatsumaki","honda","sonic","bird","chun_hurt","chun_ko","confirm","you","lose","boss_ko","player_select","continue"};
   for(int i=0;i<SOUND_COUNT;i++) {
     if(!directory && i<8)samples[i]=synth(i);
     load_sample(directory,names[i],&samples[i]);
@@ -101,11 +103,14 @@ void fc_audio_init(const char *directory) {
 #endif
 }
 void fc_audio_context(const FcFight *f) { character=f->character;move=f->move; }
-bool fc_audio_selection_active(void) { return SDL_AtomicGet(&selection)!=0; }
-void fc_audio_selection(bool active) {
-  if(active==fc_audio_selection_active())return;
+bool fc_audio_music_active(void) { return SDL_AtomicGet(&music_track)!=FC_MUSIC_NONE; }
+bool fc_audio_selection_active(void) { return SDL_AtomicGet(&music_track)==FC_MUSIC_SELECT; }
+void fc_audio_selection(bool active) { fc_audio_music(active?FC_MUSIC_SELECT:FC_MUSIC_NONE); }
+void fc_audio_music(int track) {
+  if(track<FC_MUSIC_NONE || track>FC_MUSIC_CONTINUE)return;
+  if(track==SDL_AtomicGet(&music_track))return;
   if(device)SDL_LockAudioDevice(device);
-  music_position=0;SDL_AtomicSet(&selection,active);
+  music_position=0;SDL_AtomicSet(&music_track,track);
   if(device)SDL_UnlockAudioDevice(device);
 }
 void fc_audio_play(uint32_t events) {
@@ -129,5 +134,5 @@ void fc_audio_shutdown(void) {
   if(device)SDL_CloseAudioDevice(device);device=0;loaded=false;
   for(int i=0;i<SOUND_COUNT;i++){free(samples[i].data);samples[i]=(Sample){0};}
   SDL_memset(voices,0,sizeof(voices));next_voice=0;
-  SDL_AtomicSet(&selection,0);music_position=0;
+  SDL_AtomicSet(&music_track,0);music_position=0;
 }

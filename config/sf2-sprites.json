@@ -642,6 +642,97 @@
             "ticks": 10
           }
         ]
+      },
+      "crouch_punch": {
+        "sheet": "ryu1.png",
+        "frames": [
+          {
+            "rect": [
+              227,
+              326,
+              69,
+              61
+            ],
+            "ticks": 3,
+            "anchor": [
+              30,
+              61
+            ]
+          },
+          {
+            "rect": [
+              297,
+              326,
+              95,
+              61
+            ],
+            "ticks": 4,
+            "anchor": [
+              30,
+              61
+            ]
+          },
+          {
+            "rect": [
+              227,
+              326,
+              69,
+              61
+            ],
+            "ticks": 10,
+            "anchor": [
+              30,
+              61
+            ]
+          }
+        ]
+      },
+      "crouch_kick": {
+        "sheet": "ryu1.png",
+        "frames": [
+          {
+            "rect": [
+              618,
+              323,
+              70,
+              64
+            ],
+            "ticks": 6,
+            "anchor": [
+              35,
+              64
+            ]
+          },
+          {
+            "rect": [
+              689,
+              323,
+              112,
+              64
+            ],
+            "ticks": 6,
+            "anchor": [
+              35,
+              64
+            ]
+          },
+          {
+            "rect": [
+              618,
+              323,
+              70,
+              64
+            ],
+            "ticks": 14,
+            "anchor": [
+              35,
+              64
+            ]
+          }
+        ]
+      },
+      "continue_portrait": {
+        "sheet": "continue-ryu.gif"
       }
     },
     {
@@ -795,12 +886,16 @@
           "frames": [
             {
               "rect": [
-                627,
-                1568,
-                96,
-                97
+                9,
+                1486,
+                94,
+                70
               ],
-              "ticks": 4
+              "ticks": 4,
+              "anchor": [
+                47,
+                70
+              ]
             }
           ]
         },
@@ -1366,6 +1461,97 @@
             "ticks": 12
           }
         ]
+      },
+      "crouch_punch": {
+        "sheet": "boxer-claw-honda2.png",
+        "frames": [
+          {
+            "rect": [
+              105,
+              1487,
+              99,
+              69
+            ],
+            "ticks": 3,
+            "anchor": [
+              49,
+              69
+            ]
+          },
+          {
+            "rect": [
+              206,
+              1489,
+              128,
+              67
+            ],
+            "ticks": 4,
+            "anchor": [
+              49,
+              67
+            ]
+          },
+          {
+            "rect": [
+              105,
+              1487,
+              99,
+              69
+            ],
+            "ticks": 10,
+            "anchor": [
+              49,
+              69
+            ]
+          }
+        ]
+      },
+      "crouch_kick": {
+        "sheet": "boxer-claw-honda2.png",
+        "frames": [
+          {
+            "rect": [
+              1793,
+              1482,
+              109,
+              74
+            ],
+            "ticks": 6,
+            "anchor": [
+              46,
+              74
+            ]
+          },
+          {
+            "rect": [
+              1904,
+              1479,
+              140,
+              77
+            ],
+            "ticks": 6,
+            "anchor": [
+              46,
+              77
+            ]
+          },
+          {
+            "rect": [
+              1793,
+              1482,
+              109,
+              74
+            ],
+            "ticks": 14,
+            "anchor": [
+              46,
+              74
+            ]
+          }
+        ]
+      },
+      "continue_portrait": {
+        "sheet": "continue-ehonda.gif"
       }
     },
     {
@@ -1452,12 +1638,16 @@
           "frames": [
             {
               "rect": [
-                326,
-                562,
-                72,
-                69
+                228,
+                147,
+                53,
+                74
               ],
-              "ticks": 4
+              "ticks": 4,
+              "anchor": [
+                27,
+                74
+              ]
             }
           ]
         },
@@ -2109,6 +2299,123 @@
             "ticks": 10
           }
         ]
+      },
+      "crouch_punch": {
+        "sheet": "chunLi-guile1.png",
+        "frames": [
+          {
+            "rect": [
+              282,
+              146,
+              59,
+              75
+            ],
+            "ticks": 3,
+            "anchor": [
+              28,
+              75
+            ]
+          },
+          {
+            "rect": [
+              342,
+              144,
+              83,
+              77
+            ],
+            "ticks": 4,
+            "anchor": [
+              28,
+              77
+            ]
+          },
+          {
+            "rect": [
+              282,
+              146,
+              59,
+              75
+            ],
+            "ticks": 10,
+            "anchor": [
+              28,
+              75
+            ]
+          }
+        ]
+      },
+      "crouch_kick": {
+        "sheet": "chunLi-guile1.png",
+        "frames": [
+          {
+            "rect": [
+              782,
+              158,
+              57,
+              63
+            ],
+            "ticks": 3,
+            "anchor": [
+              27,
+              63
+            ]
+          },
+          {
+            "rect": [
+              840,
+              158,
+              72,
+              63
+            ],
+            "ticks": 3,
+            "anchor": [
+              27,
+              63
+            ]
+          },
+          {
+            "rect": [
+              913,
+              165,
+              111,
+              56
+            ],
+            "ticks": 6,
+            "anchor": [
+              27,
+              56
+            ]
+          },
+          {
+            "rect": [
+              840,
+              158,
+              72,
+              63
+            ],
+            "ticks": 6,
+            "anchor": [
+              27,
+              63
+            ]
+          },
+          {
+            "rect": [
+              782,
+              158,
+              57,
+              63
+            ],
+            "ticks": 8,
+            "anchor": [
+              27,
+              63
+            ]
+          }
+        ]
+      },
+      "continue_portrait": {
+        "sheet": "continue-chunli.gif"
       }
     },
     {
@@ -2735,6 +3042,123 @@
             "ticks": 12
           }
         ]
+      },
+      "crouch_punch": {
+        "sheet": "guile2.png",
+        "frames": [
+          {
+            "rect": [
+              420,
+              370,
+              71,
+              63
+            ],
+            "ticks": 3,
+            "anchor": [
+              35,
+              63
+            ]
+          },
+          {
+            "rect": [
+              492,
+              370,
+              102,
+              63
+            ],
+            "ticks": 4,
+            "anchor": [
+              35,
+              63
+            ]
+          },
+          {
+            "rect": [
+              420,
+              370,
+              71,
+              63
+            ],
+            "ticks": 10,
+            "anchor": [
+              35,
+              63
+            ]
+          }
+        ]
+      },
+      "crouch_kick": {
+        "sheet": "guile2.png",
+        "frames": [
+          {
+            "rect": [
+              0,
+              440,
+              59,
+              60
+            ],
+            "ticks": 3,
+            "anchor": [
+              32,
+              60
+            ]
+          },
+          {
+            "rect": [
+              60,
+              444,
+              97,
+              56
+            ],
+            "ticks": 3,
+            "anchor": [
+              32,
+              56
+            ]
+          },
+          {
+            "rect": [
+              158,
+              443,
+              143,
+              57
+            ],
+            "ticks": 6,
+            "anchor": [
+              40,
+              57
+            ]
+          },
+          {
+            "rect": [
+              60,
+              444,
+              97,
+              56
+            ],
+            "ticks": 6,
+            "anchor": [
+              32,
+              56
+            ]
+          },
+          {
+            "rect": [
+              0,
+              440,
+              59,
+              60
+            ],
+            "ticks": 8,
+            "anchor": [
+              32,
+              60
+            ]
+          }
+        ]
+      },
+      "continue_portrait": {
+        "sheet": "continue-guile.gif"
       }
     }
   ]

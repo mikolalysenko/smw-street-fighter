@@ -38,6 +38,8 @@ def prepare():
             text = replace_once(text, old, new)
         path.write_text(text)
     patch('src/main.c', [
+        ('static const char kWindowTitle[] = "SMW";',
+         'static const char kWindowTitle[] = "Super Mario Fighter 2 The World Warriors";'),
         ('int main(int argc, char** argv) {',
          'int main(int argc, char** argv) {\n'
          '  char *ww_base = SDL_GetBasePath();\n'
@@ -57,7 +59,7 @@ def prepare():
         ('  SDL_DestroyWindow(window);', '  fc_audio_shutdown();\n  SDL_DestroyWindow(window);'),
         ('static void SDLCALL AudioCallback(void *userdata, Uint8 *stream, int len) {',
          'static void SDLCALL AudioCallback(void *userdata, Uint8 *stream, int len) {\n'
-         '  if (fc_audio_selection_active()) { SDL_memset(stream, 0, len); return; }'),
+         '  if (fc_audio_music_active()) { SDL_memset(stream, 0, len); return; }'),
         ('static void HandleCommand(uint32 j, bool pressed) {',
          'static void HandleCommand(uint32 j, bool pressed) {\n'
          '  // Legacy snapshots/replays omit combat state; do not create corrupt saves.\n'
@@ -68,6 +70,8 @@ def prepare():
     ])
     patch('src/smw_00.c', [
         ('#include "consts.h"', '#include "ww_smw.h"\n#include "consts.h"'),
+        ('void SmwRunOneFrameOfGame_Internal() {',
+         'void SmwRunOneFrameOfGame_Internal() {\n  ww_begin_frame();'),
         ('void DamagePlayer_Hurt() {  // 00f5b7', 'void DamagePlayer_Hurt() {  // 00f5b7\n  if (ww_damage()) return;'),
         ('void DamagePlayer_PitFall() {  // 00f60a\n  io_music_ch1 = 9;',
          'void DamagePlayer_PitFall() {  // 00f60a\n  ww_on_death();\n  io_music_ch1 = ww_enabled() ? 0 : 9;'),
@@ -75,13 +79,37 @@ def prepare():
          'void UpdatePlayerSpritePosition() {  // 00dc2d\n  ww_velocity();'),
         ('void PlayerDraw() {  // 00e2bd',
          'void PlayerDraw() { ww_player_draw(); }\n\nvoid WW_OriginalPlayerDraw() {  // 00e2bd'),
+        ('  if (player_hide_player_tile_flags != 0xFF)\n    PlayerGFXRt_01EA70();',
+         '  if (!ww_enabled() && player_hide_player_tile_flags != 0xFF)\n    PlayerGFXRt_01EA70();'),
+        ('void UpdateStatusBarCounters_DrawItemBoxItem() {  // 009079',
+         'void UpdateStatusBarCounters_DrawItemBoxItem() {  // 009079\n  if (ww_hide_native_hud()) return;'),
         ('void CheckPowerUpSpecificPlayerAttacks() {  // 00d062',
          'void CheckPowerUpSpecificPlayerAttacks() {  // 00d062\n  if (ww_enabled()) return;'),
+    ])
+    patch('src/smw_rtl.c', [
+        ('#include "smw_rtl.h"', '#include "smw_rtl.h"\n#include "ww_smw.h"'),
+        ('    ppu_runLine(g_ppu, i);',
+         '    // Only the status-bar scanlines: preserve layer-3 tides, smashers and messages.\n'
+         '    uint8 ww_main = g_ppu->screenEnabled[0], ww_sub = g_ppu->screenEnabled[1];\n'
+         '    if (ww_hide_native_hud() && i <= 40) {\n'
+         '      g_ppu->screenEnabled[0] &= ~4; g_ppu->screenEnabled[1] &= ~4;\n'
+         '    }\n'
+         '    ppu_runLine(g_ppu, i);\n'
+         '    g_ppu->screenEnabled[0] = ww_main; g_ppu->screenEnabled[1] = ww_sub;'),
     ])
     patch('src/smw_07.c', [
         ('#include "consts.h"', '#include "ww_targets.h"\n#include "consts.h"'),
         ('void InitializeNormalSpriteRAMTables(uint8 k) {',
          'void InitializeNormalSpriteRAMTables(uint8 k) {\n  ww_target_spawned(k);'),
+    ])
+    patch('src/smw_05.c', [
+        ('#include "consts.h"', '#include "ww_smw.h"\n#include "consts.h"'),
+        ('  uint16 v7 = 2;\n  LOBYTE(v4) = stripe_image_upload + 4;',
+         '  if (ww_enabled()) {\n'
+         '    for (int i = 4; i < 14; i += 2) stripe_image_upload_data[stripe_image_upload + i] = 0xfc;\n'
+         '    for (int i = 18; i < 44; i += 2) stripe_image_upload_data[stripe_image_upload + i] = 0xfc;\n'
+         '  }\n'
+         '  uint16 v7 = 2;\n  LOBYTE(v4) = stripe_image_upload + 4;'),
     ])
     for config in ('smw.ini', 'tv.ini'):
         shutil.copy2(ROOT / 'config' / config, dest / config)

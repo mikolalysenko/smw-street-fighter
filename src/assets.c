@@ -43,7 +43,8 @@ void fc_sprite(FcCanvas c,int character,int pose,unsigned tick,int x,int feet,
   if(!duration)return;
   bool once=pose==FC_POSE_KO || pose==FC_POSE_JUMP || pose==FC_POSE_WIN ||
     pose==FC_POSE_PUNCH || pose==FC_POSE_KICK || pose==FC_POSE_AIR_PUNCH ||
-    pose==FC_POSE_AIR_KICK || pose==FC_POSE_RISE || pose==FC_POSE_FIRE;
+    pose==FC_POSE_AIR_KICK || pose==FC_POSE_CROUCH_PUNCH || pose==FC_POSE_CROUCH_KICK ||
+    pose==FC_POSE_RISE || pose==FC_POSE_FIRE;
   if(once && tick>=duration)tick=duration-1;else tick%=duration;
   const Frame *p=NULL;
   for(unsigned i=0;i<count;i++)if(frames[i].character==character && frames[i].pose==pose) {

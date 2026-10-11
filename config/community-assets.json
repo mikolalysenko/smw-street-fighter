@@ -425,6 +425,14 @@
     {
       "path": "Game/assets/music/player_select.ogg",
       "sha256": "a61d46389d4f34abd922d486d44f027f05f01944f362fafd8093a437e5841f17"
+    },
+    {
+      "path": "Game/assets/music/continue.ogg",
+      "sha256": "b675b4d913d56dcf772886280b285285cdbca528007bb1e1476aa4ad2eabbdd5"
+    },
+    {
+      "path": "Game/assets/images/ui/vs_mode-game_over.png",
+      "sha256": "67effb1af8e365140f2e0678c0d80b5acb9e8e1f0455d88ebbbf93920c029bcc"
     }
   ]
 }

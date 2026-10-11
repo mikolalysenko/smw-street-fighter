@@ -20,6 +20,8 @@ int main(void) {
   fc_audio_selection(true);assert(fc_audio_selection_active());assert(energy(240)>1);
   assert(energy(2400)>1); /* Run past the 38-second loop boundary. */
   fc_audio_selection(false);assert(energy(10)==0);
+  fc_audio_music(FC_MUSIC_CONTINUE);assert(fc_audio_music_active());assert(!fc_audio_selection_active());
+  assert(energy(240)>1);fc_audio_music(FC_MUSIC_NONE);assert(energy(10)==0);
   fc_audio_play(FC_SND_KO);assert(energy(180)>1);
-  fc_audio_shutdown();SDL_Quit();puts("Audio: KO voice, fighter death, selection loop and stop passed.");
+  fc_audio_shutdown();SDL_Quit();puts("Audio: KO voice, fighter death, selection loop, continue music and stop passed.");
 }

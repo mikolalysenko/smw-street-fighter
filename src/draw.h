@@ -12,7 +12,7 @@ void fc_hud(FcCanvas c,const FcFight *f);
 void fc_battle_hud(FcCanvas c,const FcFight *f,const FcOpponent *opponent);
 void fc_selection(FcCanvas c,int choice,unsigned tick,bool compact);
 void fc_pause(FcCanvas c,int choice);
-void fc_continue(FcCanvas c,int choice,int ticks);
+void fc_continue(FcCanvas c,int character,int ticks);
 void fc_level_clear(FcCanvas c,int character);
 void fc_dim(FcCanvas c,int amount);
 #endif

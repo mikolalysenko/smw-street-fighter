@@ -9,5 +9,8 @@ void fc_audio_play(uint32_t events);
 void fc_audio_mix(float *stereo,int frames);
 void fc_audio_selection(bool active);
 bool fc_audio_selection_active(void);
+enum { FC_MUSIC_NONE, FC_MUSIC_SELECT, FC_MUSIC_CONTINUE };
+void fc_audio_music(int track);
+bool fc_audio_music_active(void);
 void fc_audio_shutdown(void);
 #endif

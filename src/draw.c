@@ -45,6 +45,11 @@ void fc_text(FcCanvas c,int x,int y,const char *s,uint32_t color,int scale) {
     } else if(ch=='/' || ch=='>') {
       for(int j=0;j<5;j++)fc_rect(c,x+(ch=='/'?4-j:(j<3?j:4-j))*scale,y+(j+1)*scale,scale,scale,color);
     } else if(ch=='!') {fc_rect(c,x+2*scale,y,scale,4*scale,color);fc_rect(c,x+2*scale,y+6*scale,scale,scale,color);}
+    else if(ch=='?') {
+      static const uint8_t rows[]={14,17,1,2,4,0,4};
+      for(int row=0;row<7;row++)for(int col=0;col<5;col++)
+        if(rows[row]&(1<<(4-col)))fc_rect(c,x+col*scale,y+row*scale,scale,scale,color);
+    }
   }
 }
 void fc_center(FcCanvas c,int y,const char *s,uint32_t color,int scale) {
@@ -69,6 +74,10 @@ void fc_fighter(FcCanvas c,const FcFight *f,int x,int feet,int scale,uint32_t ti
     pose=poses[f->move];tick=(unsigned)f->move_tick;
     if(!f->body.grounded && f->move==FC_JAB)pose=FC_POSE_AIR_PUNCH;
     if(!f->body.grounded && f->move==FC_ROUNDHOUSE)pose=FC_POSE_AIR_KICK;
+    if(f->body.grounded && f->crouching_attack) {
+      if(f->move==FC_JAB)pose=FC_POSE_CROUCH_PUNCH;
+      if(f->move==FC_ROUNDHOUSE)pose=FC_POSE_CROUCH_KICK;
+    }
     if(f->move==FC_SUPER_MOVE)pose=f->character==FC_HONDA?FC_POSE_RUSH:
       f->character==FC_CHUNLI?FC_POSE_FLURRY:FC_POSE_FIRE;
   } else if(!f->body.grounded){pose=FC_POSE_JUMP;tick=f->air_tick;}
@@ -115,8 +124,11 @@ void fc_effects(FcCanvas c,const FcFight *f,float camx,float camy) {
 static void arcade_text(FcCanvas c,int x,int y,const char *s,bool big) {
   for(;*s;s++) {
     int ch=toupper((unsigned char)*s),i=ch>='A'&&ch<='Z'?ch-'A':ch>='0'&&ch<='9'?ch-'0'+26:-1;
-    if(i>=0 && fc_assets_ready())
+    if(i>=0 && fc_assets_ready()) {
+      for(int dx=-1;dx<=1;dx++)for(int dy=-1;dy<=1;dy++)if(dx || dy)
+        fc_sprite(c,0,big?FC_POSE_BIG_FONT:FC_POSE_FONT,(unsigned)i,x+dx,y+dy,1,big?3:2,big?4:3,0x010101);
       fc_sprite(c,0,big?FC_POSE_BIG_FONT:FC_POSE_FONT,(unsigned)i,x,y,1,big?3:2,big?4:3,0);
+    }
     else {char glyph[2]={(char)ch,0};fc_text(c,x,y+1,glyph,0xffdd65,1);}
     x+=big?(ch=='W'?19:13):8;
   }
@@ -127,7 +139,7 @@ static void arcade_center(FcCanvas c,int y,const char *s,bool big) {
 }
 static void life_bar(FcCanvas c,int x,int y,int w,int hp,int maximum,bool reverse) {
   if(maximum<1)maximum=1;if(hp<0)hp=0;if(hp>maximum)hp=maximum;
-  fc_rect(c,x-2,y-2,w+4,13,0x141034);frame(c,x-1,y-1,w+2,11,0xffffee);
+  fc_rect(c,x-2,y-2,w+4,13,0x080808);frame(c,x-1,y-1,w+2,11,0xffffee);
   fc_rect(c,x,y,w,9,0xdf211b);
   int filled=w*hp/maximum,left=reverse?x+w-filled:x;
   fc_rect(c,left,y,filled,9,0xffdb00);fc_rect(c,left,y,filled,2,0xffff85);
@@ -137,31 +149,33 @@ void fc_hud(FcCanvas c,const FcFight *f) { fc_battle_hud(c,f,NULL); }
 void fc_battle_hud(FcCanvas c,const FcFight *f,const FcOpponent *o) {
   char text[64];const FcCharacter *r=&fc_roster[f->character];
   int w=(c.w-48)/2;bool boss=o && o->active;
-  fc_rect(c,0,0,c.w,39,0x101035);
   arcade_text(c,9,3,r->name,false);
   life_bar(c,9,17,w,f->hp,r->vitality,false);
   if(boss) {
     arcade_text(c,c.w-9-(int)strlen(o->name)*8,3,o->name,false);
     life_bar(c,c.w-9-w,17,w,o->hp,o->max_hp,true);
-  } else arcade_text(c,c.w-9-8*8,17,"1P WORLD",false);
-  fc_sprite(c,0,FC_POSE_KO_MARK,0,c.w/2-14,13,1,3,4,0);
-  /* Alpha-style metal bezel, three bright stocks and lettering laid over
-   * the fill. The full meter flashes gold without covering the playfield. */
-  int gy=c.h-19;
-  fc_rect(c,6,gy,176,16,0x07091c);frame(c,7,gy+1,173,14,0x6169a5);
-  fc_rect(c,10,gy+3,143,10,0x273063);
-  for(int i=0;i<3;i++) {
-    int fill=f->meter-i*100;if(fill<0)fill=0;if(fill>100)fill=100;
-    int left=11+i*47,filled=45*fill/100;
-    uint32_t color=f->meter==300 && (f->tick/12)%2?0xffd438:0x287ded;
-    fc_rect(c,left,gy+4,filled,8,color);fc_rect(c,left,gy+4,filled,2,0x8fefff);
-    fc_rect(c,left,gy+10,filled,2,0x173ea7);
-    fc_rect(c,left+45,gy+3,2,10,0x090c30);
   }
-  fc_text(c,17,gy+6,"SUPER",0x08082d,1);fc_text(c,16,gy+5,"SUPER",0xffffff,1);
-  fc_text(c,157,gy+5,"LV",0xffee87,1);
-  snprintf(text,sizeof(text),"%d",f->meter/100);arcade_text(c,171,gy+3,text,false);
-  if(f->meter==300)fc_text(c,188,gy+5,"MAX",0xffe366,1);
+  if(boss)fc_sprite(c,0,FC_POSE_KO_MARK,0,c.w/2-14,13,1,3,4,0);
+  /* A slim arcade gauge with slanted ends, one continuous fill and SUPER
+   * lettering over the bezel. Small ticks mark the three Alpha-style levels. */
+  int gy=c.h-14,fill=120*f->meter/300;
+  for(int row=0;row<11;row++) {
+    int slant=(10-row)/2,left=8+slant;
+    fc_rect(c,left,gy+row,126,1,0x080810);
+    if(row>0 && row<10)fc_rect(c,left+1,gy+row,124,1,row<3?0xfff6be:0x8c8967);
+    if(row>2 && row<8) {
+      fc_rect(c,left+3,gy+row,120,1,0x15182b);
+      uint32_t blue=row==3?0xc4ffff:row<6?0x219eff:0x2254c8;
+      if(f->meter==300 && (f->tick/12)%2)blue=row==3?0xffffff:0xffd522;
+      fc_rect(c,left+3,gy+row,fill,1,blue);
+      for(int i=1;i<3;i++)fc_rect(c,left+3+i*40,gy+row,1,1,0x777c92);
+    }
+  }
+  fc_text(c,13,gy-4,"SUPER",0x000000,1);fc_text(c,15,gy-4,"SUPER",0x000000,1);
+  fc_text(c,14,gy-5,"SUPER",0xffffe1,1);
+  snprintf(text,sizeof(text),"%d",f->meter/100);
+  arcade_text(c,139,gy-3,text,true);
+  if(f->meter==300)fc_text(c,158,gy+2,"MAX",0xffe366,1);
   if(f->combo>1) {
     snprintf(text,sizeof(text),"%d HIT",f->combo);arcade_text(c,9,40,text,false);
   }
@@ -205,21 +219,29 @@ void fc_pause(FcCanvas c,int choice) {
     if(choice==i)fc_text(c,c.w/2-87,c.h/2-8+i*21,">",0xffff55,1);
   }
 }
-void fc_continue(FcCanvas c,int choice,int ticks) {
+void fc_continue(FcCanvas c,int character,int ticks) {
   if(ticks<30)return;
-  fc_rect(c,20,155,c.w-40,61,0x0c155c);frame(c,20,155,c.w-40,61,0xffd52b);
-  arcade_center(c,160,"CONTINUE?",true);
-  const char *items[]={"RETRY LEVEL","RETURN TO MAP"};
-  for(int i=0;i<2;i++) {
-    if(choice==i)fc_rect(c,30,181+i*16,c.w-60,14,0x274ba1);
-    arcade_center(c,183+i*16,items[i],false);
-    if(choice==i)fc_text(c,33,184+i*16,">",0xffff55,1);
-  }
+  int seconds=9-(ticks-30)/60;if(seconds<0)seconds=0;
+  fc_rect(c,0,0,c.w,c.h,0x000000);
+  char label[24];snprintf(label,sizeof(label),"CONTINUE? %d",seconds);
+  arcade_text(c,8,8,label,false);
+  fc_sprite(c,character,FC_POSE_CONTINUE,0,76,154,1,3,4,0);
+  /* Original glowing SF2 lamps arranged into the six-by-eight countdown. */
+  static const uint8_t digits[10][8]={
+    {30,51,51,51,51,51,51,30},{12,28,12,12,12,12,12,63},
+    {30,51,3,6,12,24,48,63},{30,51,3,14,3,3,51,30},
+    {6,14,30,54,54,63,6,6},{63,48,48,62,3,3,51,30},
+    {14,24,48,62,51,51,51,30},{63,3,6,12,24,24,24,24},
+    {30,51,51,30,51,51,51,30},{30,51,51,51,31,3,6,28}
+  };
+  for(int row=0;row<8;row++)for(int col=0;col<6;col++)if(digits[seconds][row]&(1<<(5-col)))
+    fc_sprite(c,0,FC_POSE_COUNTDOWN_LAMP,0,164+col*10,53+row*10,1,1,6,0);
+  arcade_center(c,181,"START TO CONTINUE",false);
+  fc_center(c,204,"BACK TO WORLD MAP",0xaaaac4,1);
 }
 void fc_level_clear(FcCanvas c,int character) {
-  /* Cover the original MARIO/COURSE CLEAR heading, preserving the native
-   * time bonus, save event and walk-off sequence underneath. */
-  fc_rect(c,35,48,c.w-70,54,0x0c155c);frame(c,35,48,c.w-70,54,0xe9d162);
+  /* The native heading is suppressed at its tile upload, leaving the
+   * original scenery and time bonus behind the fighter's victory art. */
   fc_sprite(c,character,FC_POSE_WIN,40,54,99,1,1,3,0);
   arcade_center(c,54,fc_roster[character].name,true);
   arcade_center(c,78,"COURSE CLEAR",false);
