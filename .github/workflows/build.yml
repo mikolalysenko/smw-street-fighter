@@ -1,0 +1,16 @@
+name: Native builds
+on: [push, pull_request]
+jobs:
+  linux:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+      - run: sudo apt-get update && sudo apt-get install -y libsdl2-dev
+      - run: make test sanitize test-smw
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-executable-without-game-data
+          path: |
+            build/smw/smw

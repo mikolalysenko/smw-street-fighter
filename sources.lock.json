@@ -1,0 +1,44 @@
+{
+  "checked_at": "2026-10-11",
+  "sources": [
+    {
+      "name": "Super Mario World C reimplementation",
+      "url": "https://github.com/snesrev/smw",
+      "commit": "eae20c65c58930c8b62c76188d259579ad4130f1",
+      "path": "references/smw",
+      "role": "Native game host, built with our adapter",
+      "license": "MIT and bundled component notices in LICENSE.txt"
+    },
+    {
+      "name": "Street Fighter II World Warrior C rewrite (MustardTiger/FistBlue)",
+      "url": "https://github.com/dasi/sf2ww",
+      "commit": "ec0818719ac0d9f6ecc35252e44231af7f8ae1e8",
+      "path": "references/sf2ww",
+      "role": "Research reference; not linked or copied into the combat implementation",
+      "license": "No repository license found; source files retain author copyright notices"
+    },
+    {
+      "name": "Super Mario World matching disassembly",
+      "url": "https://github.com/IsoFrieze/SMWDisX",
+      "commit": "30643c7595a7d097d731de69476f8059c7cf98c3",
+      "path": "build/SMWDisX",
+      "role": "Rebuild original USA data; generated files ignored"
+    },
+    {
+      "name": "Asar 1.91",
+      "url": "https://github.com/RPGHacker/asar",
+      "commit": "6a6dbdaed8cb773e583052ce4f66375bd896c3a1",
+      "path": "build/asar-src",
+      "role": "Assemble the matching SMW disassembly"
+    },
+    {
+      "name": "Gamusinos Fighters SF2 asset tree",
+      "url": "https://github.com/Rengrow/Street-Fighter-II-Gamusinos-Fighters-",
+      "commit": "f6ed596a92d96f7f6dbcad9d92967d1e2dec2e1f",
+      "path": "local/community-sf2",
+      "role": "Original sprite and WAV rips; per-file hashes in config/community-assets.json"
+    }
+  ],
+  "assembly_reference": "https://github.com/IsoFrieze/SMWDisX",
+  "smw_asset_sha1": "6b47bb75d16514b6a476aa0c73a683a2a4c18765"
+}

@@ -1,0 +1,6 @@
+[submodule "references/smw"]
+	path = references/smw
+	url = https://github.com/snesrev/smw.git
+[submodule "references/sf2ww"]
+	path = references/sf2ww
+	url = https://github.com/dasi/sf2ww.git

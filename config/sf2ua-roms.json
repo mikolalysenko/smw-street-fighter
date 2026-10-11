@@ -1,0 +1,143 @@
+{
+  "source": "https://github.com/mamedev/mame/blob/master/src/mame/capcom/cps1.cpp",
+  "roms": [
+    {
+      "name": "sf2u_30a.11e",
+      "crc32": "08beb861",
+      "sha1": "d47f16d0d692dc6405df0aecd7d9fc3f9718c0d1",
+      "size": 131072
+    },
+    {
+      "name": "sf2u_37a.11f",
+      "crc32": "b7638d69",
+      "sha1": "b615a2e0e8772462fd875b2e8d2ccba82a8b3c47",
+      "size": 131072
+    },
+    {
+      "name": "sf2u_31a.12e",
+      "crc32": "0d5394e0",
+      "sha1": "e1d88ff3669f1dbe1e3fbdf8aa9e2c63adbbcb48",
+      "size": 131072
+    },
+    {
+      "name": "sf2u_38a.12f",
+      "crc32": "42d6a79e",
+      "sha1": "5f1e2c176d065325883a60767d05b1a542372b6a",
+      "size": 131072
+    },
+    {
+      "name": "sf2u_28a.9e",
+      "crc32": "387a175c",
+      "sha1": "2635bb82758cf217cee63b254a537b02275a6838",
+      "size": 131072
+    },
+    {
+      "name": "sf2u_35a.9f",
+      "crc32": "a1a5adcc",
+      "sha1": "47874e6d403256d828474b29e3d93c92efd9e1ce",
+      "size": 131072
+    },
+    {
+      "name": "sf2_29b.10e",
+      "crc32": "bb4af315",
+      "sha1": "75f0827f4f7e9f292add46467f8d4fe19b2514c9",
+      "size": 131072
+    },
+    {
+      "name": "sf2_36b.10f",
+      "crc32": "c02a13eb",
+      "sha1": "b807cc495bff3f95d03b061fc629c95f965cb6d8",
+      "size": 131072
+    },
+    {
+      "name": "sf2-5m.4a",
+      "crc32": "22c9cc8e",
+      "sha1": "b9194fb337b30502c1c9501cd6c64ae4035544d4",
+      "size": 524288
+    },
+    {
+      "name": "sf2-7m.6a",
+      "crc32": "57213be8",
+      "sha1": "3759b851ac0904ec79cbb67a2264d384b6f2f9f9",
+      "size": 524288
+    },
+    {
+      "name": "sf2-1m.3a",
+      "crc32": "ba529b4f",
+      "sha1": "520840d727161cf09ca784919fa37bc9b54cc3ce",
+      "size": 524288
+    },
+    {
+      "name": "sf2-3m.5a",
+      "crc32": "4b1b33a8",
+      "sha1": "2360cff890551f76775739e2d6563858bff80e41",
+      "size": 524288
+    },
+    {
+      "name": "sf2-6m.4c",
+      "crc32": "2c7e2229",
+      "sha1": "357c2275af9133fd0bd6fbb1fa9ad5e0b490b3a2",
+      "size": 524288
+    },
+    {
+      "name": "sf2-8m.6c",
+      "crc32": "b5548f17",
+      "sha1": "baa92b91cf616bc9e2a8a66adc777ffbf962a51b",
+      "size": 524288
+    },
+    {
+      "name": "sf2-2m.3c",
+      "crc32": "14b84312",
+      "sha1": "2eea16673e60ba7a10bd4d8f6c217bb2441a5b0e",
+      "size": 524288
+    },
+    {
+      "name": "sf2-4m.5c",
+      "crc32": "5e9cd89a",
+      "sha1": "f787aab98668d4c2c54fc4ba677c0cb808e4f31e",
+      "size": 524288
+    },
+    {
+      "name": "sf2-13m.4d",
+      "crc32": "994bfa58",
+      "sha1": "5669b845f624b10e7be56bfc89b76592258ce48b",
+      "size": 524288
+    },
+    {
+      "name": "sf2-15m.6d",
+      "crc32": "3e66ad9d",
+      "sha1": "9af9df0826988872662753e9717c48d46f2974b0",
+      "size": 524288
+    },
+    {
+      "name": "sf2-9m.3d",
+      "crc32": "c1befaa8",
+      "sha1": "a6a7f4725e52678cbd8d557285c01cdccb2c2602",
+      "size": 524288
+    },
+    {
+      "name": "sf2-11m.5d",
+      "crc32": "0627c831",
+      "sha1": "f9a92d614e8877d648449de2612fc8b43c85e4c2",
+      "size": 524288
+    },
+    {
+      "name": "sf2_9.12a",
+      "crc32": "a4823a1b",
+      "sha1": "7b6bf59dfd578bfbbdb64c27988796783442d659",
+      "size": 65536
+    },
+    {
+      "name": "sf2_18.11c",
+      "crc32": "7f162009",
+      "sha1": "346bf42992b4c36c593e21901e22c87ae4a7d86d",
+      "size": 131072
+    },
+    {
+      "name": "sf2_19.12c",
+      "crc32": "beade53f",
+      "sha1": "277c397dc12752719ec6b47d2224750bd1c07f79",
+      "size": 131072
+    }
+  ]
+}

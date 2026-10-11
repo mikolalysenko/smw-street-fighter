@@ -1,0 +1,414 @@
+{
+  "url": "https://github.com/Rengrow/Street-Fighter-II-Gamusinos-Fighters-",
+  "commit": "f6ed596a92d96f7f6dbcad9d92967d1e2dec2e1f",
+  "files": [
+    {
+      "path": "Game/assets/images/sprites/characters/blanka2-honda2.png",
+      "sha256": "7c9a49fcb0b0fb87f61e25a9defc2989440f001432eaca17bddfe696c232bfb5"
+    },
+    {
+      "path": "Game/assets/images/sprites/characters/boxer-claw-honda2.png",
+      "sha256": "c5516f48ac5a87d25d7dc57fa185380b79e4b993a786b03cdd2b23a1d6925b6a"
+    },
+    {
+      "path": "Game/assets/images/sprites/characters/chunLi-guile1.png",
+      "sha256": "8e16a6194bacab1f3301fd3f08cc950011876c6f1b2b2eada0ca529342852d5c"
+    },
+    {
+      "path": "Game/assets/images/sprites/characters/guile2.png",
+      "sha256": "3b5750e9847b0da03c39bfe01f8a403c731a93d2fbdbc7e702c7049da399b65f"
+    },
+    {
+      "path": "Game/assets/images/sprites/characters/guile3-sagat.png",
+      "sha256": "c4eea97bc838b0112d8ce01deeb72f843c81c8577549b454c04f666a790babc6"
+    },
+    {
+      "path": "Game/assets/images/sprites/characters/honda3.png",
+      "sha256": "0f77715687b9948988df7b7be434dddc0ae01d81471fb36068236ffa2742dd7c"
+    },
+    {
+      "path": "Game/assets/images/sprites/characters/ryu1.png",
+      "sha256": "b3b11fc5190e078c7e77a6bb965f262570b92b1295a9c4fa05569850ab506dad"
+    },
+    {
+      "path": "Game/assets/images/sprites/characters/ryu2-ken.png",
+      "sha256": "2956b750ddc891860c378d5a4fe25c0a9aec281d03c0ae2f0c62cd8de16b00e5"
+    },
+    {
+      "path": "Game/assets/images/sprites/sfx/sfx.png",
+      "sha256": "b8f0b65bbbd08cbb016e81177215a48deee063681f4625421253a7b6ac8bbc08"
+    },
+    {
+      "path": "Game/assets/images/ui/character_selection.png",
+      "sha256": "95b65525f60a88b2e8d141d16003b6113eb1f8284ee58e4414b436b704515d78"
+    },
+    {
+      "path": "Game/assets/images/ui/portraits.png",
+      "sha256": "7f206fb23dc3463526b03b1f8bbb47c8c8760557ad4b21acdec01c5ca74c2beb"
+    },
+    {
+      "path": "Game/assets/sfx/effects/23H.wav",
+      "sha256": "b3e4b76310ae799bcf3672be32d7a22512190247acd53b7c93d57820d181c14e"
+    },
+    {
+      "path": "Game/assets/sfx/effects/37H.wav",
+      "sha256": "f0566df6b130d850211f211bed3383ab8171738d9a365e1a9e1eeab7dd64d677"
+    },
+    {
+      "path": "Game/assets/sfx/effects/38H.wav",
+      "sha256": "c3a2a219639c2c25bd44031da8c3b639f0a0a9d0592ee80b948f366551fc8891"
+    },
+    {
+      "path": "Game/assets/sfx/effects/3CH.wav",
+      "sha256": "f87f6a7872c04ff287af79c1640171704fa7baa3478e6b14d2e75c474fbbbda0"
+    },
+    {
+      "path": "Game/assets/sfx/effects/3EH.wav",
+      "sha256": "7c29e71cce47a538b0366b9be4ea227555354d767cdc53710c6011b6d0906eb0"
+    },
+    {
+      "path": "Game/assets/sfx/effects/71H.wav",
+      "sha256": "7b16a6660d9f008f90e130efd331265f554c68b7c91a12f3a98cb86a0df2272a"
+    },
+    {
+      "path": "Game/assets/sfx/effects/72H.wav",
+      "sha256": "836f144c74814b8cea7fd951f2aed86c6c71e16a6194fdac828572e771d38310"
+    },
+    {
+      "path": "Game/assets/sfx/effects/86H.wav",
+      "sha256": "f9d6a5bacf8b51a7c09dba8108e07cedce73b8b570f89847e07ab749d5c2f8e8"
+    },
+    {
+      "path": "Game/assets/sfx/effects/87H.wav",
+      "sha256": "472db341e84909d109e997f3d74096af6a0961b33d80afeb94e179b3fe66fa5a"
+    },
+    {
+      "path": "Game/assets/sfx/effects/89H.wav",
+      "sha256": "a642fb85cdc3e1ccf33dab805b2aaf18073be938d4276fba7fdb68999fb85182"
+    },
+    {
+      "path": "Game/assets/sfx/effects/8B.wav",
+      "sha256": "873c299534580606418fe874d95b6b6a13b2008c8ca5deef5a3a199693a686cc"
+    },
+    {
+      "path": "Game/assets/sfx/effects/barrel_-_box_break.wav",
+      "sha256": "44fdd4c342c7c5c5ed3b67e679e6501c3bc6ccc7d39fee445d1608014e8934c0"
+    },
+    {
+      "path": "Game/assets/sfx/effects/barrel_hit_undestroyed.wav",
+      "sha256": "1ffa66993bc6afbc620719664366a2f21d55a4891b6d3406f282e5d44a9306e8"
+    },
+    {
+      "path": "Game/assets/sfx/effects/bison_special.wav",
+      "sha256": "b8001a288528c4ae8132d191ca54d3d0819386df0435cbf9137b2a4fb149b82b"
+    },
+    {
+      "path": "Game/assets/sfx/effects/blanka_thunder.wav",
+      "sha256": "8cde1660b5a2926c9d72f316840bbde0469ccab9ac71c3dc3ae7ca9fd876fc5e"
+    },
+    {
+      "path": "Game/assets/sfx/effects/blocked_hadouken.wav",
+      "sha256": "fe6beba2fb0ad6cc105a132e4a0cddeac6e48d3cda685e36b18550aeb43b6a8e"
+    },
+    {
+      "path": "Game/assets/sfx/effects/car_-_brick_break.wav",
+      "sha256": "11a22459df2a4b391d2fe7878d5b38d8698d1aacde5484731d263a6d58a39184"
+    },
+    {
+      "path": "Game/assets/sfx/effects/car_falling_down.wav",
+      "sha256": "0738ab58e1f973376c263f778fdaad5b6c5a3bfdf42f615ed079f885d822197d"
+    },
+    {
+      "path": "Game/assets/sfx/effects/coin.wav",
+      "sha256": "0cfdf181bf72b74724913427cf663fec9ffd14547f4557ea9120244413e649bb"
+    },
+    {
+      "path": "Game/assets/sfx/effects/fist_intro.wav",
+      "sha256": "38ef2f0b769b865ebc632bd23653e4cc0eb2593e7890c820726a4b9706a63a5f"
+    },
+    {
+      "path": "Game/assets/sfx/effects/game_over.wav",
+      "sha256": "8262ebd7738e64d31aa5c651af9c1a390e48b4a062aca498b9bfeb6319c09101"
+    },
+    {
+      "path": "Game/assets/sfx/effects/glass_break_bonus_car.wav",
+      "sha256": "5179088d8ab03e6be33204d0eb741e0678cc3ca3b16c8fb250ffdd9a70d5a9ac"
+    },
+    {
+      "path": "Game/assets/sfx/effects/grip.wav",
+      "sha256": "671a07478d222b14161bcecdd9a4526a4dd6de77a9370a9578137b583085990c"
+    },
+    {
+      "path": "Game/assets/sfx/effects/high_fist.wav",
+      "sha256": "d706ccd00fe8f891b3a7b58c9b9df2d6884ac1e2b69bd9c1b3391a5c0ac73a75"
+    },
+    {
+      "path": "Game/assets/sfx/effects/high_kick.wav",
+      "sha256": "f646afa37303c65deb83c17f18b3923e6b6473541229fd3fcc2f91ec76a63047"
+    },
+    {
+      "path": "Game/assets/sfx/effects/hit_bonus_car.wav",
+      "sha256": "57d2716936bf7fbaa441093b28a29bf13ed404d0b3e175adeb1f583cfbbd13c7"
+    },
+    {
+      "path": "Game/assets/sfx/effects/iron_barrel_colision.wav",
+      "sha256": "3158115381051266fb52077460e5855e0307361d0da8d513c81b0ed8a5d928da"
+    },
+    {
+      "path": "Game/assets/sfx/effects/low_fist.wav",
+      "sha256": "88873106ef3027147bab7d8d1d29a4d226cbeb150511722e10d00ce179a4c39b"
+    },
+    {
+      "path": "Game/assets/sfx/effects/low_kick.wav",
+      "sha256": "9a5eb53662bc36983aab7895356f5b2a344b77903a66f84c31ca4e1cb6bb9bc6"
+    },
+    {
+      "path": "Game/assets/sfx/effects/move_menu.wav",
+      "sha256": "0d8bb9d0ad97e59607f8cc118fa94f06706761c9cc1986fe787056385c7c1db0"
+    },
+    {
+      "path": "Game/assets/sfx/effects/new_challenger.wav",
+      "sha256": "68dd38270bba21e5df3315b368d80e4d72d3d4d818df88caf410a0a2daeeb06d"
+    },
+    {
+      "path": "Game/assets/sfx/effects/on_top_bonus_car.wav",
+      "sha256": "2b3d921c5a36897ae5e2c4a6f0b7c1249109d17b9ad5f38ad570744a27483ebd"
+    },
+    {
+      "path": "Game/assets/sfx/effects/ranking_display.wav",
+      "sha256": "fbdca7c0364520edc1ee3d7a2cef00ab0e839ac2c114bd5352a8bf10a41ab4d8"
+    },
+    {
+      "path": "Game/assets/sfx/effects/score_up.wav",
+      "sha256": "21352fae0350ad0cd53c618c416791a69c717819fe5a89c417436294832f097c"
+    },
+    {
+      "path": "Game/assets/sfx/effects/select_menu_option.wav",
+      "sha256": "878dd6e8386c8e044a006be5d5e55d9bc8cd3b887475faa01bdae58055df124a"
+    },
+    {
+      "path": "Game/assets/sfx/effects/stage_end.wav",
+      "sha256": "b2d4ebd2d1f41e050be7c83b25d9c9002340c9ea65cc8bc0c0b7145cc9cb1256"
+    },
+    {
+      "path": "Game/assets/sfx/effects/travel.wav",
+      "sha256": "0f6fdf4f9ce1e1592e00eeb4b06e127cf7fb7b9f263bad0b2c31d467344b3f59"
+    },
+    {
+      "path": "Game/assets/sfx/effects/unhit_fist.wav",
+      "sha256": "11de70441668a59b212bcecdeec80469bf68f7e08255e8598492a99424233760"
+    },
+    {
+      "path": "Game/assets/sfx/effects/unused_track.wav",
+      "sha256": "d462c3437cc6d30fab153a42205ad991ae4f4887506956de55bdd53a4704368e"
+    },
+    {
+      "path": "Game/assets/sfx/effects/vs_screen.wav",
+      "sha256": "55568dc1e9a43a6c37151f70aa5e4de2e818b3fbfcb4e5d738f01bc4a410473a"
+    },
+    {
+      "path": "Game/assets/sfx/voices/announcer_1.wav",
+      "sha256": "23a1b2d7343217b3aa69b68b0a6451b644d56606b4fa4a9d727572b8fedfce09"
+    },
+    {
+      "path": "Game/assets/sfx/voices/announcer_2.wav",
+      "sha256": "60c672a119c1c1f8d358354375f324d39ec28fb215c3b5282db9ebcbdda019ff"
+    },
+    {
+      "path": "Game/assets/sfx/voices/announcer_3.wav",
+      "sha256": "73606d15b1b45fd8e4b90ea5edc40a0d3a3094d9f4dbdac49a922006eee3707e"
+    },
+    {
+      "path": "Game/assets/sfx/voices/announcer_4.wav",
+      "sha256": "ac98ffd570778e04ab697cb37afef5a627eac585d63449887ac550079f5058c5"
+    },
+    {
+      "path": "Game/assets/sfx/voices/announcer_5.wav",
+      "sha256": "0e37d88a7c9364f357534948882f6c0754fd91757322fdeb6337b9351d52493b"
+    },
+    {
+      "path": "Game/assets/sfx/voices/announcer_6.wav",
+      "sha256": "117f9aba6ac073fd7b9a1176516b2380ce06999116603fd8ee895f22e5659de3"
+    },
+    {
+      "path": "Game/assets/sfx/voices/announcer_7.wav",
+      "sha256": "dcf7ac479c5d34e50d95b9b47b6f331940e8d802f34e130b1da0c3df28871870"
+    },
+    {
+      "path": "Game/assets/sfx/voices/announcer_8.wav",
+      "sha256": "829cb05f606a0e51821e3b2662710e997cee1ae3a6a8120be88f88976c7f3e05"
+    },
+    {
+      "path": "Game/assets/sfx/voices/announcer_9.wav",
+      "sha256": "82e68828813fdf78e7a30602afed99fda29873e17d890a7e03e31c41d01a6032"
+    },
+    {
+      "path": "Game/assets/sfx/voices/announcer_brazil.wav",
+      "sha256": "613edf03f2aba5da91d6a3cd12a120d52e961f7a872ae807e1dfa910cad3e15a"
+    },
+    {
+      "path": "Game/assets/sfx/voices/announcer_china.wav",
+      "sha256": "da76cd70d252d7911bebc3799b101a751cc0578803fef058a15ca236074f9b80"
+    },
+    {
+      "path": "Game/assets/sfx/voices/announcer_fight.wav",
+      "sha256": "1089eafaea546ec685a77a4c0dea7b1f6ceb6b10f966d6d813ad543018d53eb8"
+    },
+    {
+      "path": "Game/assets/sfx/voices/announcer_final.wav",
+      "sha256": "f2befabad126d5b79abddc2c358d5ed1d95a46a93bfd9e9ed899e1aa3d332486"
+    },
+    {
+      "path": "Game/assets/sfx/voices/announcer_india.wav",
+      "sha256": "17bd451cae38d7d8ee5117bdc412e453780d349359f4ed2efdaf464d7f84f1e9"
+    },
+    {
+      "path": "Game/assets/sfx/voices/announcer_japan.wav",
+      "sha256": "c1e1aceb6b26a2fb18dfdd7174194cb760c5b47752091b685d52984db6644069"
+    },
+    {
+      "path": "Game/assets/sfx/voices/announcer_lose.wav",
+      "sha256": "82b531a6a07b18e1904a7ca6bd8116569319e43bde7da8aa612eee25890c8a43"
+    },
+    {
+      "path": "Game/assets/sfx/voices/announcer_perfect.wav",
+      "sha256": "07f536dde07afae26463f05530aa4981b2bcd3b2b088abe54e6ec23d9da1bb95"
+    },
+    {
+      "path": "Game/assets/sfx/voices/announcer_round.wav",
+      "sha256": "442d1379fc625cf96c54705aa8a3c02767431facd0ad31a82ad6a36cd3ec8559"
+    },
+    {
+      "path": "Game/assets/sfx/voices/announcer_spain.wav",
+      "sha256": "e6cde4afc33dfe226ed3e24e6fefa2f5b54f11778b28fd18adfcbc9e8670484e"
+    },
+    {
+      "path": "Game/assets/sfx/voices/announcer_thailand.wav",
+      "sha256": "142a66e1edcfa8e4bbdebc83e9a7c39e937c1d3ffce5918d59ae8314166bd861"
+    },
+    {
+      "path": "Game/assets/sfx/voices/announcer_usa.wav",
+      "sha256": "e4ae0b4e04af3a273e6e37a61c069c5d742950bad8170aa44f13757cfb3384d8"
+    },
+    {
+      "path": "Game/assets/sfx/voices/announcer_ussr.wav",
+      "sha256": "b05fb16d036f878af319c3b4bbeb293d2b23ff84bf1504b0fd97c75aaad93f8c"
+    },
+    {
+      "path": "Game/assets/sfx/voices/announcer_win.wav",
+      "sha256": "b321390cc911924ba2ff2de4e3a4951f82a88f2e5c6407467f09313dcf88a5c7"
+    },
+    {
+      "path": "Game/assets/sfx/voices/announcer_you.wav",
+      "sha256": "b981b32a62c4b7fa2c98ab7696730dbb27021599ca99a9a15ba8cbf895e7de3e"
+    },
+    {
+      "path": "Game/assets/sfx/voices/blanka_growl.wav",
+      "sha256": "b1cb2e8f7cf45cad04c082342e217d6e821e913ea1e2f18fadcb5be1e47712cd"
+    },
+    {
+      "path": "Game/assets/sfx/voices/blanka_roar.wav",
+      "sha256": "878c99c9a3c218a0ff50d5971c6b4f51b878ebaa976546279bc9f55acf6cd24a"
+    },
+    {
+      "path": "Game/assets/sfx/voices/cheer_1_unused.wav",
+      "sha256": "d5968edfef2fbaf70d78349d34ea6deeca86a11a3a02bedde522faf4465491d1"
+    },
+    {
+      "path": "Game/assets/sfx/voices/cheer_2_unused.wav",
+      "sha256": "1ddfeeac062e5e37e3134019e4271f9229cac3483855132df1225cfa9f48ab28"
+    },
+    {
+      "path": "Game/assets/sfx/voices/chunLi_hakk_unused.wav",
+      "sha256": "da96448c898396d1d02f6f6b909b420dbe9ad18da6b15fd6a750f82c9b5e0d16"
+    },
+    {
+      "path": "Game/assets/sfx/voices/chunLi_hyooow.wav",
+      "sha256": "ea10bf6c7523fd6aa7c7f582e08be3d7d32f6e25ffa78115fdd1a928185bb65c"
+    },
+    {
+      "path": "Game/assets/sfx/voices/chunLi_kick.wav",
+      "sha256": "4fc167c1bbc225728b05de43e9a835af1b1fd14f13acecd9326a2ff55fa5ef71"
+    },
+    {
+      "path": "Game/assets/sfx/voices/chunLi_laugh.wav",
+      "sha256": "c7800361ea0a6148ee98c29b6fb025c6cee1235253e1fac273e1040137c337fc"
+    },
+    {
+      "path": "Game/assets/sfx/voices/chunLi_scream.wav",
+      "sha256": "d760f36ed543e9fcb646523607000aaa8f2f209e8224df3633f2a01e01e2ea87"
+    },
+    {
+      "path": "Game/assets/sfx/voices/chunLi_yap.wav",
+      "sha256": "af96aea5d0e6ef96a075ac1fd2a8096995c820e9a02a5575497efd42d0368e34"
+    },
+    {
+      "path": "Game/assets/sfx/voices/chunLi_yata.wav",
+      "sha256": "a69589c4fd6f6b64b4d121d018dd3146c36697822157fe045b8299f67c1185e1"
+    },
+    {
+      "path": "Game/assets/sfx/voices/dhalsim_fire.wav",
+      "sha256": "f586610765874bc38ddcc0a58f72d00b8bbaa66426af98813b171cbd59a98396"
+    },
+    {
+      "path": "Game/assets/sfx/voices/dhalsim_flame.wav",
+      "sha256": "efb98f87c71ad4ccfc813360b0a291923c81bfdf1fa8cac91454a7a286b9f990"
+    },
+    {
+      "path": "Game/assets/sfx/voices/dhalsim_yoga.wav",
+      "sha256": "ae17be54dfb75b5308057406bfce1b664292a38e9a900b0c1e40019e1bc9f229"
+    },
+    {
+      "path": "Game/assets/sfx/voices/ei.wav",
+      "sha256": "f8cb0e232135e3a2a169568b52dce9d0913e73869c3843f25a70c732ea7ab963"
+    },
+    {
+      "path": "Game/assets/sfx/voices/guile_sonicBoom.wav",
+      "sha256": "2212e316d04fe883aaf02a1c7b3847db05955df5eeaf5c95f9387d6e8dce9333"
+    },
+    {
+      "path": "Game/assets/sfx/voices/honda_dufGoi.wav",
+      "sha256": "5dadab72de89623aa1aaa424d1af733f9d5d84d117592b16b604209c3740bec4"
+    },
+    {
+      "path": "Game/assets/sfx/voices/ryu-ken_kick.wav",
+      "sha256": "31bfef1db4d10c9762cf051caf99771fedaa51ae38ce6cf5fca4986437dfa2d2"
+    },
+    {
+      "path": "Game/assets/sfx/voices/ryu-ken_shoryuken.wav",
+      "sha256": "ba05fb83bdf6e1b64e890cdd313503d5dd421c8dbc40376b07f95aec63bea275"
+    },
+    {
+      "path": "Game/assets/sfx/voices/ryu-ken_uggh.wav",
+      "sha256": "20ee278a1a5330030b21854d4726258c22400280ebd0ddfa8bbb49b5439268f2"
+    },
+    {
+      "path": "Game/assets/sfx/voices/ryu_ken_hadouken.wav",
+      "sha256": "c1db7723475978decb70203f9ec3fad7cea7cd85485d1431a2aad943a89917e6"
+    },
+    {
+      "path": "Game/assets/sfx/voices/sagat_tiger.wav",
+      "sha256": "1a486e5c43bd9e4fca2187017f1e5a5b11496bb6532d7581078a245ee05a9434"
+    },
+    {
+      "path": "Game/assets/sfx/voices/sagat_uppercut.wav",
+      "sha256": "2f67671f6ca8248dfa4b4ad6ed979a5fb585fe2790232040869ac1f029deffff"
+    },
+    {
+      "path": "Game/assets/sfx/voices/uggh_unused.wav",
+      "sha256": "c6efe0280b22e2bac952a8c47e5af6b94c6da87f7aee47dbe8327e787bb7b1ce"
+    },
+    {
+      "path": "Game/assets/sfx/voices/vega_yodel.wav",
+      "sha256": "1a2df492452597b4d22b18b8e50437c6740eaaf21275e63d922c9311c303ebca"
+    },
+    {
+      "path": "Game/assets/sfx/voices/zangief_grunt.wav",
+      "sha256": "7762fe8594b2b6f6caca6633f517eda2380ebe57afb1e395ce5d17f21214fefa"
+    },
+    {
+      "path": "Game/assets/sfx/voices/zangief_laugh.wav",
+      "sha256": "32a7e540ae7897405cac79a54f0d6dcab30ac652ab7fc20247d4e9badb60b03e"
+    }
+  ]
+}

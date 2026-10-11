@@ -1,0 +1,72 @@
+#ifndef WORLD_WARRIOR_FIGHT_H
+#define WORLD_WARRIOR_FIGHT_H
+#include <stdbool.h>
+#include <stdint.h>
+
+/* World coordinates are pixels; simulation always runs at 60 Hz. No SDL or
+ * emulator state here: the dojo and the SMW adapter run the same combat. */
+enum { FC_LEFT=1, FC_RIGHT=2, FC_UP=4, FC_DOWN=8, FC_JUMP=16,
+  FC_PUNCH=32, FC_KICK=64, FC_SPECIAL=128, FC_SUPER=256,
+  FC_GUARD=512, FC_START=1024, FC_BACK=2048 };
+enum { FC_RYU, FC_HONDA, FC_CHUNLI, FC_GUILE, FC_ROSTER_COUNT };
+typedef enum { FC_IDLE, FC_JAB, FC_ROUNDHOUSE, FC_PROJECTILE,
+  FC_RISING, FC_SPIN, FC_RUSH, FC_FLURRY, FC_SUPER_MOVE } FcMove;
+enum { FC_SND_SWING=1, FC_SND_HIT=2, FC_SND_HURT=4, FC_SND_KO=8,
+  FC_SND_SPECIAL=16, FC_SND_SUPER=32, FC_SND_BLOCK=64, FC_SND_SELECT=128 };
+#define FC_MAX_TARGETS 64
+#define FC_MAX_SHOTS 12
+#define FC_MAX_SPARKS 64
+typedef struct { float x,y,w,h; } FcBox;
+typedef struct { FcBox box; int facing; bool grounded; } FcBody;
+typedef struct {
+  FcBox box;
+  int hp;
+  bool active, hit;
+  float knock_x, knock_y;
+} FcTarget;
+typedef struct {
+  const char *name, *style, *special, *secondary, *super_name;
+  uint32_t color, cloth, skin;
+  int vitality;
+  float speed;
+} FcCharacter;
+extern const FcCharacter fc_roster[FC_ROSTER_COUNT];
+typedef struct {
+  FcBox box;
+  float vx;
+  int ttl, damage, pierce;
+  bool super;
+  uint64_t hit_mask;
+} FcShot;
+typedef struct { float x,y,vx,vy; int ttl; uint32_t color; } FcSpark;
+typedef struct { uint32_t tick; uint8_t direction; } FcDirection;
+typedef struct {
+  int character, hp, meter, facing;
+  FcMove move, buffered;
+  int move_tick, super_level, hitstop, flash, stun, invuln;
+  int combo, combo_timer, ko_timer, buffer_timer;
+  int charge_left, charge_right, charge_down, left_grace, right_grace, down_grace;
+  int mash_count, mash_timer, motion_count;
+  bool guarding, move_hit, frozen;
+  bool override_x, override_y;
+  float velocity_x, velocity_y;
+  uint64_t melee_mask;
+  uint32_t tick, previous, events;
+  FcDirection motion[32];
+  FcShot shots[FC_MAX_SHOTS];
+  FcSpark sparks[FC_MAX_SPARKS];
+  FcBody body;
+} FcFight;
+
+void fc_init(FcFight *f, int character);
+/* Clear transient actions on a room change, keeping vitality and meter. */
+void fc_clear_actions(FcFight *f);
+void fc_tick(FcFight *f, uint32_t buttons, FcBody body, FcTarget *targets, int count);
+bool fc_hurt(FcFight *f, int damage, int from_direction);
+void fc_ko(FcFight *f);
+void fc_meter(FcFight *f, int amount);
+bool fc_overlap(FcBox a, FcBox b);
+bool fc_motion(const FcFight *f, const uint8_t *sequence, int count, int window);
+bool fc_busy(const FcFight *f);
+const char *fc_move_name(const FcFight *f);
+#endif

@@ -1,0 +1,13 @@
+/build/
+/dist/
+/local/
+*.o
+*.dSYM/
+__pycache__/
+.DS_Store
+*.sfc
+*.smc
+smw_assets.dat
+allroms.bin
+sf2gfx.bin
+/saves/
