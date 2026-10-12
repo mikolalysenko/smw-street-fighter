@@ -49,27 +49,37 @@ def prepare():
          'int main(int argc, char** argv) {\n'
          '  char *ww_base = SDL_GetBasePath();\n'
          '  if (ww_base) { chdir(ww_base); SDL_free(ww_base); }'),
-        ('#include <stdio.h>', '#include "ww_smw.h"\n#include "audio.h"\n#include <stdio.h>'),
+        ('#include <stdio.h>', '#include "ww_smw.h"\n#include "audio.h"\n#include "assets.h"\n#include <stdio.h>\nstatic int ww_smoke_frames;'),
         ('  argc--, argv++;',
          '  // Strip our option before the original --config/ROM parser.\n'
          '  for (int i=1;i<argc;) {\n'
-         '    if (strcmp(argv[i], "--debug")) { ++i; continue; }\n'
-         '    ww_set_debug(true);\n'
+         '    if (!strcmp(argv[i], "--smoke-test")) ww_smoke_frames=360;\n'
+         '    else if (!strcmp(argv[i], "--debug")) ww_set_debug(true);\n'
+         '    else { ++i; continue; }\n'
          '    memmove(argv+i,argv+i+1,(argc-i)*sizeof(*argv)); --argc;\n'
          '  }\n'
          '  argc--, argv++;'),
         ('static uint32 g_input_state;', 'static uint32 g_input_state, ww_pending_buttons;'),
+        ('  ParseConfigFile(config_file);',
+         '  ParseConfigFile(config_file);\n'
+         '  if (ww_smoke_frames) { g_config.disable_frame_delay=true; g_config.fullscreen=0;\n'
+         '    g_config.output_method=kOutputMethod_SDLSoftware; g_config.window_scale=1; }'),
         ('    uint32 m = 1 << kKbdRemap[j - kKeys_Controls];',
          '    uint32 m = 1 << kKbdRemap[j - kKeys_Controls];\n    if (pressed) ww_pending_buttons |= m;'),
         ('    uint32 inputs = g_input_state | g_gamepad[0].axis_buttons | g_gamepad[1].axis_buttons << 12;',
          '    uint32 inputs = g_input_state | ww_pending_buttons | g_gamepad[0].axis_buttons | g_gamepad[1].axis_buttons << 12;\n'
          '    ww_pending_buttons = 0;'),
-        ('  bool custom_size =', '  ww_init();\n  bool custom_size ='),
+        ('  bool custom_size =', '  ww_init();\n  if (!fc_assets_ready()) Die("Missing fighter assets: keep the complete release folder together.");\n  bool custom_size ='),
         ('    uint8 is_replay = RtlRunFrame(inputs | GetActiveControllers());',
          '    uint8 is_replay = 0;\n    if (ww_before_frame(&inputs))\n      is_replay = RtlRunFrame(inputs | GetActiveControllers());'),
         ('  g_renderer_funcs.EndDraw();',
          '  ww_render(pixel_buffer, pitch, g_snes_width, g_snes_height);\n  g_renderer_funcs.EndDraw();'),
         ('  SDL_DestroyWindow(window);', '  fc_audio_shutdown();\n  SDL_DestroyWindow(window);'),
+        ('    if (!g_snes->disableRender && !g_config.disable_frame_delay) {',
+         '    if (ww_smoke_frames && !--ww_smoke_frames) {\n'
+         '      RtlWriteSram(); puts("Package smoke: original title, fighter assets, audio and save write passed."); running=false;\n'
+         '    }\n'
+         '    if (!g_snes->disableRender && !g_config.disable_frame_delay) {'),
         ('static void SDLCALL AudioCallback(void *userdata, Uint8 *stream, int len) {',
          'static void SDLCALL AudioCallback(void *userdata, Uint8 *stream, int len) {\n'
          '  if (fc_audio_music_active()) { SDL_memset(stream, 0, len); return; }'),
@@ -80,6 +90,24 @@ def prepare():
     ])
     patch('src/common_cpu_infra.c', [
         ('uint8 g_runmode = RM_BOTH;', 'uint8 g_runmode = RM_MINE; // Combat deliberately diverges from the original ROM.')
+    ])
+    patch('src/common_rtl.c', [
+        ('#include "common_rtl.h"', '#include "common_rtl.h"\n#include "ww_score.h"'),
+        ('  char filename[64];\n  snprintf(filename, sizeof(filename), "saves/%s.srm", g_rtl_game_info->title);',
+         '  char filename[4096];\n  snprintf(filename, sizeof(filename), "%s/%s.srm", ww_save_directory(), g_rtl_game_info->title);'),
+        ('  FILE *f = fopen(filename, "rb");\n  if (f) {\n    if (fread(g_sram, 1, g_sram_size, f)',
+         '  FILE *f = fopen(filename, "rb");\n'
+         '  if (!f && !getenv("WW_SAVE_DIR")) {\n'
+         '    snprintf(filename,sizeof(filename),"saves/%s.srm",g_rtl_game_info->title);\n'
+         '    f=fopen(filename,"rb"); /* Import a legacy portable save once. */\n'
+         '  }\n'
+         '  if (f) {\n    if (fread(g_sram, 1, g_sram_size, f)'),
+        ('  char filename[64], filename_bak[64];\n'
+         '  snprintf(filename, sizeof(filename), "saves/%s.srm", g_rtl_game_info->title);\n'
+         '  snprintf(filename_bak, sizeof(filename_bak), "saves/%s.srm.bak", g_rtl_game_info->title);',
+         '  char filename[4096], filename_bak[4096];\n'
+         '  snprintf(filename, sizeof(filename), "%s/%s.srm", ww_save_directory(), g_rtl_game_info->title);\n'
+         '  snprintf(filename_bak, sizeof(filename_bak), "%s/%s.srm.bak", ww_save_directory(), g_rtl_game_info->title);'),
     ])
     patch('src/smw_00.c', [
         ('#include "consts.h"', '#include "ww_smw.h"\n#include "ww_ending.h"\n#include "consts.h"'),

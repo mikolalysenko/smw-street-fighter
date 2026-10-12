@@ -380,13 +380,32 @@ static void defeat_boss(int k) {
 void ww_targets_apply(FcFight *f,FcTarget *targets) {
   for(int k=0;k<WW_TARGET_COUNT;k++)if(targets[k].hit) {
     TargetState *s=&state[k];FcTarget *t=&targets[k];
+    bool normal=t->hit==FC_HIT_NORMAL;
+    if(normal && !s->boss) {
+      /* Use SMW's block/cape bonk: Koopas become flipped, usable shells,
+       * Goombas stun, and ordinary defeated enemies fall rather than vanish.
+       * Controllers, solid platforms and hazards with no native bonk state
+       * only take the combat impact. Specials still erase them below. */
+      if(k<12 && spr_spriteid[k]==0xa2) {
+        CheckPlayerToNormalSpriteColl_SetStunnedTimer((uint8)k);
+        spr_decrementing_table154c[k]=20;spr_xspeed[k]=0;spr_yspeed[k]=-32;
+      } else if(k<12 && !essential(spr_spriteid[k]) && !(spr_property_bits166e[k]&0x20)) {
+        uint8 slot=spr_current_slotid;spr_current_slotid=k;
+        CheckPlayerAttackToNormalSpriteColl_029404((uint8)k,0);
+        spr_current_slotid=slot;
+        spr_decrementing_table154c[k]=20;
+      } else if(k>=42 && k<WW_PIPE_TARGET)ww_final_hit_shot(k-42,true);
+      if(k<12)s->tag=spr_spriteid[k]+1;
+      s->hp=t->hp=1; /* A follow-up special can immediately finish the bonk. */
+      continue;
+    }
     if(k<12 && ww_final_controls(k)) {
       int damage=ww_final_limit_damage(s->hp-t->hp,s->hp);
       t->hp=s->hp-damage;
       if(!damage)continue;
     }
     s->hp=t->hp;
-    fc_explode(f,t->box.x+t->box.w/2,t->box.y+t->box.h/2,s->boss || f->move==FC_SUPER_MOVE);
+    if(!normal)fc_explode(f,t->box.x+t->box.w/2,t->box.y+t->box.h/2,s->boss || f->move==FC_SUPER_MOVE);
     if(s->hp>0) { if(k<12 && ww_final_controls(k))s->cooldown=8;continue; }
     if(k==WW_PIPE_TARGET){s->hp=1;s->cooldown=30;continue;}
     if(s->boss) { s->dead=true;defeat_boss(k); }
@@ -460,17 +479,16 @@ static bool strike_block(FcFight *f,int x,int y) {
   uint16 old_x=blocks_xpos,old_y=blocks_ypos;
   uint8 old_layer=misc_current_layer_being_processed,old_tile=blocks_map16_to_generate;
   blocks_xpos=x;blocks_ypos=y;misc_current_layer_being_processed=0;
-  if(tile==0x130 || tile==0x132) {
-    SpawnBrickPieces(0);blocks_map16_to_generate=2;GenerateTile();
-    io_sound_ch3=7;
-  } else if((tile>=0x111 && tile<=0x12d) || tile==0x16a || tile==0x16b) {
+  if((tile>=0x111 && tile<=0x12d) || tile==0x16a || tile==0x16b) {
     /* The normal upward-hit path preserves coins, powerups, switches,
      * vines and item memory. Side-bounce blocks use their native direction. */
     CheckIfBlockWasHit((uint8)tile,tile==0x12a || tile==0x12b?(f->facing>0?1:2):0);
   }
   blocks_xpos=old_x;blocks_ypos=old_y;
   misc_current_layer_being_processed=old_layer;blocks_map16_to_generate=old_tile;
-  fc_explode(f,x+8,y+8,false);f->events|=FC_SND_HIT;
+  /* Cement, used blocks, pipes and terrain stay solid, just as on a jump
+   * hit. Turn blocks spin and item blocks use their original contents. */
+  f->events|=FC_SND_HIT;
   return true;
 }
 static void normal_blocks(FcFight *f) {
@@ -480,6 +498,13 @@ static void normal_blocks(FcFight *f) {
     f->air_attack?72:f->crouching_attack?88:96;
   if(f->character==FC_VEGA)reach+=12;
   int feet=(int)(f->body.box.y+f->body.box.h+f->sprite_y_offset);
+  if(f->air_attack && (f->previous&FC_DOWN)) {
+    /* A downward aerial normal can bump a block beneath the fighter with
+     * the same response as an upward jump hit, without deleting the floor. */
+    for(int x=(int)f->body.box.x&~15;x<f->body.box.x+f->body.box.w;x+=16)
+      for(int y=feet&~15;y<feet+12;y+=16)strike_block(f,x,y);
+    return;
+  }
   int top=feet-(f->crouching_attack?(kick?9:14):32);
   int edge=(int)(f->body.box.x+(f->facing>0?f->body.box.w:0));
   int first=(edge+(f->facing>0?0:-1))&~15;
@@ -499,7 +524,8 @@ void ww_scenery_hits(FcFight *f) {
     FcBox nose={p->box.x+(p->vx>0?p->box.w:0),p->box.y+p->box.h/2,1,1};
     p->scenery_hit=blast_tiles(f,nose,p->super);
   }
-  if((f->move==FC_JAB && f->move_tick==4) || (f->move==FC_ROUNDHOUSE && f->move_tick==7))
+  if((f->move==FC_JAB && f->move_tick>=4 && f->move_tick<=7) ||
+      (f->move==FC_ROUNDHOUSE && f->move_tick>=7 && f->move_tick<=12))
     normal_blocks(f);
   else if(f->move>FC_ROUNDHOUSE && f->move!=FC_PROJECTILE && !fc_piledriver(f) && f->move_tick==4) {
     FcBox b=f->body.box;

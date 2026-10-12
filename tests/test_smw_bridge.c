@@ -72,6 +72,31 @@ static void test_all_targets(void) {
   assert(!ext_spr_spriteid[0] && !cluster_spr_spriteid[0]);
   printf("Hadouken hit all %d normal sprite IDs; all Chucks, extended and cluster hazards exploded.\n",hits);
 }
+static void test_normal_bonks(void) {
+  const int ids[]={4,5,6,7,0xf,0x11,0xa2,0x46,0x91,0x35,0x80};
+  for(unsigned n=0;n<sizeof(ids)/sizeof(ids[0]);n++)for(int kick=0;kick<2;kick++) {
+    memset(g_ram,0,0x20000);ww_targets_reset();enemy(0,ids[n]);
+    FcFight f;fc_init(&f,FC_RYU);FcTarget t[WW_TARGET_COUNT];
+    ww_targets_collect(&f,t);FcBox b=t[0].box;
+    FcBody body={{b.x-16,b.y+b.h-28,16,32},1,true,false,false};
+    bool hit=false;
+    for(int i=0;i<18;i++) {
+      ww_targets_collect(&f,t);fc_tick(&f,i?0:kick?FC_KICK:FC_PUNCH,body,t,WW_TARGET_COUNT);
+      if(t[0].hit){assert(t[0].hit==FC_HIT_NORMAL);hit=true;}
+      ww_targets_apply(&f,t);
+    }
+    assert(hit && spr_current_status[0] && !f.blasts[0].ttl);
+    if(ids[n]>=4 && ids[n]<=7)assert(spr_current_status[0]==9 && (spr_table15f6[0]&0x80));
+    if(ids[n]==0xf || ids[n]==0x11 || ids[n]==0xa2)assert(spr_current_status[0]==9);
+    if(ids[n]==0x35 || ids[n]==0x80)assert(spr_current_status[0]==8);
+    if(ids[n]==4 || ids[n]==0xf) {
+      /* Normals leave a usable enemy; a projectile follow-up destroys it. */
+      ww_targets_collect(&f,t);assert(t[0].active);t[0].hit=FC_HIT_SPECIAL;t[0].hp=0;
+      ww_targets_apply(&f,t);assert(!spr_current_status[0] && f.blasts[0].ttl);
+    }
+  }
+  puts("Normal punches/kicks flip shells, stun Goombas/Mechakoopas, preserve objects; specials still obliterate.");
+}
 static void test_progression_objects(void) {
   const int ids[]={0x0e,0x2f,0x35,0x3e,0x49,0x4a,0x55,0x60,0x61,0x79,0x7b,0x80,0x8d,0xa3,0xc0};
   for(unsigned i=0;i<sizeof(ids)/sizeof(ids[0]);i++) {
@@ -296,11 +321,11 @@ int main(void) {
   assert(SDL_Init(SDL_INIT_AUDIO)==0);
   enter();enemy(0,0x0f);
   frame(2);for(int i=0;i<5;i++)frame(0);
-  assert(spr_current_status[0]==0); /* Goomba explodes from the shared jab. */
+  assert(spr_current_status[0]==9); /* A jab leaves a stunned, usable Goomba. */
   assert(ww_fight_state()->meter==112);
   for(int i=0;i<30;i++)frame(0);
   enemy(0,0x0f);frame(2);for(int i=0;i<5;i++)frame(0);
-  assert(spr_current_status[0]==0 && ww_fight_state()->meter==124); /* Recycled slot. */
+  assert(spr_current_status[0]==9 && ww_fight_state()->meter==124); /* Recycled slot. */
 
   enter();enemy(0,0x0f);spr_current_slotid=0;
   DamagePlayer_Hurt();assert(player_current_state==0 && player_current_power_up==1);
@@ -332,7 +357,7 @@ int main(void) {
   enter();player_in_air_flag=1;uint32_t input=(1u<<6)|(1u<<9)|1;
   ww_before_frame(&input);assert(ww_fight_state()->facing==-1);
   assert((input&1) && !ww_fight_state()->override_x);
-  test_projectile_height();test_all_targets();test_progression_objects();test_swinging_balls();test_castle_plungers();test_bosses();
+  test_projectile_height();test_normal_bonks();test_all_targets();test_progression_objects();test_swinging_balls();test_castle_plungers();test_bosses();
   test_mount_and_perfect();test_scenery();test_combo_score();test_psycho_exits();test_psycho_camera();test_practice_menu();
   test_meter_pickups();
   fc_audio_shutdown();SDL_Quit();puts("SMW bridge: broad targeting, progression objects, boss deaths, slot reuse, hurt, movement, transitions, KO and pause passed.");

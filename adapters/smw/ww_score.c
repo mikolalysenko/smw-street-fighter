@@ -4,6 +4,20 @@
 #include "variables.h"
 #include "funcs.h"
 #include <string.h>
+#include <stdlib.h>
+#include <SDL.h>
+
+const char *ww_save_directory(void) {
+#ifdef __EMSCRIPTEN__
+  return "saves";
+#else
+  const char *override=getenv("WW_SAVE_DIR");
+  if(override && *override)return override;
+  static char *directory;
+  if(!directory)directory=SDL_GetPrefPath("WorldWarrior","SuperMarioWorldII");
+  return directory?directory:"saves";
+#endif
+}
 
 /* Original USA SMW uses bytes 0..857 for its three files and their backups.
  * A versioned record in the unused SRAM tail travels with the same .srm file

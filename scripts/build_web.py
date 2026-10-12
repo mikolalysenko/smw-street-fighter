@@ -49,7 +49,7 @@ def main():
     (out/'.nojekyll').touch()
     shutil.copy2(ROOT/'LICENSE',out/'LICENSE.txt')
     shutil.copy2(ROOT/'references/smw/LICENSE.txt',out/'SMW-LICENSE.txt')
-    shutil.copy2(ROOT/'docs/ASSETS.md',out/'ASSETS.md')
+    shutil.copy2(ROOT/'dev/ASSETS.md',out/'ASSETS.md')
     (out/'README.txt').write_text(
         'Super Mario World II - The World Warrior\n\n'
         'Run in this folder: python3 -m http.server 8765 --bind 127.0.0.1\n'

@@ -27,10 +27,12 @@ typedef struct {
   int hp, max_hp, ko_timer;
   bool active;
 } FcOpponent;
+enum { FC_HIT_SPECIAL=1, FC_HIT_NORMAL=2 };
 typedef struct {
   FcBox box;
   int hp;
-  bool active, hit;
+  bool active;
+  uint8_t hit; /* Bitmask: a projectile and a normal can connect together. */
   float knock_x, knock_y;
 } FcTarget;
 typedef struct {

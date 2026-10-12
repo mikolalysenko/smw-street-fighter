@@ -39,7 +39,8 @@ for boss in cases:
         for name in ('smw_assets.dat','sf2'):
             (runtime/name).symlink_to(tree/name)
         (runtime/'test-play.ini').write_text(config)
-        env={**os.environ,'SDL_VIDEODRIVER':'dummy','SDL_AUDIODRIVER':'dummy'}
+        (runtime/'saves').mkdir()
+        env={**os.environ,'SDL_VIDEODRIVER':'dummy','SDL_AUDIODRIVER':'dummy','WW_SAVE_DIR':str(runtime/'saves')}
         if boss:env['WW_TEST_BOSS']=boss
         try:
             subprocess.run([str(runtime/binary.name)],env=env,check=True,timeout=60)

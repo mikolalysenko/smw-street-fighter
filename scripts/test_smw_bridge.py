@@ -3,6 +3,7 @@ from pathlib import Path
 import os
 import shlex
 import subprocess
+import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
 tree = ROOT / 'build/smw'
@@ -21,4 +22,5 @@ objects = [str(p) for p in sorted(tree.rglob('*.o')) if p.name not in ('main.o',
 binary = ROOT / 'build/test-smw-bridge'
 subprocess.run(compiler + ['-O1', '-g', '-I'+str(tree / 'src')] + flags + [str(ROOT / 'tests/test_smw_bridge.c'),
     str(tree / 'main-test.o')] + objects + ['-o', str(binary)] + libs + ['-lm'], check=True)
-subprocess.run([str(binary)], env={**os.environ, 'SDL_AUDIODRIVER': 'dummy'}, check=True)
+with tempfile.TemporaryDirectory(prefix='bridge-saves-',dir=ROOT/'build') as saves:
+    subprocess.run([str(binary)], env={**os.environ, 'SDL_AUDIODRIVER': 'dummy','WW_SAVE_DIR':saves}, check=True)

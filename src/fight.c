@@ -230,8 +230,8 @@ static void start(FcFight *f,FcMove move) {
     if(move==FC_RISING) f->invuln=12;
   } else f->events|=FC_SND_SWING;
 }
-static void hit(FcFight *f,FcTarget *t,int damage,bool super) {
-  t->hp=imax(0,t->hp-damage); t->hit=true;
+static void hit(FcFight *f,FcTarget *t,int damage,bool super,bool normal) {
+  t->hp=imax(0,t->hp-damage); t->hit|=normal?FC_HIT_NORMAL:FC_HIT_SPECIAL;
   t->knock_x=f->facing*(super?6.5f:3.5f); t->knock_y=super?-6:-4;
   f->move_hit=true;
   if(!fc_psycho_flight(f))f->hitstop=imax(f->hitstop,super?7:4);
@@ -408,7 +408,8 @@ void fc_tick(FcFight *f,uint32_t buttons,FcBody body,FcTarget *targets,int count
         case FC_PROJECTILE:
           melee=false;total=25;
           if(body.grounded && t<=10){f->override_x=true;f->velocity_x=0;}
-          if(t==6)shot(f,false);break;
+          if(t==6)shot(f,false);
+          break;
         case FC_RISING:
           f->override_x=true;f->velocity_x=0;
           begin=2;end=20;total=34;height=42;damage=2;
@@ -457,7 +458,7 @@ void fc_tick(FcFight *f,uint32_t buttons,FcBody body,FcTarget *targets,int count
               int i=f->grabbed;
               if(i<count && targets[i].active) {
                 targets[i].box.y=body.box.y+body.box.h-targets[i].box.h;
-                hit(f,&targets[i],targets[i].hp>1?(super?18:6):999,super);
+                hit(f,&targets[i],targets[i].hp>1?(super?18:6):999,super,false);
               }
               f->grab_slam=true;f->grabbed=-1;f->move_tick=t=36;
             } else if(f->grab_tick>180) {
@@ -559,7 +560,7 @@ void fc_tick(FcFight *f,uint32_t buttons,FcBody body,FcTarget *targets,int count
         for(int i=0;i<count && i<FC_MAX_TARGETS;i++) {
           uint64_t bit=UINT64_C(1)<<i;
           if(targets[i].active && targets[i].hp>0 && !(f->melee_mask&bit) && fc_overlap(box,targets[i].box)) {
-            f->melee_mask|=bit; hit(f,&targets[i],damage,super);
+            f->melee_mask|=bit; hit(f,&targets[i],damage,super,normal);
           }
         }
       }
@@ -602,7 +603,7 @@ void fc_tick(FcFight *f,uint32_t buttons,FcBody body,FcTarget *targets,int count
     for(int i=0;i<count && i<FC_MAX_TARGETS && p->pierce;i++) {
       uint64_t bit=UINT64_C(1)<<i;
       if(i!=f->grabbed && targets[i].active && targets[i].hp>0 && !(p->hit_mask&bit) && fc_overlap(sweep,targets[i].box)) {
-        p->hit_mask|=bit;hit(f,&targets[i],p->damage,p->super);--p->pierce;
+        p->hit_mask|=bit;hit(f,&targets[i],p->damage,p->super,false);--p->pierce;
         targets[i].knock_x=(p->vx>0?1:-1)*(p->super?6.5f:3.5f);
         if(!p->pierce)p->ttl=0;
       }

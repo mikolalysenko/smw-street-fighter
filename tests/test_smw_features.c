@@ -20,7 +20,7 @@ static void tile(int x,int y,unsigned id) {
 }
 static unsigned get_tile(int x,int y) {unsigned o=offset(x,y);return g_ram[o]+256*g_ram[o+0x10000];}
 static void blocks(void) {
-  unsigned ids[]={0x11f,0x130,0x132,0x137,0x025,0x100};
+  unsigned ids[]={0x11f,0x130,0x132,0x137,0x025,0x100,0x11e};
   for(int face=-1;face<=1;face+=2)for(int crouch=0;crouch<2;crouch++)for(int kick=0;kick<2;kick++)
     for(unsigned type=0;type<sizeof(ids)/sizeof(ids[0]);type++) {
       for(int y=112;y<=160;y+=16)for(int x=64;x<=208;x+=16)tile(x,y,0x25);
@@ -41,10 +41,23 @@ static void blocks(void) {
         assert(bounce_spr_spriteid[3]);
         int item=0;for(int k=0;k<12;k++)item|=spr_current_status[k] && spr_spriteid[k]>=0x74 && spr_spriteid[k]<=0x77;
         assert(item); /* Original item dispensing, not a cosmetic explosion. */
-      } else assert(get_tile(x,y)==(type==1 || type==2?0x25:ids[type]));
+      } else if(type==6)assert(bounce_spr_spriteid[3]==7); /* Turn, don't shatter. */
+      else assert(get_tile(x,y)==ids[type]);
       if(type!=4)assert(get_tile(x+face*16,y)==0x130);
     }
-  puts("Punch/kick: both facings and crouch, correct active frame, native item blocks, breakables, pipes and ground passed.");
+  for(int kick=0;kick<2;kick++) {
+    for(int y=112;y<=192;y+=16)for(int x=64;x<=208;x+=16)tile(x,y,0x25);
+    tile(128,160,0x11e);memset(bounce_spr_spriteid,0,4);
+    FcFight f;fc_init(&f,FC_RYU);FcBody b={{128,120,16,32},1,false,false,false};
+    int active=kick?7:4;
+    for(int t=1;t<=active;t++) {
+      fc_tick(&f,FC_DOWN|(t==1?(kick?FC_KICK:FC_PUNCH):0),b,NULL,0);
+      ww_scenery_hits(&f);
+    }
+    assert(bounce_spr_spriteid[3]==7 && get_tile(128,160)==0x11e);
+    assert(!f.blasts[0].ttl);
+  }
+  puts("Normals: native item/turn blocks, aerial down-strikes, intact cement/pipes/ground and both facings/crouches passed.");
 }
 static void endings(void) {
   uint8 old_mode=misc_game_mode;

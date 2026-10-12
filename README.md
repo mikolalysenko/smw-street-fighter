@@ -1,385 +1,113 @@
 # Super Mario World II — The World Warrior
 
-A C/SDL2 and WebAssembly crossover: Super Mario World's original levels,
-scenery, enemies, music and platforming, with ripped Street Fighter II fighter
-sprites, voices and impacts. All twelve classic SF2 fighters are selectable,
-including the four bosses, with character specials and a three-level super gauge.
+Hadoukens in Dinosaur Land. Twelve Street Fighter fighters take on Super Mario
+World’s original levels with arcade combat, a three-bar super meter, and an
+Akuma finale that gets completely out of hand.
 
-The actual SMW game is the default build. The earlier placeholder dojo is only
-a combat test fixture. The native and browser builds share the same game engine.
+**[Play in your browser](https://mikolalysenko.github.io/smw-street-fighter/)** ·
+**[Download for desktop](https://github.com/mikolalysenko/smw-street-fighter/releases/latest)** ·
+**[Watch the teaser](https://mikolalysenko.github.io/smw-street-fighter/media/teaser.mp4)**
 
-Original levels, twelve fighters, aerial specials, Alpha-style supers, an SF2
-HUD, persistent scores, and an Akuma finale in Bowser's clown car. Keyboard and
-controller support are included, with fullscreen play for Linux/Bazzite and TVs.
-Phones also get a multi-touch direction pad and attack buttons; desktop and
-tablet browsers keep the keyboard/controller layout.
+[![Super Mario World II — The World Warrior gameplay](media/cover.jpg)](https://mikolalysenko.github.io/smw-street-fighter/)
 
-[Play the browser demo](https://mikolalysenko.github.io/smw-street-fighter/) ·
-[Download a build](https://github.com/mikolalysenko/smw-street-fighter/releases)
+## Pick a fighter. Break the rules.
 
-The `main` branch contains the source. The `gh-pages` branch hosts the compiled
-WASM demo. See [publishing instructions](docs/PUBLISHING.md) to rebuild it.
+- **The original world.** Mario’s levels, secrets, enemies, Yoshi, music and overworld, with Street Fighter sprites, voices and hit reactions.
+- **All twelve fighters.** Ryu, Honda, Chun-Li, Guile, Ken, Blanka, Zangief, Dhalsim, Balrog, Vega, Sagat and M. Bison. Each has their own moves and ending.
+- **Three levels of super.** Fire a giant Shinku Hadouken beam, fly across a stage with Psycho Crusher, or piledrive a warp pipe. Mushrooms, flowers and feathers charge your meter.
+- **An entirely different final fight.** Akuma takes Bowser’s clown car. Dodge his fireballs, hit them back, and find openings between attack waves. Zangief can grab the whole car.
+- **Arcade rewards.** Health bars, parries, escalating combos, a PERFECT bonus, fighter-specific continues and a persistent high score.
+- **Play where you want.** Keyboard, gamepad or phone touch controls. Fullscreen for the TV. The browser and desktop versions run the same game.
 
-## Play in a browser
+| A familiar world, different rules | The final challenger |
+| --- | --- |
+| ![Ryu’s Shinku Hadouken in an original Mario level](media/shinku.png) | ![Akuma fights from Bowser’s flying clown car](media/akuma.png) |
+| ![M. Bison tears across a level with Psycho Crusher](media/psycho-crusher.png) | ![Zangief piledrives Akuma and the entire clown car](media/piledriver.png) |
 
-```sh
-make web          # Requires Emscripten and the prepared original assets
-make serve-web
-```
+## Start playing
 
-Open **http://localhost:8765**, click Play, and use the keyboard or a gamepad.
-The original SMW engine, PPU and music run in WASM. WebGPU presents the pixel
-framebuffer; Canvas 2D is the fallback. Fullscreen is available below the game.
-Reload the page after rebuilding; the status shows the loaded build timestamp.
-Original SMW save points and your high score persist in browser storage, with an Export Save button.
-This saves normal game progress, not an instant snapshot of the current room.
+The **[browser version](https://mikolalysenko.github.io/smw-street-fighter/)** needs no installation.
+Click **Play**, start a one-player game, choose a save file, then pick your fighter.
+Use **Jump** to confirm menus and dismiss Mario’s introduction.
 
-On iPhone, tap **Play** to enable sound. Turn sideways and tap **Expand** for a
-larger play area; this works even without Safari's fullscreen API. The touch pad
-supports diagonals and simultaneous jump/attack inputs. **Start** opens menus,
-**Jump** confirms, and **Back** cancels. Returning from another app shows **Resume**
-so Safari can restart audio from a tap. WebGPU is optional; Canvas 2D uses the
-same WASM game. Progress is stored separately on each device/browser.
+On a phone, tap **Play** to enable sound. Touch controls appear automatically;
+turn sideways and tap **Expand** for a larger play area. A gamepad also works in
+supported browsers. WebGPU is optional—the game has a Canvas fallback.
 
-Copy `dist/web/` to Linux/Bazzite and serve that folder on localhost to play
-without recompiling. See [BAZZITE.md](docs/BAZZITE.md) for the TV setup.
+### Desktop downloads
 
-## Play on this Mac
+Every desktop download includes the game data and SDL runtime. Extract the
+**whole** archive before launching; there is nothing to compile.
 
-Open `dist/Super Mario World II - The World Warrior.app`, or:
+| Platform | Download | Launch |
+| --- | --- | --- |
+| macOS · Apple Silicon | [ARM64 ZIP](https://github.com/mikolalysenko/smw-street-fighter/releases/latest/download/super-mario-world-ii-macos-arm64.zip) | Move the app to Applications and open it. |
+| macOS · Intel | [x86-64 ZIP](https://github.com/mikolalysenko/smw-street-fighter/releases/latest/download/super-mario-world-ii-macos-x86_64.zip) | Move the app to Applications and open it. |
+| Linux · x86-64 | [TAR.GZ](https://github.com/mikolalysenko/smw-street-fighter/releases/latest/download/super-mario-world-ii-linux-x86_64.tar.gz) | Run `./play.sh`; add `--fullscreen` for the TV. |
+| Windows · x86-64 | [ZIP](https://github.com/mikolalysenko/smw-street-fighter/releases/latest/download/super-mario-world-ii-windows-x86_64.zip) | Open `Super Mario World II.exe`. |
 
-```sh
-make run
-# Fullscreen:
-make tv
-```
+These community builds are not publisher-signed. If macOS blocks the app, open
+**System Settings → Privacy & Security** to review it. See the release notes for
+OS requirements and checksums.
 
-Start a one-player game using Enter or controller Start. Pick your fighter at
-character select after choosing a save file, before the intro or overworld loads.
-This also applies when resuming an existing save. Use the normal SMW overworld to
-enter a level. Each life starts
-with one super bar. Hits refill it; supers spend one to three complete bars.
-Health refills on level entry and meter carries between levels. Start opens
-Resume / Quit Game during play. On death, the SF2 continue
-screen shows the defeated fighter and a ten-second countdown. Start/Jump opens
-character select, then returns to the world map with the chosen fighter at full
-health and one super bar. Enter a level when ready. Back or letting the countdown
-expire returns directly to the map. Continues are unlimited.
-Character selection plays the original SF2 selection music. The title combines
-SMW's original lettering, scenery, demo and music with SF2's gold/red II and
-blue “The World Warrior” subtitle. Course clear shows the selected fighter.
-Clearing without taking damage displays PERFECT with the original announcer voice.
-Defeated Akuma flips upside down, pops upward, then falls offscreen before the
-original Peach rescue. Each fighter gets a distinct ending screen after the
-rescue; Start/Jump continues into the original credits. Seven endings have new
-pixel-art illustrations; Ryu, Chun-Li, Guile, Ken and Vega currently use original
-arcade sprites in custom pixel scenery.
-
-**Debug shortcuts:** open the browser demo with `?debug=1`, or launch the native
-game with `./scripts/play-smw.sh --debug` (combine with `--fullscreen` for TV play).
-Only debug mode adds **PLAYER SELECT** and **AKUMA BATTLE** to the pause menu;
-normal starting/continuing character selection always remains available.
-
-**Jump to the final fight in debug mode:** enter any level, press Enter/Start, choose
-**AKUMA BATTLE**, then confirm. You start with full health and three super bars.
-Bowser makes his entrance wearing Bison's hat before Akuma takes over the clown
-car. Continue opens character select and returns to the world map here too.
-Practice does not write game saves or records; returning to the map restores
-the score and lives from before practice.
-
-The title and gameplay HUD show your high score. SMW's normal points from
-enemies, pickups and the course-clear tally count; combat kills award the native
-combo points too. Consecutive combat hits award **200, 400, 800, 1000, 2000,
-4000, 8000, 1UP, 2UP, then 3UP**. Further hits keep awarding 3UP, up to SMW's
-99-life limit. Damage or a 90-frame gap ends the chain; Bison's continuous level
-3 flight keeps it going. New records save immediately, survive new games and continues,
-and travel with Export Save in the same `smw.srm` as level progress. The title
-demo cannot set a record. Native builds keep it in `saves/smw.srm`.
-
-The transparent SF2 HUD keeps Mario's counters: **1P** is the current score,
-**HI** is the saved record, and the three-digit clock beneath **K.O.** is SMW's
-actual timer. The fighter portrait has lives underneath the name; the five
-round markers track Dragon Coins. The right bar fills toward a 100-coin **1UP**,
-then becomes the opponent's health bar in a boss room. Coins and bonus stars
-remain visible during boss fights. Bowser/Akuma
-has an unlimited clock, displayed as infinity. The bottom gauge shows super
-levels, and hit combos show their current points or extra-life award.
+For Bazzite or Steam Gaming Mode, add the extracted Linux `play.sh` as a
+non-Steam game and set `--fullscreen` in Launch Options. Use Steam’s Gamepad
+layout. [TV setup guide →](docs/BAZZITE.md)
 
 ## Controls
 
-Punches and kicks activate item/turn blocks next to you and shatter cement or
-used blocks. Crouching attacks hit low blocks; Dhalsim's extended limbs reach
-farther. Pipes, doors and level terrain remain usable. Down + Guard holds a low
-block; a fresh guard can parry, while sustained guard takes reduced damage.
-Bison's level-three Psycho Crusher damages enemies touching its visible beam.
-At the goal he leaves the beam and jumps down continuously to the finish floor.
+Gamepad labels use Xbox / Steam button positions.
 
-| Action | Xbox/Steam gamepad | Keyboard |
+| Action | Keyboard | Gamepad |
 | --- | --- | --- |
-| Move / menu | D-pad or left stick | Arrows |
-| Jump / confirm | A | Z |
-| Punch | X | X |
-| Kick | B | C |
-| Crouching punch / kick | Down + X / B | Down + X / C |
-| Special | Y | A |
-| Secondary special | Up + Y | Up + A |
-| Extra special / Hurricane Kick | Down + Y | Down + A |
-| Super | RB | S |
-| Guard | LB | D |
-| Crouch block | Down + LB | Down + D |
-| Pause / confirm | Start | Enter |
-| Back / pause | Back | Escape |
-| Fullscreen | Launcher option | F11 |
+| Move | Arrow keys | D-pad / left stick |
+| Jump / confirm | Z | A |
+| Punch / kick | X / C | X / B |
+| Crouching attacks | Down + X / C | Down + X / B |
+| Special | A | Y |
+| Alternate special | Up + A | Up + Y |
+| Extra special | Down + A | Down + Y |
+| Super | S | RB |
+| Guard / crouch guard | D / Down + D | LB / Down + LB |
+| Start / pause | Enter | Start |
+| Back | Escape | Back |
+| Fullscreen | F11 | Browser button / launcher option |
 
-SMW's introduction and message boxes accept Jump. On the overworld,
-Start + Back together quits. Controller labels use SDL's Xbox button positions;
-Steam Input can map other controllers to this layout.
+**A few things to try:**
 
-Tap **Guard** just before a frontal hit for a parry: no damage and a quarter-bar
-of super meter. Holding Guard gives normal blocking with chip damage. A parry
-keeps a PERFECT run intact. Grounded landings use a brief crouch that attacks
-and movement can interrupt immediately; walking off a ledge uses a falling
-pose. A small gold glint at the feet signals that the charged high jump is ready.
+- Ryu and Ken: **Special** for Hadouken, **Up + Special** for Shoryuken, **Down + Special** for Hurricane Kick.
+- Honda: tap **Punch** for Hundred Hand Slap. Chun-Li: tap **Kick** for Lightning Legs. Blanka: tap **Down + Special** for Electricity. Keep tapping to keep them going.
+- Zangief: **Up + Special** grabs; the slam lands the damage. His **Super** can grab Akuma’s car.
+- Fill three bars for Ryu’s giant beam or Bison’s full-stage Psycho Crusher. **Guard** ends Bison’s flight early.
 
-## Fighters and moves
+Punches and kicks bonk enemies or flip shells, and bump blocks like a jump hit.
+An aerial **Down + Punch / Kick** strikes blocks below you. Specials and supers
+keep their destructive power. Keys, exits and essential platforms remain usable.
 
-| Fighter | Special | Secondary | Super |
-| --- | --- | --- | --- |
-| Ryu | Hadouken | Shoryuken | Shinku Hadouken |
-| E. Honda | Sumo Headbutt | Hundred Hand Slap | Super Oni Musou |
-| Chun-Li | Kikoken | Spinning Bird Kick | Senretsukyaku |
-| Guile | Sonic Boom | Flash Kick | Sonic Hurricane |
-| Ken | Hadouken | Shoryuken | Shoryureppa |
-| Blanka | Rolling Attack | Vertical Roll | Ground Shave Roll |
-| Zangief | Double Lariat | Screw Piledriver | Final Atomic Buster |
-| Dhalsim | Yoga Fire | Yoga Flame | Yoga Inferno |
-| Balrog | Dash Straight | Dash Uppercut | Crazy Buffalo |
-| Vega | Rolling Crystal Flash | Flying Barcelona | Rolling Izuna Drop |
-| Sagat | Tiger Shot | Tiger Uppercut | Tiger Genocide |
-| M. Bison | Psycho Crusher | Head Press | Psycho Crusher |
+Hold **Down**, then **Jump** for a charged high jump. Walk into a key or shell
+to carry it; **Guard + Punch** releases it. Add **Down** to drop it or **Up** to
+throw upward. Mobility specials reset when you land, swim or climb.
 
-Ryu and Ken can Hurricane Kick with **Down + Special**, or quarter-circle back
-+ Kick, on the ground or in the air. Down + Special gives Blanka Electricity
-and Dhalsim Teleport. Ryu, Ken and Sagat also accept quarter-circle forward +
-Punch and the dragon-punch motion. Double quarter-circle forward + Punch
-activates a super. Honda, Guile, Blanka, Balrog, Vega and Bison accept back charge
-then forward + Punch; Guile, Blanka, Vega and Bison accept down charge then
-up + Kick. Zangief accepts a three-quarter circle + Punch; Dhalsim accepts
-half-circle forward + Punch. Honda/Blanka's repeated punches and Chun-Li's
-repeated kicks trigger rapid attacks. Keep tapping to sustain them indefinitely;
-Blanka also accepts repeated Down + Special for electricity. Chun-Li uses her
-own Kikoken projectile and voice, and Lightning Legs has a repeating kick swish.
-Honda’s headbutt
-flies horizontally, and Bison’s crouching kick slides forward. Dhalsim uses his
-long punches, including the crouching stretch, and his original low slide kick.
-Landed normals can cancel into specials; landed attacks can
-cancel into supers. These are forgiving platformer adaptations, not arcade
-frame data. Sonic Hurricane is a later-series move adapted to this prototype.
+[Full move list, HUD, secrets and boss tips →](docs/PLAYING.md)
 
-Bison's **three-bar Psycho Crusher** is intentionally ridiculous: invulnerable
-flight, 999-damage hits, an original Alpha spin and blue-white wake, and a
-combo that lasts until he lands. It flies to the actual goal or end of the room.
-Up/Down steer in horizontal rooms; Left/Right steer in vertical rooms. **Guard
-lands early**. Doors, pipes, exits and essential platforms keep working; a room
-without a goal still needs its normal exit. The camera and sprite loader continue
-running, so the native goal, score tally and overworld event finish normally.
-Forced scrolling accelerates during the flight and returns to normal on landing.
-Boss rooms retain their arena boundaries and damage rules.
+## Saves and continues
 
-Mobility specials share **one use per jump**. Land, swim, or grab a climbable
-surface to reset it; attacking or hitting a wall does not grant another use.
-Ordinary punches, kicks and fireballs remain usable in the air.
+Progress saves at the original Mario save points. High scores save immediately.
+Browser saves stay in that browser on that device; **Export Save** makes a backup.
+Desktop saves live in your user account, outside the install folder, so replacing
+a release keeps them. [Save locations and moving an older save →](docs/PLAYING.md#saves)
 
-**High jump:** hold Down for about three quarters of a second, then Jump.
-Keep Jump held for height and steer in the air. Every fighter can reach Donut
-Plains 1's secret platform without the green switch blocks.
-Walk into a key or shell to pick it up, or hold Guard while touching it.
-It stays held when you stop and attack. **Guard + Punch** releases it; add
-Down to drop or Up to throw upward. Keys still activate the original keyholes.
+Accepting Continue opens character select, then returns to the world map with
+full health. Continues are unlimited.
 
-Zangief's **Up + Special** grabs nearby enemies and pipes. A successful grab
-launches, spins the held object upside down, and damages it only on landing.
-A whiff only reaches. **Super** can also grab Akuma with the entire clown car.
-Required objects and pipe entrances remain usable after their slam.
-Triangle blocks rotate the fighter into the wall run, with a walking cycle.
+## About this project
 
-Enemy contact causes health loss, hitstop, hit stun, knockback and SF2 hurt
-sounds. Death uses ripped fighter screams. Punches, kicks, specials and supers
-also work in the air, including pressing jump and attack together.
-Holding Down gives each fighter original crouching punch/kick poses and low
-hitboxes. Moving platforms preserve fighter visibility, and the original Yoshi
-renders both on foot and while ridden. Health and super gauges float over the
-level, without an opaque HUD strip.
-Mounted Hadoukens pass Yoshi. Punch activates his tongue; automatic running does
-not. Mushrooms add one super bar, Fire Flowers add two, and Feathers fill all
-three. Pickups are consumed immediately; reserve items are disabled. They do
-not heal or change the fighter.
+An unofficial, single-player fan crossover. Nintendo and Capcom own the original
+game characters and assets. New code is [MIT licensed](LICENSE); that license
+does not cover the original game content. [Credits and asset sources →](dev/ASSETS.md)
 
-Ryu and Ken’s fireballs originate at their palms, also in the air and on Yoshi.
-Shinku Hadouken uses the original Alpha “Shinku… Hadouken” voice sequence.
-Level one and two fireballs are larger; level three becomes a sustained beam
-that blasts across the stage. Small enemies still use forgiving hit detection.
+Found a problem? [Report an issue](https://github.com/mikolalysenko/smw-street-fighter/issues)
+with your platform, fighter and level. Phone browser checks use simulated
+iPhone/Android devices; physical phone and TV testing is still welcome.
 
-All normal sprite IDs and extended/cluster hazards accept attacks, including
-Chucks, Thwomps, wooden castle plungers and the layer-three crusher. Enemies
-explode. Keys, exits, switches and essential platforms take a visual hit but
-retain their function. Terrain shows a single impact without erasing routes.
-Boss rooms have opposing health bars, a KO announcement and their original
-defeat/exit sequences. In the finale, Akuma assassinates Bowser, throws him
-upside down offscreen, and pilots the original clown car. The fight has three
-health phases: purple air fireballs and moving volleys, then roof-level car
-sweeps and telegraphed ground slams, then charged red barrages and warp feints.
-Uppercuts mix into the earlier phases. Each wave ends with a clear recovery
-opening; leftover hostile projectiles disperse, and health phase changes give
-Peach a quiet mushroom throw.
-
-Punch or kick an incoming fireball to send it back. A timed guard returns it
-too; a successful return staggers Akuma and earns extra meter. Jump down onto
-the clown car's rim to bop it and bounce into an aerial follow-up. Zangief can
-still piledrive the whole car. Damage is capped at six per hit and twelve per
-wave, with health thresholds at two thirds and one third; Akuma visibly guards
-during recovery when the wave's damage limit is reached. Defeating Akuma starts
-the original rescue and ending.
-
-## Build from a fresh checkout
-
-Requirements: C/C++ compilers, Make, SDL2 development files, Git, Python 3 with
-venv support, CMake, ffmpeg and bsdtar (libarchive-tools on Linux). On macOS: `brew install sdl2 cmake ffmpeg` and Xcode command
-line tools. Linux/Bazzite instructions are in [BAZZITE.md](docs/BAZZITE.md).
-
-Clone this repository with its submodules, or initialize them in an existing
-checkout before building:
-
-```sh
-git submodule update --init
-make original-assets
-make smw
-make run
-```
-
-`make original-assets` builds the pinned public SMW disassembly, checks that the
-result exactly matches the USA ROM, and extracts the original game data. It also
-downloads checksum-pinned community SF2 sprite sheets and WAV rips and packs them
-for the renderer. This works without the NAS. Source details, credits and the
-precise scope of the art are in [ASSETS.md](docs/ASSETS.md).
-
-Alternatively, use your existing SMW USA ROM:
-
-```sh
-make assets ROM="/path/to/Super Mario World (USA).sfc"
-make build/asset-tools/bin/python3
-build/asset-tools/bin/python3 scripts/import_community_sf2.py
-make smw
-```
-
-Game data, downloads and generated builds remain in ignored `local/`, `build/`
-and `dist/` on `main`. The prepared `gh-pages` branch contains the browser runtime
-and its packed game data. `make package` creates a bundle for the current platform. The Mac
-bundle uses the installed SDL library; the Linux bundle should run in its build
-Distrobox until a portable release is prepared.
-
-## Tests and publishing
-
-```sh
-make test sanitize test-smw              # Core tests and SMW hooks; no game data needed
-make test-animations test-audio          # Requires prepared original assets
-make test-play test-bosses test-movement # Replays against the original game
-make test-final-depth                   # Boss phases, counters and native ending
-make web test-web                       # Build and exercise the actual WASM module
-make pages-branch                       # Build, test, and commit a local gh-pages update
-```
-
-Run native replay targets serially because they share a generated build tree.
-`make pages-branch` prepares a local branch without pushing or changing the
-current checkout. Start from committed source; the deployment includes its
-source revision and build timestamp. [PUBLISHING.md](docs/PUBLISHING.md) covers
-the first push and later updates.
-
-The shared combat and drawing code is in `src/`, engine hooks in `adapters/smw/`,
-and the WASM interface in `adapters/web/`. `web/` supplies the browser shell;
-`scripts/` builds and imports the pinned assets. `references/` contains pinned
-upstream submodules.
-
-New code and documentation are MIT licensed. Original game content retains its
-separate rights and credits; see [asset provenance](docs/ASSETS.md) and [LICENSE](LICENSE).
-
-## Current limits
-
-The main SMW integration was built and visually checked on Apple Silicon.
-An automated replay boots the original game, reaches Yoshi's Island 2, and
-checks an attack, super, Goomba contact damage and KO using deterministic enemy
-fixtures. This is not a full-game completion test.
-
-Foreground occlusion and dedicated swimming/climbing/riding attack poses
-remain. Yoshi's original rendering and mounting work; the fighter keeps Mario's
-compact terrain collision box. Animation
-timings and anchors are adapted for platforming; jumps use separate airborne
-strike clips and walking advances with actual movement. Projectiles pass
-through scenery, and essential objects survive explosions to preserve routes.
-The original title/overworld still show Mario. Snapshot/replay hotkeys are
-disabled because they omit combat state.
-
-Real-engine replays verify Hadoukens, supers, KO and native endings in all seven
-Koopaling rooms, Reznor, Big Boo and Bowser. Movement tests cover ten jump/attack
-combinations, all Continue choices and goal-tape clear. Presentation tests cover
-platform redraws, Yoshi standing/riding, message boxes, and character selection
-before both new and saved games. A Node test boots the shipped WASM module and
-checks original menus/music, movement, crouching attacks, air specials, supers,
-audio and save RAM. These checks are not a full-game completion test.
-
-Linux CI is configured but has not run in this local repository. The physical
-Bazzite machine, controller and downstairs TV have not been tested.
-
-## Source research
-
-- [snesrev/smw](https://github.com/snesrev/smw): pinned C reimplementation used as
-  the actual game host.
-- [dasi/sf2ww](https://github.com/dasi/sf2ww): pinned, incomplete World Warrior
-  arcade C rewrite, kept as a read-only research reference.
-- [IsoFrieze/SMWDisX](https://github.com/IsoFrieze/SMWDisX): matching assembly source
-  used to rebuild the original game data.
-
-[sources.lock.json](sources.lock.json) records revisions.
-[RESEARCH.md](docs/RESEARCH.md) maps the engine hooks and outstanding work.
-`scripts/prepare_sf2.py /path/to/sf2ua.zip` also prepares checksum-verified CPS1
-research inputs; the current renderer uses the extracted community sheets.
-
-## Verify
-
-```sh
-make test        # Combat, sprite loader/rendering, ROM/tool checks
-make sanitize    # Combat and sprite tests under ASan/UBSan
-make test-smw    # Actual SMW RAM/clipping/damage/menu hooks; no assets needed
-make test-play   # Original game boot + level/combat replay; assets required
-make test-bosses # Ten actual boss rooms, attacks, KO and native endings
-make test-movement # Jump/air attacks, Continue and original goal tape
-make test-presentation # Moving platforms, Yoshi and new/resumed file selection
-make test-hud    # Native timer/pause, coins, lives, meter pickups, max counters and HUD captures
-make test-roster # All twelve fighters: 17 ground/air actions, Bison's stage exit
-make test-collision # Pipe walls, both camera edges, rolls and slides
-make test-pipes     # Original bonus-room return entrances
-make test-specials  # Sustained attacks, horizontal headbutt, fireballs and beam
-make test-features  # Adjacent blocks, low guard and all twelve ending screens
-make test-scroll # Bison in the original scrolling smasher room, through its door
-make test-animations # Packed art: both facings, strike timing, landing and freeze
-make audit-animations # Sprite contact sheets and loops in build/animation-audit
-make test-audio  # Voices, original Alpha charge and selection/continue music
-make test-web    # Built WASM module through the original game flow
-```
-
-The replay produces `selection.bmp`, `original-level.bmp`, `super.bmp` and
-`ko.bmp` under `build/smw/`. Source submodules stay unmodified; the patch script
-creates a separate build tree and refuses missing or ambiguous hook matches.
-
-Optional real-browser checks (start `make serve-web` first):
-
-```sh
-npm install --prefix build/browser-tools playwright@1.58.2
-build/browser-tools/node_modules/.bin/playwright install chromium webkit
-node tests/test_browser.mjs
-```
-
-These run the actual WASM build in WebKit and Chromium with phone, tablet and
-desktop profiles, including touch-only game startup/combat, multi-touch,
-rotation-friendly layouts, expansion, audio resume and the debug query flag.
-They emulate phone browsers; physical iPhone testing remains separate.
+Build instructions, engine notes, tests and publishing tools live in **[dev/](dev/README.md)**.
