@@ -24,18 +24,18 @@ function padButtons() {
 }
 function updateSound() {
   const state=audio.diagnostics(),button=$('#mute');
-  button.textContent=muted?'SOUND OFF':state.retry?'ENABLE SOUND':'SOUND ON';
+  button.textContent=muted?'Sound off':state.retry?'Enable sound':'Sound on';
   button.setAttribute('aria-pressed',String(!muted && !state.retry));
 }
 function pausePlayback() {
   running=false;held.clear();pending=0;last=0;accumulator=0;touch.clear();audio.pause();save();
-  play.hidden=false;play.textContent=started?'RESUME':'PLAY';
+  play.hidden=false;play.textContent=started?'Resume':'Play';
 }
 function save() {
   if(!game)return;
   const bytes=game.HEAPU8.subarray(game._ww_web_sram(),game._ww_web_sram()+game._ww_web_sram_size());
   try {localStorage.setItem(SAVE_KEY,btoa(String.fromCharCode(...bytes)));}
-  catch {$('#save-status').textContent='Browser storage unavailable';}
+  catch {$('#save-status').textContent='Browser storage unavailable';$('#help').open=true;}
 }
 function restore() {
   try {
@@ -43,7 +43,7 @@ function restore() {
     if(!saved)return;
     const bytes=Uint8Array.from(atob(saved),c=>c.charCodeAt(0));
     if(bytes.length===game._ww_web_sram_size())game.HEAPU8.set(bytes,game._ww_web_sram());
-  } catch {$('#save-status').textContent='Could not restore browser save';}
+  } catch {$('#save-status').textContent='Could not restore browser save';$('#help').open=true;}
 }
 function renderAudio() {
   const pointer=game._ww_web_audio(); // Also advances the original SPC state when muted.
@@ -59,7 +59,7 @@ async function start() {
 }
 function failure(error) {
   running=false;audio.pause();status.textContent='Game stopped: '+error.message;
-  status.dataset.error='true';console.error(error);
+  status.hidden=false;status.dataset.error='true';console.error(error);
 }
 function animate(now) {
   requestAnimationFrame(animate);
@@ -70,7 +70,7 @@ function animate(now) {
     while(accumulator>=STEP) {
       const input=keyboardButtons()|padButtons()|touch.buttons()|pending;pending=0;
       if(!game._ww_web_step(input)) {
-        running=false;play.hidden=false;play.textContent='RELOAD GAME';
+        running=false;play.hidden=false;play.textContent='Reload game';
         play.onclick=()=>location.reload();save();audio.pause();return;
       }
       renderAudio();accumulator-=STEP;
@@ -85,7 +85,7 @@ function animate(now) {
 }
 window.addEventListener('keydown',event=>{
   if(event.ctrlKey || event.metaKey || event.altKey || !keyMap[event.code])return;
-  if(event.target.closest?.('a,button,input,textarea,select,video'))return;
+  if(event.target.closest?.('a,button,input,textarea,select,video,summary'))return;
   event.preventDefault();
   if(!running && game) {start().catch(failure);}
   if(!held.has(event.code))pending|=keyMap[event.code];
@@ -93,7 +93,7 @@ window.addEventListener('keydown',event=>{
 });
 window.addEventListener('keyup',event=>{
   held.delete(event.code);
-  if(keyMap[event.code] && !event.target.closest?.('a,button,input,textarea,select,video'))event.preventDefault();
+  if(keyMap[event.code] && !event.target.closest?.('a,button,input,textarea,select,video,summary'))event.preventDefault();
 });
 window.addEventListener('blur',()=>{held.clear();pending=0;});
 document.addEventListener('visibilitychange',()=>{
@@ -106,19 +106,26 @@ document.addEventListener('visibilitychange',()=>{
 window.addEventListener('pagehide',pausePlayback);
 play.onclick=()=>start().catch(failure);
 $('#teaser-video')?.addEventListener('play',pausePlayback);
+$('#teaser').addEventListener('toggle',()=>{if(!$('#teaser').open)$('#teaser-video').pause();});
+function updateExpansion() {
+  const expanded=cabinet.classList.contains('expanded')||document.fullscreenElement===cabinet;
+  document.body.classList.toggle('game-expanded',cabinet.classList.contains('expanded'));
+  $('#touch-expand').textContent=expanded?'EXIT':'EXPAND';
+  $('#fullscreen').textContent=expanded?'Exit fullscreen':'Fullscreen';
+  $('#fullscreen').setAttribute('aria-pressed',String(expanded));
+}
 async function expand() {
   try {
     if(document.fullscreenElement)await document.exitFullscreen();
     else if(document.fullscreenEnabled && cabinet.requestFullscreen)await cabinet.requestFullscreen();
     else cabinet.classList.toggle('expanded');
   } catch {cabinet.classList.toggle('expanded');}
-  document.body.classList.toggle('game-expanded',cabinet.classList.contains('expanded'));
-  $('#touch-expand').textContent=cabinet.classList.contains('expanded')||document.fullscreenElement?'EXIT':'EXPAND';
+  updateExpansion();
   touch.clear();
 }
 $('#fullscreen').onclick=expand;$('#touch-expand').onclick=expand;
 document.addEventListener('fullscreenchange',()=>{
-  $('#touch-expand').textContent=document.fullscreenElement||cabinet.classList.contains('expanded')?'EXIT':'EXPAND';
+  updateExpansion();
   touch.clear();
 });
 $('#pause').onclick=()=>{pending|=8;$('#screen').focus();};
@@ -137,7 +144,8 @@ $('#export').onclick=()=>{
 try {
   presenter=await createPresenter($('#screen'),kind=>{
     document.documentElement.dataset.renderer=kind;
-    status.textContent=kind+(game?' · WASM · __BUILD__':' · Loading original game assets…');
+    status.textContent=game?kind+' · WASM · __BUILD__':'Loading game…';
+    status.hidden=!!game && !debug;
   });
   game=await createWorldWarrior({
     locateFile:path=>path+'?v=__BUILD__',
@@ -147,9 +155,10 @@ try {
   if(!game._ww_web_init())throw new Error('Engine initialization failed');
   restore();game._ww_web_step(0);savedHighScore=game._ww_web_state(19);
   const pointer=game._ww_web_pixels();presenter.draw(game.HEAPU8.subarray(pointer,pointer+256*224*4));
-  play.disabled=false;play.textContent='PLAY';
+  play.disabled=false;play.textContent='Play';
   $('#export').disabled=false;
   status.textContent=presenter.kind+' · WASM · __BUILD__';
+  status.hidden=!debug;
   requestAnimationFrame(animate);
 } catch(error) {failure(error);}
 

@@ -221,7 +221,7 @@ To move from an older portable build, copy its `saves/smw.srm` to the location
 above. An existing local `saves/smw.srm` is also read automatically when no
 user-account save exists. The first new save writes to your user account.
 
-In the browser, use **Export Save** to download `smw.srm`. It can be copied to
+In the browser, open **Controls & help → Export save** to download `smw.srm`. It can be copied to
 one of the native locations above. Browser storage is separate for each site
 and device; clearing site data removes its save. Browser save import is not
 currently exposed in the player UI.

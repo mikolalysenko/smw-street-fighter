@@ -97,7 +97,7 @@ it, or **Up** to throw upward. Mobility specials reset when you land, swim or cl
 ## Saves and continues
 
 Progress saves at the original Mario save points. High scores save immediately.
-Browser saves stay in that browser on that device; **Export Save** makes a backup.
+Browser saves stay in that browser on that device; **Controls & help → Export save** makes a backup.
 Desktop saves live in your user account, outside the install folder, so replacing
 a release keeps them. [Save locations and moving an older save →](docs/PLAYING.md#saves)
 

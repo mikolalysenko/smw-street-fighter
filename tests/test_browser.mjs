@@ -85,6 +85,16 @@ async function inspect(name,browser,options,phone) {
   assert.equal((await diagnostics()).phone,phone);
   assert.equal((await diagnostics()).debug,false);
   assert.equal(await page.locator('[data-debug]').isVisible(),false);
+  const repository=page.locator('#cabinet .repo-link');
+  assert.equal(await repository.getAttribute('href'),'https://github.com/mikolalysenko/smw-street-fighter');
+  assert.equal(await repository.getAttribute('target'),'_blank');
+  assert(await repository.isVisible(),'The player links directly back to the repository');
+  if(name==='desktop') {
+    await page.locator('#help summary').focus();await page.keyboard.press('Enter');
+    assert(await page.locator('#help').evaluate(el=>el.open));
+    assert(!(await diagnostics()).running,'Opening help with Enter does not start the game');
+    await page.keyboard.press('Enter');
+  }
   await page.locator('#play').click();
   await page.waitForTimeout(1600);
   const state=await diagnostics();assert(state.running && state.frames>65 && state.audio==='running',JSON.stringify(state));
@@ -100,6 +110,12 @@ async function inspect(name,browser,options,phone) {
   if(name==='desktop') {
     const metadata=await page.locator('meta[property="og:image"]').getAttribute('content');
     assert(metadata.endsWith('/media/og-image.jpg'));
+    await page.locator('#fullscreen').click();
+    await page.waitForFunction(()=>document.fullscreenElement===document.querySelector('#cabinet'));
+    assert(await page.locator('#cabinet').evaluate(el=>document.fullscreenElement===el));
+    assert(await repository.isVisible(),'Repository link remains in fullscreen');
+    await page.locator('#fullscreen').click();
+    await page.locator('#teaser summary').click();
     const video=page.locator('#teaser-video');
     await video.scrollIntoViewIfNeeded();
     await video.evaluate(v=>v.play());
@@ -144,6 +160,9 @@ async function inspect(name,browser,options,phone) {
     await page.evaluate(()=>Object.defineProperty(document,'fullscreenEnabled',{value:false,configurable:true}));
     await page.locator('#touch-expand').click();
     assert(await page.locator('#cabinet').evaluate(el=>el.classList.contains('expanded')));
+    const link=await repository.boundingBox();
+    assert(link.x>=0 && link.y>=0 && link.x+link.width<=options.viewport.width+1 && link.y+link.height<=options.viewport.height+1,
+      'The GitHub link stays on screen in expanded phone mode');
     await page.screenshot({path:`build/browser-checks/${name}-expanded.png`});
     await page.locator('#touch-expand').click();
     // Safari suspends background audio: require a gesture to resume once.
@@ -172,6 +191,7 @@ try {
   for(const value of ['1','0','true']) {
     await page.goto(url+'?debug='+value);
     await page.waitForFunction(()=>!document.querySelector('#play').disabled);
+    await page.locator('#help summary').click();
     const debug=await page.evaluate(async()=>(await import(document.querySelector('script[type=module]').src)).diagnostics().debug);
     assert.equal(debug,value==='1');assert.equal(await page.locator('[data-debug]').isVisible(),value==='1');
   }
