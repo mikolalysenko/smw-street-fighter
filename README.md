@@ -43,9 +43,10 @@ enter a level. Each life starts
 with one super bar. Hits refill it; supers spend one to three complete bars.
 Health refills on level entry and meter carries between levels. Start opens
 Resume / Character Select / Akuma Battle / Quit Game during play. On death, the SF2 continue
-screen shows the defeated fighter and a ten-second countdown. Start/Jump retries
-the level; Back or letting the countdown expire returns to the map. Continues
-are unlimited and retain the selected fighter.
+screen shows the defeated fighter and a ten-second countdown. Start/Jump opens
+character select, then returns to the world map with the chosen fighter at full
+health and one super bar. Enter a level when ready. Back or letting the countdown
+expire returns directly to the map. Continues are unlimited.
 Character selection plays the original SF2 selection music. The title combines
 SMW's original lettering, scenery, demo and music with SF2's gold/red II and
 blue “The World Warrior” subtitle. Course clear shows the selected fighter.
@@ -54,8 +55,9 @@ Clearing without taking damage displays PERFECT with the original announcer voic
 **Jump to the final fight:** enter any level, press Enter/Start, choose
 **AKUMA BATTLE**, then confirm. You start with full health and three super bars.
 Bowser makes his entrance wearing Bison's hat before Akuma takes over the clown
-car. Continue retries this arena. Practice does not write game saves or records;
-returning to the map restores the score and lives from before practice.
+car. Continue opens character select and returns to the world map here too.
+Practice does not write game saves or records; returning to the map restores
+the score and lives from before practice.
 
 The title and gameplay HUD show your high score. SMW's normal points from
 enemies, pickups and the course-clear tally count; combat kills award the native
@@ -70,8 +72,8 @@ The transparent SF2 HUD keeps Mario's counters: **1P** is the current score,
 **HI** is the saved record, and the three-digit clock beneath **K.O.** is SMW's
 actual timer. The fighter portrait has lives underneath the name; the five
 round markers track Dragon Coins. The right bar fills toward a 100-coin **1UP**,
-then becomes the opponent's health bar in a boss room. Coins, bonus stars and
-the original reserve-item icon remain visible during boss fights. Bowser/Akuma
+then becomes the opponent's health bar in a boss room. Coins and bonus stars
+remain visible during boss fights. Bowser/Akuma
 has an unlimited clock, displayed as infinity. The bottom gauge shows super
 levels, and hit combos show their current points or extra-life award.
 
@@ -87,7 +89,6 @@ levels, and hit combos show their current points or extra-life award.
 | Extra special / Hurricane Kick | Down + Y | Down + A |
 | Super | RB | S |
 | Guard | LB | D |
-| Drop reserve item | LB + X | D + X |
 | Pause / confirm | Start | Enter |
 | Back / pause | Back | Escape |
 | Fullscreen | Launcher option | F11 |
@@ -100,7 +101,7 @@ Steam Input can map other controllers to this layout.
 | --- | --- | --- | --- |
 | Ryu | Hadouken | Shoryuken | Shinku Hadouken |
 | E. Honda | Sumo Headbutt | Hundred Hand Slap | Super Oni Musou |
-| Chun-Li | Lightning Legs | Spinning Bird Kick | Senretsukyaku |
+| Chun-Li | Kikoken | Spinning Bird Kick | Senretsukyaku |
 | Guile | Sonic Boom | Flash Kick | Sonic Hurricane |
 | Ken | Hadouken | Shoryuken | Shoryureppa |
 | Blanka | Rolling Attack | Vertical Roll | Ground Shave Roll |
@@ -119,17 +120,42 @@ activates a super. Honda, Guile, Blanka, Balrog, Vega and Bison accept back char
 then forward + Punch; Guile, Blanka, Vega and Bison accept down charge then
 up + Kick. Zangief accepts a three-quarter circle + Punch; Dhalsim accepts
 half-circle forward + Punch. Honda/Blanka's repeated punches and Chun-Li's
-repeated kicks trigger rapid attacks. Landed normals can cancel into specials; landed attacks can
+repeated kicks trigger rapid attacks. Keep tapping to sustain them indefinitely;
+Blanka also accepts repeated Down + Special for electricity. Chun-Li uses her
+own Kikoken projectile and voice, and Lightning Legs has a repeating kick swish.
+Honda’s headbutt
+flies horizontally, and Bison’s crouching kick slides forward. Dhalsim uses his
+long punches, including the crouching stretch, and his original low slide kick.
+Landed normals can cancel into specials; landed attacks can
 cancel into supers. These are forgiving platformer adaptations, not arcade
 frame data. Sonic Hurricane is a later-series move adapted to this prototype.
 
 Bison's **three-bar Psycho Crusher** is intentionally ridiculous: invulnerable
-flight, 999-damage hits, a huge original Alpha spin and blue-white wake, and a
+flight, 999-damage hits, an original Alpha spin and blue-white wake, and a
 combo that lasts until he lands. It flies to the actual goal or end of the room.
 Up/Down steer in horizontal rooms; Left/Right steer in vertical rooms. **Guard
 lands early**. Doors, pipes, exits and essential platforms keep working; a room
 without a goal still needs its normal exit. The camera and sprite loader continue
 running, so the native goal, score tally and overworld event finish normally.
+Forced scrolling accelerates during the flight and returns to normal on landing.
+Boss rooms retain their arena boundaries and damage rules.
+
+Mobility specials share **one use per jump**. Land, swim, or grab a climbable
+surface to reset it; attacking or hitting a wall does not grant another use.
+Ordinary punches, kicks and fireballs remain usable in the air.
+
+**High jump:** hold Down for about three quarters of a second, then Jump.
+Keep Jump held for height and steer in the air. Every fighter can reach Donut
+Plains 1's secret platform without the green switch blocks.
+Walk into a key or shell to pick it up, or hold Guard while touching it.
+It stays held when you stop and attack. **Guard + Punch** releases it; add
+Down to drop or Up to throw upward. Keys still activate the original keyholes.
+
+Zangief's **Up + Special** grabs nearby enemies and pipes. A successful grab
+launches, spins the held object upside down, and damages it only on landing.
+A whiff only reaches. **Super** can also grab Akuma with the entire clown car.
+Required objects and pipe entrances remain usable after their slam.
+Triangle blocks rotate the fighter into the wall run, with a walking cycle.
 
 Enemy contact causes health loss, hitstop, hit stun, knockback and SF2 hurt
 sounds. Death uses ripped fighter screams. Punches, kicks, specials and supers
@@ -139,7 +165,14 @@ hitboxes. Moving platforms preserve fighter visibility, and the original Yoshi
 renders both on foot and while ridden. Health and super gauges float over the
 level, without an opaque HUD strip.
 Mounted Hadoukens pass Yoshi. Punch activates his tongue; automatic running does
-not. Mushrooms restore 25 health without erasing damage from the PERFECT check.
+not. Mushrooms add one super bar, Fire Flowers add two, and Feathers fill all
+three. Pickups are consumed immediately; reserve items are disabled. They do
+not heal or change the fighter.
+
+Ryu and Ken’s fireballs originate at their palms, also in the air and on Yoshi.
+Shinku Hadouken uses the original Alpha “Shinku… Hadouken” voice sequence.
+Level one and two fireballs are larger; level three becomes a sustained beam
+that blasts across the stage. Small enemies still use forgiving hit detection.
 
 All normal sprite IDs and extended/cluster hazards accept attacks, including
 Chucks, Thwomps, wooden castle plungers and the layer-three crusher. Enemies
@@ -147,14 +180,17 @@ explode. Keys, exits, switches and essential platforms take a visual hit but
 retain their function. Terrain shows a single impact without erasing routes.
 Boss rooms have opposing health bars, a KO announcement and their original
 defeat/exit sequences. In the finale, Akuma assassinates Bowser, throws him
-upside down offscreen, and pilots the original clown car with faster sweeps,
-dives and aimed fireballs. Peach still throws mushrooms. Defeating Akuma starts
+upside down offscreen, and pilots the original clown car. Downward air fireballs,
+horizontal volleys, uppercuts and low-health barrages alternate with retreat,
+wind-up and recovery periods. Damage is capped at six per hit and twelve per
+wave, with health thresholds at two thirds and one third. Peach throws mushrooms
+from her hands during recovery. Defeating Akuma starts
 the original rescue and ending.
 
 ## Build from a fresh checkout
 
 Requirements: C/C++ compilers, Make, SDL2 development files, Git, Python 3 with
-venv support, CMake and ffmpeg. On macOS: `brew install sdl2 cmake ffmpeg` and Xcode command
+venv support, CMake, ffmpeg and bsdtar (libarchive-tools on Linux). On macOS: `brew install sdl2 cmake ffmpeg` and Xcode command
 line tools. Linux/Bazzite instructions are in [BAZZITE.md](docs/BAZZITE.md).
 
 ```sh
@@ -235,8 +271,11 @@ make test-play   # Original game boot + level/combat replay; assets required
 make test-bosses # Ten actual boss rooms, attacks, KO and native endings
 make test-movement # Jump/air attacks, Continue and original goal tape
 make test-presentation # Moving platforms, Yoshi and new/resumed file selection
-make test-hud    # Native timer/pause, coins, lives, reserve, max counters and HUD captures
+make test-hud    # Native timer/pause, coins, lives, meter pickups, max counters and HUD captures
 make test-roster # All twelve fighters: 17 ground/air actions, Bison's stage exit
+make test-collision # Pipe walls, both camera edges, rolls and slides
+make test-pipes     # Original bonus-room return entrances
+make test-specials  # Sustained attacks, horizontal headbutt, fireballs and beam
 make test-scroll # Bison in the original scrolling smasher room, through its door
 make test-animations # Packed art: both facings, strike timing, landing and freeze
 make audit-animations # Sprite contact sheets and loops in build/animation-audit

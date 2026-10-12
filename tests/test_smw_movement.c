@@ -1,5 +1,6 @@
 /* Exercise inputs through the actual SMW frame loop and level collision. */
 #include "ww_smw.h"
+#include "audio.h"
 #include "smw_rtl.h"
 #include "variables.h"
 #include "funcs.h"
@@ -12,6 +13,8 @@ static int tick,map_ticks,level_frames,phase=-1,phase_tick,home_x,home_y,peak;
 static int moving,attack_seen,shot_seen,rise_seen,death_ticks,continued;
 static int capture_walk,capture_air,capture_continue,capture_clear;
 static int covered_death_frames;
+static int continue_select_ticks,continue_selected,continue_map_ticks,old_level;
+static PointU16 old_node;
 static const uint32_t attacks[]={0,2,1u<<8,1u<<9,(1u<<9)|(1u<<4),2,1u<<8,1u<<9,(1u<<9)|(1u<<4),1u<<11};
 static const int moves[]={FC_IDLE,FC_JAB,FC_ROUNDHOUSE,FC_PROJECTILE,FC_RISING,FC_JAB,FC_ROUNDHOUSE,FC_PROJECTILE,FC_RISING,FC_SUPER_MOVE};
 int ww_upstream_main(int,char**);
@@ -22,8 +25,32 @@ uint32_t ww_test_input(void) {
   }
   if(phase==10) {
     ++death_ticks;
+    const char *action=getenv("WW_TEST_CONTINUE");
+    bool accept=!action || (strcmp(action,"map") && strcmp(action,"timeout"));
+    if(fc_audio_selection_active()) {
+      assert(accept && misc_game_mode==0x0e);
+      if(++continue_select_ticks==3)return 128;
+      if(continue_select_ticks==8){continue_selected=1;return 1;}
+      return 0;
+    }
+    if(misc_game_mode==0x0e) {
+      if(accept && !continue_selected)return 0;
+      if(!accept && death_ticks<650)return 0;
+      assert(ow_players_pos[0].x==old_node.x && ow_players_pos[0].y==old_node.y);
+      ++continue_map_ticks;
+      /* Hold the same Jump used to confirm selection, then wait on the map.
+       * Only a new press after release may re-enter the original node. */
+      if(accept && continue_map_ticks<=30)return 1;
+      return continue_map_ticks>90 && continue_map_ticks%30==1?1:0;
+    }
     if(ww_enabled() && player_current_state==0 && f->hp>0) {
-      if(!continued) {assert(f->character==FC_RYU && f->hp==100);puts("Continue returned to the same fighter and level.");}
+      if(!continued) {
+        assert(continue_map_ticks>90 && ow_level_number_lo==old_level);
+        assert(f->character==(accept?FC_HONDA:FC_RYU));
+        assert(f->hp==fc_roster[f->character].vitality && f->meter==100);
+        puts(accept?"Continue selected Honda, stayed on the world map, then entered the same node.":
+          "Declining Continue returned to the map; the original node remains playable.");
+      }
       ++continued;
       if(continued==50) {
         /* Goal tape fixture in the original loaded level: native contact
@@ -33,9 +60,7 @@ uint32_t ww_test_input(void) {
       }
       return continued<60?1u<<7:0;
     }
-    const char *action=getenv("WW_TEST_CONTINUE");
     if(action && (!strcmp(action,"map") || !strcmp(action,"timeout"))) {
-      if(death_ticks>650 && misc_game_mode==0x0e)return death_ticks%30==0?1:0;
       return !strcmp(action,"map") && death_ticks==50?4:0;
     }
     return death_ticks==50?8:0;
@@ -72,7 +97,10 @@ uint32_t ww_test_input(void) {
       if(phase==3 || phase==7 || phase==9)assert(shot_seen);
       if(phase==4 || phase==8)assert(rise_seen);
       phase++;phase_tick=0;
-      if(phase==10)DamagePlayer_Kill();
+      if(phase==10) {
+        old_level=ow_level_number_lo;old_node=ow_players_pos[0];
+        player_current_life_count=0;DamagePlayer_Kill(); /* Last-life game over. */
+      }
       return 0;
     }
     uint32_t b=phase_tick<19?1:0;
@@ -96,6 +124,8 @@ void ww_test_render(uint8_t *pixels,size_t pitch,int w,int h) {
   if(phase==0 && phase_tick==73 && !capture_walk++)save(pixels,pitch,w,h,"walk.bmp");
   if(phase==7 && phase_tick==18 && !capture_air++)save(pixels,pitch,w,h,"air-hadouken.bmp");
   if(death_ticks==40 && !capture_continue++)save(pixels,pitch,w,h,"continue.bmp");
+  if(continue_select_ticks==4)save(pixels,pitch,w,h,"continue-select.bmp");
+  if(continue_map_ticks==40)save(pixels,pitch,w,h,"continue-world-map.bmp");
   if(timer_end_level && continued>90 && !capture_clear++)save(pixels,pitch,w,h,"course-clear.bmp");
 }
 int main(void) {

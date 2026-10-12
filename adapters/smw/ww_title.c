@@ -15,7 +15,7 @@ void ww_title_reset(void) { ticks=brightness=0;active=saved_map=false; }
 void ww_title_tick(void) { ++ticks; }
 void ww_title_begin(Ppu *ppu) {
   /* The title demo fades back through modes 2/3 before restarting. */
-  active=fc_assets_ready() && ((misc_game_mode>=5 && misc_game_mode<=7) ||
+  active=fc_assets_ready() && ((misc_game_mode>=5 && misc_game_mode<=0x0a) ||
     (active && (misc_game_mode==2 || misc_game_mode==3)));
   saved_map=false;
   brightness=PPU_forcedBlank(ppu)?0:PPU_brightness(ppu);
@@ -57,7 +57,7 @@ bool ww_title_render(FcCanvas canvas,unsigned high_score) {
   memset(overlay,0,sizeof(overlay));FcCanvas title={overlay,256,224,256};
   for(int y=0;y<LOGO_H*4/5;y++)for(int x=0;x<LOGO_W*4/5;x++)
     overlay[(34+y)*256+20+x]=letters[(y*5/4)*LOGO_W+x*5/4];
-  fc_title(title,ticks,high_score);
+  if(misc_game_mode>=8)fc_title_art(title,high_score);else fc_title(title,ticks,high_score);
   for(int y=0;y<224 && y<canvas.h;y++)for(int x=0;x<256 && x<canvas.w;x++) {
     uint32_t color=overlay[y*256+x];
     if(color>>24)canvas.pixels[y*canvas.pitch+x]=0xff000000|

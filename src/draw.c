@@ -3,6 +3,7 @@
 #include <ctype.h>
 #include <stdio.h>
 #include <string.h>
+#include <math.h>
 
 /* Small original 5x7 bitmap alphabet. Each integer is one row. */
 static const uint8_t letters[36][7]={
@@ -67,8 +68,8 @@ void fc_dim(FcCanvas c,int amount) {
 static unsigned super_tick(const FcFight *f,int pose,unsigned t) {
   unsigned end=44+f->super_level*8;
   if(f->character==FC_RYU) {
-    if(t<2)return t*2;
-    return t<end?5+(t-2)%13:18+(t-end)*7/8;
+    if(t<30)return t<3?t:4;
+    return t<end+30?5+(t-30)%13:18+(t-end-30)*7/8;
   }
   if(f->character==FC_GUILE) {
     unsigned last=f->super_level>1?30:16;
@@ -108,6 +109,12 @@ FcAnimation fc_animation(const FcFight *f) {
       pose=super_pose[f->character];
       tick=f->flash?0:super_tick(f,pose,tick);
     }
+    if(fc_piledriver(f)) {
+      pose=FC_POSE_THROW;
+      if(f->grabbed>=0)tick=14+(unsigned)f->grab_tick%21;
+      else if(f->grab_slam)tick=35+(f->move_tick>36?(unsigned)f->move_tick-36:0);
+      else tick=f->move_tick<11?(unsigned)f->move_tick:4;
+    }
   } else if(!f->body.grounded){
     pose=f->jump_forward?FC_POSE_JUMP_FORWARD:FC_POSE_JUMP;
     unsigned duration=fc_sprite_duration(f->character,pose),half=duration/2;
@@ -129,19 +136,30 @@ void fc_fighter(FcCanvas c,const FcFight *f,int x,int feet,int scale,uint32_t ti
      * whose wake stretches offscreen, with the original Alpha spin at its tip. */
     int length=f->move_tick*12;if(length>c.w)length=c.w;
     int cy=feet-26,pulse=(f->tick/4)%3;
-    for(int dy=-30;dy<=30;dy++) {
-      int a=dy<0?-dy:dy;if(a>28+pulse)continue;
-      uint32_t color=a>23?0x6757d9:a>18?0x439bff:a>15?0x8af6ff:0xf0ffff;
-      int nose=20-(a*a)/40;
+    for(int dy=-22;dy<=22;dy++) {
+      int a=dy<0?-dy:dy;if(a>20+pulse)continue;
+      uint32_t color=a>16?0x6757d9:a>12?0x439bff:a>10?0x8af6ff:0xf0ffff;
+      int nose=14-(a*a)/32;
       int left=f->facing>0?x-length:x-nose;
       fc_rect(c,left,cy+dy,length+nose,1,color);
     }
-    fc_sprite(c,0,FC_POSE_PSYCHO,f->tick,x,cy,f->facing,scale,2,tint);
+    fc_sprite(c,0,FC_POSE_PSYCHO,f->tick,x,cy,f->facing,scale,3,tint);
     return;
   }
   if(f->move==FC_TELEPORT && f->move_tick>5 && f->move_tick<19)
     tint=(f->tick/3)%2?0x9b6ed3:0x413063;
   fc_sprite(c,f->character,pose,tick,x,feet,f->facing,scale,2,tint);
+}
+void fc_fighter_rotated(FcCanvas c,const FcFight *f,int x,int feet,int degrees) {
+  uint32_t pixels[192*192]={0};
+  fc_fighter((FcCanvas){pixels,192,192,192},f,96,96,1,0);
+  float angle=degrees*0.01745329252f,cs=cosf(angle),sn=sinf(angle);
+  for(int y=-96;y<96;y++)for(int dx=-96;dx<96;dx++) {
+    int sx=(int)lroundf(dx*cs+y*sn)+96,sy=(int)lroundf(-dx*sn+y*cs)+96;
+    if(sx<0 || sx>=192 || sy<0 || sy>=192)continue;
+    uint32_t p=pixels[sy*192+sx];int px=x+dx,py=feet+y;
+    if(p && px>=0 && px<c.w && py>=0 && py<c.h)c.pixels[py*c.pitch+px]=p;
+  }
 }
 void fc_effects(FcCanvas c,const FcFight *f,float camx,float camy) {
   if(f->flash) {
@@ -153,7 +171,26 @@ void fc_effects(FcCanvas c,const FcFight *f,float camx,float camy) {
   for(int i=0;i<FC_MAX_SHOTS;i++)if(f->shots[i].ttl) {
     const FcShot *p=&f->shots[i];int x=(int)(p->box.x-camx),y=(int)(p->box.y-camy);
     int w=(int)p->box.w,h=(int)p->box.h;
-    fc_sprite(c,f->character,FC_POSE_SHOT,f->tick,x+w/2,y+h/2,p->vx>0?1:-1,p->super?2:1,2,0);
+    if(p->beam) {
+      int cy=y+h/2,tail=p->vx>0?x:x+w,tip=p->vx>0?x+w:x;
+      int fade=p->ttl<10?p->ttl:10,r=h*fade/20;
+      /* Pixel bands form a widening blue-white blast, with the original
+       * Hadouken at its source and nose. Clip the length before drawing. */
+      int left=x<0?0:x,right=x+w>c.w?c.w:x+w;
+      if(left>=right)continue;
+      for(int dy=-r;dy<=r;dy++) {
+        int a=dy<0?-dy:dy;
+        uint32_t color=a>r-3?0x5364ec:a>r-8?0x3aafff:a>r-13?0x9befff:0xf1ffff;
+        fc_rect(c,left,cy+dy,right-left,1,color);
+      }
+      for(int j=0;j<6;j++) {
+        int streak=(int)((f->tick*13+j*47)%((unsigned)c.w+80))-40;
+        int begin=streak<left?left:streak,finish=streak+22>right?right:streak+22;
+        if(begin<finish)fc_rect(c,begin,cy-r+4+j*(r>12?(r*2-8)/6:2),finish-begin,2,0xc7ffff);
+      }
+      fc_sprite(c,f->character,FC_POSE_SHOT,f->tick,tail,cy,p->vx>0?1:-1,2,2,0);
+      fc_sprite(c,f->character,FC_POSE_SHOT,f->tick,tip,cy,p->vx>0?1:-1,4,2,0);
+    } else fc_sprite(c,f->character,FC_POSE_SHOT,f->tick,x+w/2,y+h/2,p->vx>0?1:-1,p->super?3:1,2,0);
   }
   for(int i=0;i<FC_MAX_SPARKS;i++)if(f->sparks[i].ttl) {
     const FcSpark *s=&f->sparks[i];
@@ -191,13 +228,16 @@ static void arcade_center(FcCanvas c,int y,const char *s,bool big) {
   int width=0;for(const char *p=s;*p;p++)width+=big?(*p=='W'?19:13):8;
   arcade_text(c,(c.w-width)/2,y,s,big);
 }
-void fc_title(FcCanvas c,unsigned tick,unsigned high_score) {
+void fc_title_art(FcCanvas c,unsigned high_score) {
   /* Exact SF2 title art beside the original SMW lettering. */
   fc_sprite(c,0,FC_POSE_TITLE_II,0,192,36,1,2,3,0);
   fc_sprite(c,0,FC_POSE_TITLE_SUBTITLE,0,32,111,1,4,5,0);
-  if(tick%90<65)arcade_center(c,139,"PRESS START",false);
   char text[32];snprintf(text,sizeof(text),"HI SCORE %07u",high_score);
   arcade_center(c,19,text,false);
+}
+void fc_title(FcCanvas c,unsigned tick,unsigned high_score) {
+  fc_title_art(c,high_score);
+  if(tick%90<65)arcade_center(c,139,"PRESS START",false);
 }
 static void hud_text(FcCanvas c,int x,int y,const char *s) {
   for(;*s;s++,x+=8) {
@@ -268,8 +308,6 @@ void fc_battle_hud(FcCanvas c,const FcFight *f,const FcOpponent *o,const FcStage
     snprintf(text,sizeof(text),"%02d",s->bonus_stars);hud_text(c,c.w-93,42,text);
     hud_icon(c,c.w-65,42,s->coin_icon);
     snprintf(text,sizeof(text),"%02d",s->coins);hud_text(c,c.w-55,42,text);
-    frame(c,c.w-30,28,22,22,0x080808);frame(c,c.w-29,29,20,20,0xefedd5);
-    hud_icon(c,c.w-27,31,s->reserve_icon);
   }
   /* A slim arcade gauge with slanted ends, one continuous fill and SUPER
    * lettering over the bezel. Small ticks mark the three Alpha-style levels. */

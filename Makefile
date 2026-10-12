@@ -9,7 +9,7 @@ SDL_LIBS = $(shell $(SDL_CONFIG) --libs)
 CORE = src/fight.c
 MEDIA = src/draw.c src/audio.c src/assets.c
 
-.PHONY: all dojo run tv test sanitize smoke capture smw test-smw test-play test-bosses test-movement test-presentation test-hud test-audio test-animations audit-animations test-roster test-scroll assets original-assets package clean web serve-web test-web
+.PHONY: all dojo run tv test sanitize smoke capture smw test-smw test-play test-bosses test-movement test-presentation test-hud test-audio test-animations audit-animations test-roster test-scroll test-collision test-pipes test-specials test-entrances test-grapple test-carry test-wallrun assets original-assets package clean web serve-web test-web
 all: smw
 dojo: build/world-warrior-dojo
 build:
@@ -71,8 +71,23 @@ test-hud: smw
 	$(PYTHON) scripts/test_smw_play.py --hud
 test-roster: smw
 	$(PYTHON) scripts/test_smw_play.py --roster
+test-collision: smw
+	$(PYTHON) scripts/test_smw_play.py --collision
+test-pipes: smw
+	$(PYTHON) scripts/test_smw_play.py --pipes
+test-specials: smw
+	$(PYTHON) scripts/test_smw_play.py --specials
 test-scroll: smw
 	$(PYTHON) scripts/test_smw_play.py --scroll
+test-entrances: smw
+	$(PYTHON) scripts/test_smw_play.py --entrances
+test-grapple: smw
+	$(PYTHON) scripts/test_smw_play.py --grapple
+	$(PYTHON) scripts/test_smw_play.py --final-grapple
+test-carry: smw
+	$(PYTHON) scripts/test_smw_play.py --carry
+test-wallrun: smw
+	$(PYTHON) scripts/test_smw_play.py --wallrun
 test-audio: | build
 	$(CC) $(CPPFLAGS) $(CFLAGS) -DFC_AUDIO_MANUAL $(SDL_CFLAGS) src/audio.c tests/test_audio.c -o build/test-audio $(SDL_LIBS) -lm
 	SDL_AUDIODRIVER=dummy ./build/test-audio

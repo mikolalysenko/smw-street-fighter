@@ -25,6 +25,18 @@ static void enemy(int slot,int id) {
   InitializeNormalSpriteRAMTables((uint8)slot);
   SetSprXYPos((uint8)slot,118,114);
 }
+static void test_projectile_height(void) {
+  for(int character=FC_RYU;character<=FC_KEN;character+=FC_KEN-FC_RYU) {
+    for(int y=-32;y<=96;y+=32) {
+      enter();FcFight *f=(FcFight*)ww_fight_state();fc_init(f,character);
+      player_ypos=(uint16)y;player_in_air_flag=1;
+      frame(1u<<9);
+      for(int t=0;t<5;t++)frame(0);
+      assert(f->shots[0].ttl>0);
+      assert(f->shots[0].box.y==y+32-30-10);
+    }
+  }
+}
 static void test_all_targets(void) {
   int hits=0;
   for(int id=0;id<=0xc8;id++) {
@@ -32,7 +44,7 @@ static void test_all_targets(void) {
     FcFight f;fc_init(&f,FC_RYU);FcTarget targets[WW_TARGET_COUNT];
     ww_targets_collect(&f,targets);assert(targets[0].active);
     FcBox b=targets[0].box;
-    FcBody player={{b.x-30,b.y+b.h/2-20,16,32},1,true};
+    FcBody player={{b.x-30,b.y+b.h/2-20,16,32},1,true,false,false};
     bool hit=false;
     for(int tick=0;tick<40;tick++) {
       ww_targets_collect(&f,targets);
@@ -54,14 +66,14 @@ static void test_all_targets(void) {
   cluster_spr_spriteid[0]=4;cluster_spr_xpos_lo[0]=170;cluster_spr_ypos_lo[0]=120;
   FcFight f;fc_init(&f,0);f.meter=100;FcTarget t[WW_TARGET_COUNT];
   for(int i=0;i<90;i++) {
-    ww_targets_collect(&f,t);fc_tick(&f,i?0:FC_SUPER,(FcBody){{100,100,16,32},1,true},t,WW_TARGET_COUNT);
+    ww_targets_collect(&f,t);fc_tick(&f,i?0:FC_SUPER,(FcBody){{100,100,16,32},1,true,false,false},t,WW_TARGET_COUNT);
     ww_targets_apply(&f,t);
   }
   assert(!ext_spr_spriteid[0] && !cluster_spr_spriteid[0]);
   printf("Hadouken hit all %d normal sprite IDs; all Chucks, extended and cluster hazards exploded.\n",hits);
 }
 static void test_progression_objects(void) {
-  const int ids[]={0x0e,0x2f,0x35,0x3e,0x49,0x4a,0x55,0x60,0x61,0x79,0x7b,0x80,0x8d,0xc0};
+  const int ids[]={0x0e,0x2f,0x35,0x3e,0x49,0x4a,0x55,0x60,0x61,0x79,0x7b,0x80,0x8d,0xa3,0xc0};
   for(unsigned i=0;i<sizeof(ids)/sizeof(ids[0]);i++) {
     memset(g_ram,0,0x20000);ww_targets_reset();enemy(0,ids[i]);
     FcFight f;fc_init(&f,0);FcTarget t[WW_TARGET_COUNT];ww_targets_collect(&f,t);
@@ -72,20 +84,39 @@ static void test_progression_objects(void) {
     assert(t[0].active && t[0].hp==1);
   }
 }
+static void test_swinging_balls(void) {
+  const int expected[4][2]={{0,80},{80,0},{0,-80},{-80,0}};
+  for(int phase=0;phase<4;phase++) {
+    memset(g_ram,0,0x20000);ww_targets_reset();enemy(0,0x9e);
+    SetSprXYPos(0,200,160);spr_table187b[0]=80;
+    FcFight f;fc_init(&f,FC_RYU);FcTarget t[WW_TARGET_COUNT];
+    spr_table187b[0]=0;ww_targets_collect(&f,t);FcBox pivot=t[0].box;
+    spr_table187b[0]=80;spr_table1602[0]=(phase*128)&255;spr_table151c[0]=(phase*128)>>8;
+    ww_targets_collect(&f,t);FcBox ball=t[0].box;
+    assert(ball.x==pivot.x+expected[phase][0] && ball.y==pivot.y+expected[phase][1]);
+    FcBody b={{ball.x-48,ball.y+ball.h/2-2,16,32},1,true,false,false};
+    f.meter=100;
+    for(int i=0;i<95;i++) {
+      ww_targets_collect(&f,t);fc_tick(&f,i?0:FC_SUPER,b,t,WW_TARGET_COUNT);ww_targets_apply(&f,t);
+    }
+    assert(!spr_current_status[0]);assert(GetSprXPos(0)==200 && GetSprYPos(0)==160);
+  }
+}
 static void test_mount_and_perfect(void) {
   enter();enemy(0,0x35);enemy(1,0x0f);SetSprXYPos(1,160,114);player_riding_yoshi_flag=1;
   FcFight f;fc_init(&f,0);FcTarget t[WW_TARGET_COUNT];
   for(int i=0;i<50;i++) {
     ww_targets_collect(&f,t);assert(!t[0].active);
-    fc_tick(&f,i?0:FC_SPECIAL,(FcBody){{100,100,16,32},1,true},t,WW_TARGET_COUNT);
+    fc_tick(&f,i?0:FC_SPECIAL,(FcBody){{100,100,16,32},1,true,false,false},t,WW_TARGET_COUNT);
     ww_targets_apply(&f,t);
   }
   assert(spr_current_status[0]==8 && !spr_current_status[1]);
   for(int i=0;i<20;i++){uint32_t input=i%2?0:128;ww_before_frame(&input);assert(!ww_yoshi_tongue_pressed());}
   frame(2);assert(ww_yoshi_tongue_pressed());frame(2);assert(!ww_yoshi_tongue_pressed());
   enter();timer_end_level=255;assert(ww_perfect_clear());
-  enter();assert(ww_take_damage(12,1));ww_mushroom();assert(ww_fight_state()->hp==100);
-  timer_end_level=255;assert(!ww_perfect_clear()); /* Healing never erases a hit. */
+  enter();assert(ww_take_damage(12,1));assert(ww_powerup(0x74));
+  assert(ww_fight_state()->hp==88 && ww_fight_state()->meter==208);
+  timer_end_level=255;assert(!ww_perfect_clear()); /* A pickup never erases a hit. */
   enter();timer_end_level=255;assert(ww_perfect_clear());
 }
 static void test_scenery(void) {
@@ -95,7 +126,7 @@ static void test_scenery(void) {
     enter();misc_screens_in_lvl=1;FcFight f;fc_init(&f,0);
     unsigned p=GetLevelLayoutPtr_Horizontal(0)+0x60+8;
     g_ram[p]=solid?0x30:0x41;g_ram[p+0x10000]=solid?1:0;
-    f.shots[0]=(FcShot){{108,92,20,20},4,20,1,1,false,0,false};
+    f.shots[0]=(FcShot){.box={108,92,20,20},.vx=4,.ttl=20,.damage=1,.pierce=1};
     ww_scenery_hits(&f);
     assert(f.shots[0].ttl==20 && f.shots[0].scenery_hit==!!solid);
     assert(!!f.blasts[0].ttl==!!solid);
@@ -105,7 +136,7 @@ static void test_combo_score(void) {
   enter();FcFight f;fc_init(&f,FC_BISON);f.move=FC_SUPER_MOVE;f.super_level=3;
   player_current_life_count=4;
   FcTarget t[12];for(int k=0;k<12;k++)t[k]=(FcTarget){{118,110,16,20},1,true,false,0,0};
-  fc_tick(&f,0,(FcBody){{100,100,16,32},1,true},t,12);ww_combat_score(&f);
+  fc_tick(&f,0,(FcBody){{100,100,16,32},1,true,false,false},t,12);ww_combat_score(&f);
   assert(ww_score()==16400 && misc_1up_handler==12);
   /* Rendering every popup past its original award time must not pay twice. */
   for(int i=0;i<50;i++)ProcessScoreSprites();
@@ -176,28 +207,41 @@ static void test_practice_menu(void) {
   player_mario_score_lo=90;
   DamagePlayer_Kill();for(int i=0;i<32;i++)frame(0);frame(8);
   misc_game_mode=0x0e;frame(0);
-  assert(ww_practicing() && misc_game_mode==0x0f); /* Retry arena, not the old node. */
+  assert(!ww_practicing() && misc_game_mode==0x0e && fc_audio_selection_active());
+  assert(ww_score()==120 && player_current_life_count==4);
+  frame(0);frame(8);frame(0); /* Choose the fighter, then stay on the map. */
   misc_game_mode=0x14;player_current_state=0;frame(0);
-  assert(ww_fight_state()->hp==100 && ww_fight_state()->meter==300);
+  assert(ww_fight_state()->hp==100 && ww_fight_state()->meter==100);
   DamagePlayer_Kill();for(int i=0;i<32;i++)frame(0);frame(4);
   misc_game_mode=0x0e;frame(0);
   assert(!ww_practicing() && ww_score()==120 && player_current_life_count==4);
 }
-static void test_reserve_capacity(void) {
-  enter();
-  for(int k=0;k<12;k++)enemy(k,k==10?0xa0:0x0f);
-  player_current_item_box=1;frame(1024|2);
-  assert(player_current_item_box==1 && spr_spriteid[10]==0xa0 && spr_spriteid[11]==0x0f);
-  /* Once a slot opens, the same input uses the native falling-item path. */
-  frame(0);spr_current_status[11]=0;frame(1024|2);
-  assert(!player_current_item_box && spr_spriteid[11]==0x74 && spr_current_status[11]==8);
-  assert(spr_spriteid[10]==0xa0 && spr_current_status[10]==8);
+static void test_meter_pickups(void) {
+  const int sprites[]={0x74,0x75,0x77},gains[]={100,200,300},meters[]={0,75,250,300};
+  for(int item=0;item<3;item++)for(int m=0;m<4;m++)for(int power=0;power<4;power++) {
+    enter();FcFight *f=(FcFight*)ww_fight_state();f->hp=60;f->meter=meters[m];
+    player_current_power_up=power;player_current_item_box=players_item_box[0]=players_item_box[1]=4;
+    enemy(11,sprites[item]);spr_decrementing_table1540[11]=0;
+    SprXXX_PowerUps_01C4BF(11); /* Actual collection, score and sound path. */
+    int expected=meters[m]+gains[item];if(expected>300)expected=300;
+    assert(f->meter==expected && f->hp==60 && !spr_current_status[11]);
+    assert(!player_current_item_box && !players_item_box[0] && !players_item_box[1]);
+    assert(player_current_power_up==1 && !player_current_state && !flag_sprites_locked);
+    assert(io_sound_ch1==10);
+  }
+  enter();enemy(11,0x76);spr_decrementing_table1540[11]=0;SprXXX_PowerUps_01C4BF(11);
+  assert(timer_star_power==255 && ww_fight_state()->meter==100);
+  assert(!ww_powerup(0x78)); /* 1UPs still use the original handler. */
+  enter();enemy(10,0xa0);player_current_item_box=players_item_box[0]=players_item_box[1]=1;
+  frame(1024|2);assert(!player_current_item_box && !players_item_box[0] && !players_item_box[1]);
+  assert(!spr_current_status[11] && spr_spriteid[10]==0xa0);
+  puts("Power-ups: mushroom +1, flower +2, feather +3 bars; cap, no reserve or transformations passed.");
 }
 static void test_castle_plungers(void) {
   for(int id=0xac;id<=0xad;id++)for(int height=8;height<=72;height+=32) {
     memset(g_ram,0,0x20000);ww_targets_reset();enemy(0,id);SetSprXYPos(0,140,80);
     FcFight f;fc_init(&f,0);FcTarget t[WW_TARGET_COUNT];
-    FcBody player={{102,80+height-20,16,32},1,false};
+    FcBody player={{102,80+height-20,16,32},1,false,false,false};
     for(int tick=0;tick<30;tick++) {
       ww_targets_collect(&f,t);fc_tick(&f,tick?0:FC_SPECIAL,player,t,WW_TARGET_COUNT);ww_targets_apply(&f,t);
     }
@@ -264,19 +308,25 @@ int main(void) {
   assert(io_music_ch1==0); /* Original Mario death jingle is replaced. */
   for(int i=0;i<32;i++)frame(0);
   frame(8); /* Accept the new arcade continue before the map transition. */
-  misc_game_mode=0x0e;assert(frame(0));
+  misc_game_mode=0x0e;assert(!frame(0));assert(fc_audio_selection_active());
+  assert(!frame(128));assert(!frame(0));assert(!frame(1)); /* Pick Honda, confirm with Jump. */
+  assert(!fc_audio_selection_active() && ww_fight_state()->character==FC_HONDA);
+  for(int i=0;i<45;i++) {
+    uint32_t held=1;assert(ww_before_frame(&held));assert(!held); /* Never auto-enter. */
+  }
+  assert(frame(0));uint32_t press=1;assert(ww_before_frame(&press) && press==1);
   player_current_state=0;flag_sprites_locked=0;timer_player_hurt=0;
   misc_game_mode=0x14;assert(frame(0));
-  assert(ww_fight_state()->hp==100 && ww_fight_state()->meter==100);
+  assert(ww_fight_state()->hp==125 && ww_fight_state()->meter==100);
   assert(!frame(8));assert(!frame(0));assert(!frame(8)); /* Controller pause/resume. */
   assert(frame(0));
   /* A turn + attack uses this frame's direction and preserves held air jump. */
   enter();player_in_air_flag=1;uint32_t input=(1u<<6)|(1u<<9)|1;
   ww_before_frame(&input);assert(ww_fight_state()->facing==-1);
   assert((input&1) && !ww_fight_state()->override_x);
-  test_all_targets();test_progression_objects();test_castle_plungers();test_bosses();
+  test_projectile_height();test_all_targets();test_progression_objects();test_swinging_balls();test_castle_plungers();test_bosses();
   test_mount_and_perfect();test_scenery();test_combo_score();test_psycho_exits();test_psycho_camera();test_practice_menu();
-  test_reserve_capacity();
+  test_meter_pickups();
   fc_audio_shutdown();SDL_Quit();puts("SMW bridge: broad targeting, progression objects, boss deaths, slot reuse, hurt, movement, transitions, KO and pause passed.");
   return 0;
 }

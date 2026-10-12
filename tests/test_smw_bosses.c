@@ -15,6 +15,7 @@
 static int tick,map_ticks,base_frames,room_frames,level,warped,entered;
 static int hadouken_hits,super_hits,ko_seen,end_seen,last_mode=-1,last_hp;
 static int rise_hits,phases,peach_mushrooms,demon_shots;
+static int patterns,attack_mask,last_serial,last_attack=-1,quiet_frames,downward_shots;
 int ww_upstream_main(int argc,char **argv);
 uint32_t ww_test_input(void) {
   ++tick;FcFight *f=(FcFight*)ww_fight_state();const FcOpponent *boss=ww_opponent();
@@ -56,6 +57,24 @@ uint32_t ww_test_input(void) {
     int phase=ww_final_phase();if(phase>=0)phases|=1<<phase;
     for(int k=0;k<12;k++)if(spr_current_status[k]>=8 && spr_spriteid[k]==0x74)peach_mushrooms=1;
     for(int k=0;k<12;k++){FcTarget shot;if(ww_final_target(k,&shot))demon_shots=1;}
+    if(patterns && phase==WW_FINAL_FIGHT && ww_final_tick()<3100) {
+      timer_star_power=timer_player_hurt=32;player_xpos=64;player_ypos=160;player_yspeed=0;
+      int a=ww_final_attack(),at=ww_final_attack_tick();attack_mask|=1<<a;
+      int newest=last_serial;
+      for(int j=0;j<12;j++){FcTarget t;int id=ww_final_target(j,&t);if(id>newest)newest=id;}
+      if((a==WW_AKUMA_RETREAT || a==WW_AKUMA_PAUSE || a==WW_AKUMA_RECOVER) && a==last_attack && at>1) {
+        assert(newest==last_serial);quiet_frames++;
+      }
+      if(a==WW_AKUMA_AIR && newest>last_serial)downward_shots++;
+      last_serial=newest;last_attack=a;
+      int desired=ww_final_tick()<1000?72:ww_final_tick()<2000?48:24;
+      if(boss->hp>desired && ww_final_vulnerable()) {
+        FcTarget t[WW_TARGET_COUNT];ww_targets_collect(f,t);
+        for(int j=0;j<12;j++)if(ww_final_controls(j)) {t[j].hit=true;t[j].hp=desired;}
+        ww_targets_apply(f,t);
+      }
+      return 0;
+    }
   }
   timer_star_power=32;timer_player_hurt=32;
   if(boss->active && last_hp>boss->hp) {
@@ -83,6 +102,10 @@ uint32_t ww_test_input(void) {
       break;
     }
     if(room_frames%60==0 && !flag_sprites_locked && !player_current_state) {
+      /* This fixture repositions next to each boss instead of traversing
+       * its arena. Supply a landing between attacks as well; real airtime
+       * limits are exercised separately with unassisted native physics. */
+      if(f->move==FC_IDLE)player_in_air_flag=0;
       if(!rise_hits)return (1u<<9)|(1u<<4);
       if(hadouken_hits<2)return 1u<<9;
       f->meter=300;return 1u<<11;
@@ -91,6 +114,11 @@ uint32_t ww_test_input(void) {
   return 0;
 }
 void ww_test_render(uint8_t *pixels,size_t pitch,int w,int h) {
+  if(patterns && ww_final_phase()==WW_FINAL_FIGHT && (ww_final_attack_tick()==40 || ww_final_attack_tick()==55)) {
+    char name[80];snprintf(name,sizeof(name),"akuma-wave-%d-%d.bmp",ww_final_attack(),ww_final_attack_tick());
+    SDL_Surface *s=SDL_CreateRGBSurfaceFrom(pixels,w,h,32,(int)pitch,0xff0000,0xff00,0xff,0xff000000);
+    assert(s);assert(!SDL_SaveBMP(s,name));SDL_FreeSurface(s);
+  }
   if(level==0x1c7 && ((ww_final_phase()==WW_FINAL_INTRO && room_frames==700) ||
       (ww_final_phase()>WW_FINAL_INTRO && ww_final_tick()==30) ||
       (ww_final_phase()==WW_FINAL_DEMON && ww_final_tick()==95) ||
@@ -108,10 +136,12 @@ void ww_test_render(uint8_t *pixels,size_t pitch,int w,int h) {
 int main(void) {
   setvbuf(stdout,NULL,_IONBF,0);
   level=(int)strtol(getenv("WW_TEST_BOSS")?getenv("WW_TEST_BOSS"):"1f6",NULL,16);
+  patterns=getenv("WW_TEST_PATTERNS")!=NULL;
   char *args[]={"test-smw-bosses","--config","test-play.ini",NULL};
   int result=ww_upstream_main(3,args);
   printf("Boss %03x: uppercut hits %d, hadouken hits %d, super hits %d, KO %d, native ending %d\n",level,rise_hits,hadouken_hits,super_hits,ko_seen,end_seen);
   assert(entered && rise_hits && hadouken_hits && super_hits && ko_seen==1 && end_seen);
   if(level==0x1c7)assert((phases&31)==31 && peach_mushrooms && demon_shots);
+  if(patterns){printf("Akuma waves %x, quiet frames %d, air volleys %d\n",attack_mask,quiet_frames,downward_shots);assert(attack_mask==127 && quiet_frames>1000 && downward_shots>2);}
   return result;
 }

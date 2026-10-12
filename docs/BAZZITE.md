@@ -35,7 +35,7 @@ Bazzite machine, or clone it once a Git remote exists. In Desktop Mode:
 distrobox create --name world-warrior-dev --image docker.io/library/ubuntu:24.04
 distrobox enter world-warrior-dev
 sudo apt-get update
-sudo apt-get install -y build-essential libsdl2-dev python3 python3-venv cmake git ffmpeg
+sudo apt-get install -y build-essential libsdl2-dev python3 python3-venv cmake git ffmpeg libarchive-tools
 cd /absolute/path/to/smw-street-fighter
 git submodule update --init
 make original-assets

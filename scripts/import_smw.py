@@ -4,6 +4,8 @@ import hashlib
 from pathlib import Path
 import subprocess
 import sys
+import shutil
+import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
 SHA1 = '6b47bb75d16514b6a476aa0c73a683a2a4c18765'
@@ -30,8 +32,25 @@ def main():
         raise SystemExit('Run git submodule update --init references/smw first.')
     output = ROOT / 'local'
     output.mkdir(exist_ok=True)
-    # No ROM copied into this repository. Asset data is gitignored.
-    subprocess.run([sys.executable, str(tool), '--rom', str(path), '--no-include-rom'], cwd=output, check=True)
+    # The pinned extractor only included these four entrance tables for
+    # Lunar Magic ROMs, although the vanilla loader reads them on every
+    # secondary (return-pipe) entrance too. Patch a temporary tool copy;
+    # retain the pinned upstream checkout unchanged.
+    from prepare_smw import replace_once
+    with tempfile.TemporaryDirectory(prefix='smw-extract-') as folder:
+        copied=Path(folder)/'assets'
+        shutil.copytree(tool.parent,copied)
+        compiler=copied/'compile_resources.py';source=compiler.read_text()
+        for name,pointer,address in (('kLm5FE00','0x5DC81','0x5FE00'),
+                                     ('kLevelInfo_05F800','0xde191','0x5F800'),
+                                     ('kLevelInfo_05FA00','0xde198','0x5FA00'),
+                                     ('kLevelInfo_05FC00','0xde19f','0x5FC00')):
+            size='512' if name=='kLm5FE00' else '0x200'
+            old=f"add_asset_uint8('{name}', util.get_bytes(get_24({pointer}), {size}) if lm_load_level else b'')"
+            new=f"add_asset_uint8('{name}', util.get_bytes(get_24({pointer}) if lm_load_level else {address}, {size}))"
+            source=replace_once(source,old,new)
+        compiler.write_text(source)
+        subprocess.run([sys.executable,str(copied/'restool.py'),'--rom',str(path),'--no-include-rom'],cwd=output,check=True)
     print(f'Extracted {output / "smw_assets.dat"}; run make smw, then ./scripts/play-smw.sh')
 
 

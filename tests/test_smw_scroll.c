@@ -10,6 +10,7 @@
 static int tick,map_ticks,base_frames,warped,room_frames,done,max_camera;
 static int cancel_seen,restarted,landed;
 static int at_exit;
+static int last_camera,max_step,normal_frames,normal_steps,cancel_frame;
 int ww_upstream_main(int,char**);
 uint32_t ww_test_input(void) {
   ++tick;FcFight *f=(FcFight*)ww_fight_state();
@@ -32,6 +33,9 @@ uint32_t ww_test_input(void) {
     return 0;
   }
   ++room_frames;
+  int delta=mirror_current_layer1_xpos-last_camera;last_camera=mirror_current_layer1_xpos;
+  if(room_frames>40 && delta>max_step)max_step=delta;
+  if(cancel_seen && !restarted && room_frames>cancel_frame+2){normal_frames++;normal_steps+=delta;if(delta>1)fprintf(stderr,"Normal scroll n=%d delta=%d move=%d\n",room_frames,delta,f->move);assert(delta<=1);}
   if(room_frames==40) {fc_init(f,FC_BISON);f->meter=300;return 2048;}
   if(room_frames<40)return 0;
   if(player_current_state==9 || f->hp<=0) {
@@ -48,8 +52,8 @@ uint32_t ww_test_input(void) {
     player_xpos,player_ypos,mirror_current_layer1_xpos,mirror_current_layer1_ypos,f->move,f->move_tick);
   /* Cancel after the entry platform is long gone, then launch again. */
   if(!cancel_seen && max_camera>400 && f->move==FC_SUPER_MOVE)return 1024;
-  if(!cancel_seen && max_camera>400 && f->move==FC_IDLE)cancel_seen=1;
-  if(cancel_seen && !restarted && !player_in_air_flag) {
+  if(!cancel_seen && max_camera>400 && f->move==FC_IDLE){cancel_seen=1;cancel_frame=room_frames;}
+  if(cancel_seen && !restarted && room_frames-cancel_frame>=64 && !player_in_air_flag) {
     restarted=1;f->meter=300;return 2048;
   }
   if(restarted && f->move==FC_IDLE && !player_in_air_flag)landed=1;
@@ -67,5 +71,7 @@ int main(void) {
   setvbuf(stdout,NULL,_IONBF,0);char *args[]={"test-scroll","--config","test-play.ini",NULL};
   int result=ww_upstream_main(3,args);
   printf("Smasher autoscroll: camera=%d, cancel=%d, restart=%d, landing=%d\n",max_camera,cancel_seen,restarted,landed);
-  assert(done && cancel_seen && restarted && landed);return result;
+  assert(done && cancel_seen && restarted && landed && max_step>=6 && max_step<=8);
+  assert(normal_frames>=60 && normal_steps>0 && normal_steps<=normal_frames);
+  assert(room_frames<1300);return result;
 }

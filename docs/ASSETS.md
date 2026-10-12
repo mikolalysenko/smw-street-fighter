@@ -18,6 +18,9 @@ requires SHA-1 `6b47bb75d16514b6a476aa0c73a683a2a4c18765`. The locally rebuilt
 asset extractor then creates `local/smw_assets.dat` without embedding the ROM.
 The native engine reads the original level layouts, tiles, palettes, sprites,
 music and sound data. Levels are not approximated or redrawn.
+The extractor explicitly includes the original four secondary-entrance tables
+at $05F800–$05FFFF; the pinned upstream extractor omitted them for vanilla ROMs.
+Return pipes require these tables even without Lunar Magic.
 
 ## Street Fighter II
 
@@ -25,8 +28,8 @@ Fighter animations: [N64Mario's original SFII World Warrior sprite rip](http://g
 `config/sf2-motion-source.json` pins the sprite-only SFF archive by SHA-256.
 `scripts/sf2_motion_assets.py` reads its indexed images, shared palettes and
 signed axes as data. Vega's separate claw layer is composited at its original
-axis. One constant floor adjustment per fighter fits SMW's platform collision
-plane while preserving relative frame origins, including airborne spins.
+axis. Grounded poses align their lowest visible pixels with SMW's platform
+collision plane. Airborne frames retain their relative origins, including spins.
 `config/sf2-sprites.json` records the selected frame identifiers and durations.
 All twelve fighters use these original walking, jumping, crouching, normal
 attack and special-move frames. Forward and neutral jumps have separate clips.
@@ -48,13 +51,18 @@ rectangles from these supplementary sheets.
 `scripts/import_community_sf2.py` packs the selected frame records (including repeated
 frames, crouching attacks, portraits, original fonts, KO lettering, countdown
 lamps, victory poses, map, original title II/subtitle, small HUD portraits,
-system font, round markers and Alpha effects), 34 effects/voices and the selection/continue music.
+system font, round markers and Alpha effects), 39 effects/voices and the selection/continue music.
 It does not generate replacement
 art. All twelve SF2 fighters render at half arcade size to fit Mario's
 levels. Cropping, nearest-neighbor scaling and animation timings are adaptations.
+Chun-Li’s added Kikoken uses her two-palm strike frames with her own blue/yellow
+energy projectile, isolated from the pinned `chunny-fireball1212.gif` rip at
+[Fighters Generation](https://www.fightersgeneration.com/characters/chunny-fireball1212.gif).
+Grounded poses are aligned to their lowest
+visible pixels at the game’s half-size rendering scale.
 The supplementary sheets are SF2-family community rips; variants and palette
 differences are possible. No claim is made to a verified `sf2ua` ROM extraction.
-The HUD's coins, bonus stars and four reserve items are decoded from SMW's
+The HUD's coins and bonus stars are decoded from SMW's
 original common graphics and palettes into private buffers. They remain correct
 when boss rooms replace the live VRAM with Mode 7 art.
 `config/animation-assets.json` pins supplementary GIFs by URL and SHA-256.
@@ -63,7 +71,7 @@ The four original World Warrior defeated portraits come from
 pinned in that manifest. Their green color key is made transparent at import.
 
 Ripped audio includes Hadouken, Shoryuken, Tatsumaki, Honda's voice, Sonic Boom,
-Chun-Li's voice and scream, general impacts, block, menu and KO effects. The
+Chun-Li's Spinning Bird Kick call and scream, general impacts, block, menu and KO effects. The
 main game loads `sf2/audio/`; it does not use the dojo's synthesized fallback.
 The boss KO announcement is the pinned Street Fighter sample in
 [Citedy/game-sounds](https://github.com/Citedy/game-sounds), commit
@@ -74,6 +82,14 @@ as an SF2 World Warrior announcer extraction. The SF2 `player_select.ogg` and
 time. Selection loops; Continue plays once against its countdown. SMW's music
 is muted during both menus, then continues through the original
 sound engine. Native and browser builds use the same imported audio.
+
+Chun-Li's spoken Kikoken, Lightning Legs attack cry and kick swish come from
+[Jmorphman's Chun-Li sound archive](https://network.mugenguild.com/jmorphman/characters/chun-li),
+which contains original Capcom audio. Its move definitions identify SND 1000,0
+as Kikoken, 4,2 as the rapid-kick cry, and 1,3 as the swish. These are supplementary
+CvS-era samples, not World Warrior recordings. `config/chunli-audio.json` pins
+the archive and each extracted WAV; `scripts/chunli_audio.py` reads only the
+SND data, without executing the character scripts. Extraction needs bsdtar.
 
 Supers and their gauge are new Alpha-inspired mechanics using SF2 animation
 frames and voices, with the original Alpha activation effect and audio described below.
@@ -91,6 +107,10 @@ Crusher spin and voice. The source atlases are enlarged 2×; nearest-neighbor
 sampling restores the native pixels. The clown-car pilot uses upper-body crops.
 Bowser's falling body and car still come from the original SMW Mode 7 graphics;
 his hat is cropped from the pinned original SF2 Bison animation.
+
+Ryu’s Shinku charge and Hadouken release voices are imported from the pinned
+Alpha `script/audio/ryu.ogg.js` asset; the level-three beam is a procedural
+pixel effect around the original energy sprite.
 
 Bison's level-three wake and continuous flight take inspiration from
 [N64Mario's Psycho Crusher, FTW!](https://www.youtube.com/watch?v=oIXilgKNYaY).

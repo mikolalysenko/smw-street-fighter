@@ -19,8 +19,8 @@ static FcFight fight;
 static bool initialized,chosen,was_level;
 static int menu,choice,pause_choice;
 static uint32_t previous;
-static bool death_prompt,continue_pending,death_transition;
-static int death_ticks,retry_ticks,clear_ticks;
+static bool death_prompt,continue_pending,death_transition,map_confirm_held;
+static int death_ticks,clear_ticks;
 static bool fighter_drawn;
 static bool level_hurt,perfect_announced;
 static bool tongue_pressed;
@@ -34,7 +34,7 @@ void WW_OriginalPlayerDraw(void);
 void ww_init(void) {
   fc_init(&fight,FC_RYU);fight.meter=100;initialized=true;
   chosen=was_level=false;menu=choice=pause_choice=0;previous=0;
-  death_prompt=continue_pending=death_transition=fighter_drawn=false;death_ticks=retry_ticks=clear_ticks=0;
+  death_prompt=continue_pending=death_transition=map_confirm_held=fighter_drawn=false;death_ticks=clear_ticks=0;
   level_hurt=perfect_announced=tongue_pressed=false;
   psycho_was_active=psycho_safe=false;
   boss_practice=false;
@@ -81,7 +81,7 @@ static FcBody body(void) {
    * Using the engine's clipping function also follows ducking and Yoshi. */
   CollInfo ci={0};StandardSpriteToSpriteCollisionChecks_GetMarioClipping(&ci);
   FcBody b={{(float)(int16)(ci.r0|(ci.r8<<8)),(float)(int16)(ci.r1|(ci.r9<<8)),ci.r2,ci.r3},
-    player_facing_direction?1:-1,!player_in_air_flag};
+    player_facing_direction?1:-1,!player_in_air_flag,player_swimming_flag!=0,player_climbing_flag!=0};
   return b;
 }
 static void quit(void) { SDL_Event e={0};e.type=SDL_QUIT;SDL_PushEvent(&e); }
@@ -91,11 +91,12 @@ bool ww_before_frame(uint32_t *inputs) {
   ww_title_tick();
   uint32_t b=decode(*inputs),edge=b&~previous;previous=b;
   bool in_level=misc_game_mode==0x14;
+  if(chosen)player_current_item_box=players_item_box[0]=players_item_box[1]=0;
   if(death_prompt) {
     ++death_ticks;
     if(death_ticks>30 && ((edge&(FC_JUMP|FC_START|FC_PUNCH|FC_BACK)) || death_ticks>=630)) {
       continue_pending=death_ticks<630 && !(edge&FC_BACK);
-      death_prompt=false;death_transition=true;retry_ticks=0;
+      death_prompt=false;death_transition=true;
       /* Finish the native life/midpoint bookkeeping behind the curtain.
        * Never expose the old level after the arcade continue is accepted. */
       if(in_level && player_current_state==9)player_anim_timer=1;
@@ -117,30 +118,41 @@ bool ww_before_frame(uint32_t *inputs) {
     }
     if(edge&(FC_JUMP|FC_START|FC_PUNCH)) {
       int hp=fight.hp*fc_roster[choice].vitality/fc_roster[fight.character].vitality;
+      bool air_move_used=in_level && fight.air_move_used;
       int meter=fight.meter;fc_init(&fight,choice);fight.hp=hp;fight.meter=meter;
+      fight.air_move_used=air_move_used;
       fight.previous=b;chosen=true;menu=0;fc_audio_context(&fight);fc_audio_play(FC_SND_SELECT);
       fc_audio_music(FC_MUSIC_NONE);
+      if(misc_game_mode==0x0e)map_confirm_held=true;
     }
-    if(edge&FC_BACK){if(chosen){menu=2;fc_audio_music(FC_MUSIC_NONE);}else quit();}
+    if(edge&FC_BACK){if(chosen){menu=in_level?2:0;fc_audio_music(FC_MUSIC_NONE);}else quit();}
     *inputs=0;return false;
   }
   if(!in_level) {
     if(was_level){fc_clear_actions(&fight);ww_targets_reset();ww_final_reset();}
     was_level=false;menu=0;
     if(boss_practice && misc_game_mode==0x0e) {
-      if(continue_pending){start_akuma();*inputs=0;return true;}
       boss_practice=false;ow_players_map[0]=practice_map;
       player_current_life_count=practice_lives;misc_1up_handler=0;
       player_mario_score_lo=practice_score;player_mario_score_mid=practice_score>>8;
       player_mario_score_hi=practice_score>>16;
     }
-    if(death_transition && !continue_pending && misc_game_mode==0x0e)death_transition=false;
+    if(death_transition && misc_game_mode==0x0e) {
+      death_transition=false;
+      if(continue_pending) {
+        /* Native death has restored the overworld node. Choose a healthy
+         * fighter while the map is covered, then let the player pick a level. */
+        continue_pending=false;choice=fight.character;
+        fc_init(&fight,choice);fight.meter=100;menu=1;
+        fc_audio_music(FC_MUSIC_SELECT);*inputs=0;return false;
+      }
+    }
     if(!death_prompt && !death_transition)fc_audio_music(FC_MUSIC_NONE);
-    if(continue_pending) {
-      /* Re-enter the same overworld node through the original loader. It
-       * restores the midpoint, level objects and exits just like a retry. */
-      *inputs=misc_game_mode==0x0e && ++retry_ticks%30==0?1:0;
-      return true;
+    if(death_transition)*inputs=0;
+    /* A held selection-confirm button must not immediately enter a level. */
+    if(map_confirm_held) {
+      if(!(*inputs&0x0bu))map_confirm_held=false;
+      *inputs&=~0x0bu;
     }
     /* The crossover is one player; keep the native save-file flow. */
     if(misc_game_mode==0x0a){misc_blinking_cursor_pos=0;*inputs&=~0xf0u;}
@@ -176,6 +188,12 @@ bool ww_before_frame(uint32_t *inputs) {
   if(ww_final_cinematic()) {
     *inputs=0;fight.previous=b;timer_player_hurt=2;return true;
   }
+  if(player_current_state==0x0a) {
+    /* Entrance scenes drive Mario themselves. Animate their real movement
+     * without requiring a direction button from the player. */
+    uint32_t walking=(int8)player_xspeed>0?FC_RIGHT:(int8)player_xspeed<0?FC_LEFT:0;
+    fc_tick(&fight,walking,body(),NULL,0);return true;
+  }
   if(timer_end_level || misc_display_message || player_current_state!=0 || flag_pause || flag_sprites_locked) {
     if(timer_end_level && ++clear_ticks==60 && !level_hurt && !perfect_announced) {
       perfect_announced=true;fc_audio_play(FC_SND_PERFECT);
@@ -183,22 +201,27 @@ bool ww_before_frame(uint32_t *inputs) {
     fight.previous=b;
     return true;
   }
-  /* No cape/fire form; pickups and the underlying level logic still execute. */
+  /* Keep the terrain hull; power-up pickups now refill the super meter. */
   player_current_power_up=1;
-  if((b&FC_GUARD) && (edge&FC_PUNCH) && player_current_item_box) {
-    /* Select is now Back/Pause. Keep the visible reserve usable on a pad,
-     * without letting the native full-slot fallback overwrite a boss. */
-    for(int k=11;k>=0;k--)if(!spr_current_status[k]) { DropReservedItem();break; }
-    b&=~FC_PUNCH;edge&=~FC_PUNCH;
-  }
+  bool carrying=false;
+  for(int k=0;k<12;k++)if(spr_current_status[k]==11 && spr_spriteid[k]!=0x7d)carrying=true;
+  bool release=carrying && (b&FC_GUARD) && (edge&FC_PUNCH);
+  if(release){b&=~FC_PUNCH;edge&=~FC_PUNCH;}
+  ww_grapple_sync(&fight);
   FcTarget targets[WW_TARGET_COUNT];ww_targets_collect(&fight,targets);
   FcBody player=body();
+  /* Boss arenas wrap positions above the screen through $ffff. Keep the
+   * muzzle in the same signed world coordinates as the combat hull. */
+  int feet=(int16)player_ypos+32;
+  if(player_riding_yoshi_flag)feet+=(int8)player_relative_yposition_during_screen_shake-8;
+  fight.sprite_y_offset=feet-player.box.y-player.box.h;
   if(!fc_busy(&fight) && !!(b&FC_LEFT)!=!!(b&FC_RIGHT)) {
     player.facing=(b&FC_RIGHT)?1:-1;player_facing_direction=player.facing>0;
   }
   fc_tick(&fight,b,player,targets,WW_TARGET_COUNT);
   ww_combat_score(&fight);
   ww_targets_apply(&fight,targets);
+  ww_grapple_sync(&fight);
   if(fc_psycho_flight(&fight) && ww_opponent()->active && !fight.flash && fight.move_tick>0)
     fight.move_tick=1199;
   ww_scenery_hits(&fight);
@@ -209,7 +232,11 @@ bool ww_before_frame(uint32_t *inputs) {
    * preserves SMW's long jumps without a second held face button. */
   *inputs&=~(2u|4u|8u|(1u<<8)|(1u<<9)|(1u<<10)|(1u<<11));
   if(b&(FC_LEFT|FC_RIGHT))*inputs|=2;
-  if(fight.override_x || fight.guarding)*inputs&=~(0xc0u|2u);
+  if(fight.override_x || (fight.guarding && !release))*inputs&=~(0xc0u|2u);
+  /* Auto-run used to drop keys whenever the player stopped or attacked.
+   * Guard can grab an item, and carried items stay held until Guard+Punch. */
+  if(carrying || (b&FC_GUARD))*inputs|=2u;
+  if(release)*inputs&=~2u;
   if(fight.crouching_attack && player.grounded)*inputs|=1u<<5;
   /* Held jump still controls SMW's variable jump arc during air attacks. */
   if(fight.stun)*inputs&=~1u;
@@ -229,7 +256,45 @@ static unsigned level_tile(int x,int y) {
   return g_ram[offset]+256*g_ram[offset+0x10000];
 }
 static bool floor_tile(unsigned t) { return t>=0x100 && t<0x1d8; }
+static bool teleport_clear(int x,int y) {
+  /* Teleport travels six pixels per frame. Check its entire swept hull,
+   * rather than waiting for SMW's next one-pixel wall depenetration. */
+  for(int dx=2;dx<=13;dx+=11)for(int dy=7;dy<=31;dy+=8) {
+    if(!(misc_level_layout_flags&0x40) && floor_tile(level_tile(x+dx,y+dy)))return false;
+    if(misc_level_layout_flags&0x80) {
+      int px=x+dx+(int16)misc_second_level_layer_xpos,py=y+dy+(int16)misc_second_level_layer_ypos;
+      int screens=misc_screens_in_lvl;
+      if(px<0 || py<0)continue;
+      unsigned o;
+      if(misc_level_layout_flags&2) {
+        if(px>=512 || (py>>8)>=screens || (py>>8)>=14)continue;
+        o=GetLevelLayoutPtr_Vertical((py>>8)+14)+(py&0xf0)+((px&255)>>4)+((px>>8)<<8);
+      } else {
+        if(py>=432 || (px>>8)>=screens || (px>>8)>=16)continue;
+        o=GetLevelLayoutPtr_Horizontal((px>>8)+16)+(py&0xf0)+((px&255)>>4)+((py>>8)<<8);
+      }
+      if(o<0x10000 && floor_tile(g_ram[o]+256*g_ram[o+0x10000]))return false;
+    }
+  }
+  return true;
+}
 static bool psycho_scrolling(void) { return l1_l2_scroll_spr_spriteid[0]!=0; }
+bool ww_fast_scroll(void) {
+  if(!ww_psycho_collision() || !psycho_scrolling() || flag_sprites_locked)return false;
+  PointU16 origin=misc_layer1_pos[0];
+  bool linked=l1_l2_scroll_spr_spriteid[1]==1;
+  /* Advance the original path controller in small steps. Its stop points,
+   * turns and room bounds stay authoritative; never skip tile uploads by
+   * moving the viewport more than roughly Bison's seven pixels per frame. */
+  for(int i=0;i<32;i++) {
+    ProcessScrollSprites_Layer1();
+    if(linked)ProcessScrollSprites_Layer2();
+    if(abs((int16)(misc_layer1_pos[0].x-origin.x))>=7 ||
+       abs((int16)(misc_layer1_pos[0].y-origin.y))>=7)break;
+  }
+  if(!linked)ProcessScrollSprites_Layer2();
+  return true;
+}
 static bool psycho_visible(int x,int y) {
   return x>=(int)mirror_current_layer1_xpos+16 && x<=(int)mirror_current_layer1_xpos+216 &&
     y>=(int)mirror_current_layer1_ypos+32 && y<=(int)mirror_current_layer1_ypos+192;
@@ -240,8 +305,15 @@ static bool remember_landing(int x) {
   if(top<32)top=32;
   for(int y=(top+15)&~15;y<bottom;y+=16) {
     if(psycho_scrolling() && !psycho_visible(x,y-32))continue;
-    if(floor_tile(level_tile(x+8,y)) && !floor_tile(level_tile(x+8,y-16)) &&
-       !floor_tile(level_tile(x+8,y-32))) {
+    bool clear=true;
+    for(int dx=2;dx<=13;dx+=11) {
+      unsigned ground=level_tile(x+dx,y);
+      if(!floor_tile(ground) || ground==0x12f ||
+          !((ground<0x159 || ground>=0x16a) || (misc_level_tileset_setting!=1 &&
+            misc_level_tileset_setting!=5 && misc_level_tileset_setting!=13)))clear=false;
+      for(int dy=16;dy<=32;dy+=16)if(floor_tile(level_tile(x+dx,y-dy)))clear=false;
+    }
+    if(clear) {
       psycho_safe_x=(uint16)x;psycho_safe_y=(uint16)(y-32);psycho_safe=true;return true;
     }
   }
@@ -352,10 +424,14 @@ bool ww_take_damage(int amount,int direction) {
 }
 bool ww_perfect_clear(void) { return ww_enabled() && timer_end_level && !level_hurt; }
 bool ww_yoshi_tongue_pressed(void) { return tongue_pressed; }
-void ww_mushroom(void) {
-  if(!ww_enabled() || fight.hp<=0)return;
-  int maximum=fc_roster[fight.character].vitality;
-  fight.hp+=25;if(fight.hp>maximum)fight.hp=maximum;
+bool ww_powerup(uint8_t sprite) {
+  if(!ww_enabled())return false;
+  int bars=sprite==0x74?1:sprite==0x75?2:sprite==0x77?3:0;
+  if(!bars)return false; /* Stars and 1UPs retain their native effects. */
+  if(fight.hp>0)fc_meter(&fight,bars*100);
+  player_current_item_box=players_item_box[0]=players_item_box[1]=0;
+  player_current_power_up=1;
+  return true;
 }
 void ww_on_death(void) {
   if(!ww_enabled())return;
@@ -367,12 +443,62 @@ void ww_on_death(void) {
 }
 void ww_velocity(void) {
   if(!ww_enabled() || player_current_state || timer_end_level || menu)return;
-  if(fight.override_x)player_xspeed=(uint8)(int8)(fight.velocity_x*16);
+  if(fight.override_x) {
+    int speed=(int)(fight.velocity_x*16);
+    if(fight.move==FC_TELEPORT && speed) {
+      int direction=speed>0?1:-1,allowed=0;
+      for(int step=1;step<=(abs(speed)+15)/16;step++) {
+        if(!teleport_clear((int16)player_xpos+direction*step,(int16)player_ypos))break;
+        allowed=step;
+      }
+      if(allowed*16<abs(speed)){speed=direction*allowed*16;player_sub_xpos=0;}
+    }
+    /* Native terrain collision stops at a wall and depenetrates one pixel.
+     * Reapplying a four-pixel dash through that stop embeds the whole hull
+     * in a pipe, so the next frame's crush test kills the player. */
+    if(!ww_psycho_collision() && ((speed>0 && (player_blocked_flags&1)) ||
+        (speed<0 && (player_blocked_flags&2))))speed=0;
+    player_xspeed=(uint8)(int8)speed;
+  }
   if(fight.override_y) {
+    if(fight.jump_boost && (player_blocked_flags&8)) {
+      fight.jump_boost=0;fight.velocity_y=0;
+    }
     player_yspeed=(uint8)(int8)(fight.velocity_y*16);
     if(fight.velocity_y<0)player_in_air_flag=11;
     fight.override_y=false;
   }
+}
+void ww_position_end(void) {
+  if(!ww_enabled() || player_current_state || timer_end_level || menu ||
+      ww_psycho_collision() || flag_side_exits)return;
+  /* Fast rolls can cross SMW's one-pixel camera barrier in a single tick.
+   * Clamp the position before its offscreen/crush check, including momentum
+   * during recovery. This does not alter normal pit or hazard collisions. */
+  int x=(int16)player_xpos,cx=mirror_current_layer1_xpos;
+  int clamped=x<cx+8?cx+8:x>cx+232?cx+232:x;
+  if(clamped!=x) {
+    player_xpos=(uint16)clamped;player_xspeed=player_sub_xpos=0;
+    player_on_screen_pos_x=clamped-cx;
+  }
+}
+void ww_carried_position(uint8_t slot) {
+  if(!ww_enabled() || player_current_state || spr_spriteid[slot]==0x7d)return;
+  /* Hold the original object at the fighter's hands, outside the larger
+   * torso overlay, so keys and shells remain visible while carried. */
+  SetSprXPos(slot,player_xpos+(fight.facing>0?36:-36));
+  SetSprYPos(slot,player_ypos+4);
+}
+bool ww_keyhole_contact(uint8_t slot) {
+  if(!ww_enabled())return false;
+  /* The carried key is drawn at the fighter's higher, wider hands. Keep
+   * the original one-pixel keyhole usable across that visual offset. */
+  for(int i=0;i<12;i++)if(spr_spriteid[i]==0x80 && spr_current_status[i]==11) {
+    int dx=(int16)(GetSprXPos(i)-GetSprXPos(slot));
+    int dy=(int16)(GetSprYPos(i)-GetSprYPos(slot));
+    if(dx>=-20 && dx<=16 && dy>=-32 && dy<=16)return true;
+  }
+  return false;
 }
 void ww_player_draw(void) {
   if(!ww_enabled()){WW_OriginalPlayerDraw();return;}
@@ -398,6 +524,7 @@ void ww_render(uint8_t *pixels,size_t pitch,int width,int height) {
   }
   if(!chosen)return;
   ww_final_render(c);
+  ww_grapple_render(c,false);
   int x=(int16)(player_xpos-mirror_current_layer1_xpos)+8;
   int feet=(int16)(player_ypos-mirror_current_layer1_ypos)+32;
   if(player_riding_yoshi_flag)feet+=(int8)player_relative_yposition_during_screen_shake-8;
@@ -410,9 +537,29 @@ void ww_render(uint8_t *pixels,size_t pitch,int width,int height) {
       drawing.victory=flag_show_victory_pose_during_level_end!=0;
       drawing.move_tick=clear_ticks;
     }
-    fc_fighter(c,&drawing,x,feet,1,0);
+    if(player_current_state==0x0a && (misc_level_tileset_setting==1 ||
+        misc_level_tileset_setting==5 || misc_level_tileset_setting==13) &&
+        (player_timer_pipe_warping==14 || player_timer_pipe_warping>=37)) {
+      /* The original house foreground occludes Mario's OAM. The replacement
+       * fighter must also disappear through its open doorway, not slide
+       * over the wall to the right or draw his head across the lintel. */
+      bool castle=misc_level_tileset_setting==1;
+      int left=(uint8)(184-mirror_current_layer1_xpos),top=(uint8)((castle?80:96)-mirror_current_layer1_ypos);
+      int dw=castle?48:32,dh=castle?64:48;
+      FcCanvas outside=c;outside.w=left<c.w?left:c.w;
+      fc_fighter(outside,&drawing,x,feet,1,0);
+      if(left+dw<=c.w && top+dh<=c.h) {
+        FcCanvas door={c.pixels+top*c.pitch+left,dw,dh,c.pitch};
+        fc_fighter(door,&drawing,x-left,feet-top,1,0);
+      }
+    } else if(player_wall_walk_status && !player_in_air_flag) {
+      int direction=player_wall_walk_status&1?1:-1;
+      bool vertical=player_wall_walk_status>=6;
+      fc_fighter_rotated(c,&drawing,x+(vertical?direction*8:0),feet-(vertical?16:0),-direction*(vertical?90:45));
+    } else fc_fighter(c,&drawing,x,feet,1,0);
   }
   fc_effects(c,&fight,mirror_current_layer1_xpos,mirror_current_layer1_ypos);
+  ww_grapple_render(c,true);
   FcStageHud hud=ww_stage_hud();
   fc_battle_hud(c,&fight,ww_opponent(),&hud);
   if(timer_end_level && !misc_currently_active_boss_end_cutscene)fc_level_clear(c,fight.character,ww_perfect_clear());

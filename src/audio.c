@@ -5,14 +5,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-enum { RATE=48000, SOUND_COUNT=36, VOICE_COUNT=12 };
+enum { RATE=48000, SOUND_COUNT=41, VOICE_COUNT=12 };
 typedef struct { float *data; int length; } Sample;
 typedef struct { int sound,position; bool active; } Voice;
 static SDL_AudioDeviceID device;
 static Sample samples[SOUND_COUNT];
 static Voice voices[VOICE_COUNT];
 static int next_voice;
-static int character,move;
+static int character,move,move_tick;
 static bool loaded;
 static SDL_atomic_t music_track;
 static int music_position;
@@ -89,7 +89,7 @@ void fc_audio_init(const char *directory) {
   if(loaded)return;
   static const char *names[]={"swing","hit","hurt","ko","special","super","block","select",
     "hadouken","shoryuken","tatsumaki","honda","sonic","bird","chun_hurt","chun_ko","confirm","you","lose","boss_ko","player_select","continue","perfect","alpha_charge","akuma_super","akuma_warp",
-    "blanka","electric","zangief","yoga_fire","yoga_flame","vega","tiger","tiger_uppercut","psycho","psycho_super"};
+    "blanka","electric","zangief","yoga_fire","yoga_flame","vega","tiger","tiger_uppercut","psycho","psycho_super","shinku","alpha_hadouken","kikoken","lightning_kick","chun_attack"};
   for(int i=0;i<SOUND_COUNT;i++) {
     if(!directory && i<8)samples[i]=synth(i);
     load_sample(directory,names[i],&samples[i]);
@@ -103,7 +103,7 @@ void fc_audio_init(const char *directory) {
   else fprintf(stderr,"Audio unavailable: %s\n",SDL_GetError());
 #endif
 }
-void fc_audio_context(const FcFight *f) { character=f->character;move=f->move; }
+void fc_audio_context(const FcFight *f) { character=f->character;move=f->move;move_tick=f->move_tick; }
 bool fc_audio_music_active(void) { return SDL_AtomicGet(&music_track)!=FC_MUSIC_NONE; }
 bool fc_audio_selection_active(void) { return SDL_AtomicGet(&music_track)==FC_MUSIC_SELECT; }
 void fc_audio_selection(bool active) { fc_audio_music(active?FC_MUSIC_SELECT:FC_MUSIC_NONE); }
@@ -124,11 +124,26 @@ void fc_audio_play(uint32_t events) {
     if((i==2 || i==3) && character==FC_BLANKA)sound=26;
     if((i==2 || i==3) && character==FC_ZANGIEF)sound=28;
     if((i==2 || i==3) && character==FC_VEGA)sound=31;
-    if(i==5)sound=23;
+    if(i==5) {
+      sound=23;
+      if(character==FC_RYU && samples[36].data) {
+        voices[next_voice]=(Voice){36,0,true};next_voice=(next_voice+1)%VOICE_COUNT;
+      }
+    }
     if(i==4) {
       sound=character==FC_HONDA?11:character==FC_GUILE?12:character==FC_CHUNLI?13:
         move==FC_RISING?9:move==FC_SPIN?10:8;
       if(character==FC_KEN && move==FC_SUPER_MOVE)sound=9;
+      if(character==FC_RYU && move==FC_SUPER_MOVE)sound=37;
+      if(character==FC_CHUNLI && move==FC_PROJECTILE)sound=38;
+      if(character==FC_CHUNLI && (move==FC_FLURRY || move==FC_SUPER_MOVE)) {
+        sound=39;
+        /* Lightning Legs has its own short cry and repeated kick swishes;
+         * Spinning Bird Kick's spoken call belongs only to that move. */
+        if(move_tick<=1 && samples[40].data) {
+          voices[next_voice]=(Voice){40,0,true};next_voice=(next_voice+1)%VOICE_COUNT;
+        }
+      }
       if(character==FC_BLANKA)sound=move==FC_ELECTRIC?27:26;
       if(character==FC_ZANGIEF)sound=28;
       if(character==FC_DHALSIM)sound=move==FC_PROJECTILE?29:30;

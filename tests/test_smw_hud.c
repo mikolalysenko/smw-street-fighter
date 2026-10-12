@@ -12,6 +12,11 @@
 #include <string.h>
 
 static int tick,map_ticks,select_ticks,level_ticks,clock_start,paused_time,done;
+static void pickup(int id) {
+  spr_spriteid[11]=id;spr_current_status[11]=8;InitializeNormalSpriteRAMTables(11);
+  SetSprXYPos(11,player_xpos,player_ypos+16);
+  spr_decrementing_table1540[11]=0;
+}
 int ww_upstream_main(int,char**);
 uint32_t ww_test_input(void) {
   if(++tick>5000 || done){SDL_Event e={0};e.type=SDL_QUIT;SDL_PushEvent(&e);return 0;}
@@ -40,22 +45,21 @@ uint32_t ww_test_input(void) {
   }
   if(level_ticks==85) {
     assert(h.time<clock_start && h.coins==99 && h.lives==5);
-    assert(h.bonus_stars==27 && h.dragon_coins==3 && h.reserve_icon.pixels);
+    assert(h.bonus_stars==27 && h.dragon_coins==3 && !player_current_item_box);
   }
   if(level_ticks==90)GiveCoins_OneCoin();
   if(level_ticks==100) {
     assert(h.coins==0 && h.lives==6); /* Native 100-coin rollover pays exactly once. */
     counter_timer_hundreds=0;counter_timer_tens=9;counter_timer_ones=9;
-    player_current_item_box=2;
+    FcFight *f=(FcFight*)ww_fight_state();f->hp=75;f->meter=0;pickup(0x74);
   }
-  if(level_ticks==106)player_current_item_box=3;
-  if(level_ticks==112)player_current_item_box=4;
-  if(level_ticks==118)player_current_item_box=1;
-  if(level_ticks==120)return 1024|2; /* Guard + Punch drops the reserve. */
-  if(level_ticks==122) {
-    assert(!player_current_item_box && !h.reserve_icon.pixels);
-    int mushrooms=0;for(int k=0;k<12;k++)mushrooms+=spr_current_status[k]>=8 && spr_spriteid[k]==0x74;
-    assert(mushrooms==1);
+  if(level_ticks==106 || level_ticks==112 || level_ticks==118 || level_ticks==124) {
+    FcFight *f=(FcFight*)ww_fight_state();
+    assert(f->meter==(level_ticks==106?100:level_ticks==112?200:300) && f->hp==75);
+    assert(!player_current_item_box && !player_current_state && !flag_sprites_locked);
+    if(level_ticks==106){f->meter=0;pickup(0x75);}
+    if(level_ticks==112){f->meter=0;pickup(0x77);}
+    if(level_ticks==118)pickup(0x74); /* At MAX, consume without storing. */
   }
   if(level_ticks==130){paused_time=h.time;return 8;}
   if(level_ticks>130 && level_ticks<=170)assert(h.time==paused_time);
@@ -78,8 +82,8 @@ static void save(uint8_t *pixels,size_t pitch,int w,int h,const char *name) {
 void ww_test_render(uint8_t *pixels,size_t pitch,int w,int h) {
   if(misc_game_mode!=0x14 || misc_intro_level_flag)return;
   if(level_ticks==85)save(pixels,pitch,w,h,"hud-honda.bmp");
-  if(level_ticks==102 || level_ticks==108 || level_ticks==114 || level_ticks==122) {
-    char name[32];snprintf(name,sizeof(name),"hud-item-%d.bmp",player_current_item_box);save(pixels,pitch,w,h,name);
+  if(level_ticks==104 || level_ticks==110 || level_ticks==116 || level_ticks==124) {
+    char name[32];snprintf(name,sizeof(name),"hud-meter-%d.bmp",level_ticks);save(pixels,pitch,w,h,name);
   }
   if(level_ticks==225) {
     save(pixels,pitch,w,h,"hud-max-counters.bmp");
@@ -102,6 +106,6 @@ void ww_test_render(uint8_t *pixels,size_t pitch,int w,int h) {
 int main(void) {
   setvbuf(stdout,NULL,_IONBF,0);char *args[]={"test-hud","--config","test-play.ini",NULL};
   int result=ww_upstream_main(3,args);assert(done);
-  puts("HUD: native countdown/pause, coins to 1UP, lives, bonus/Dragon Coins, reserve drop and max score passed.");
+  puts("HUD: native timer/pause, coins to 1UP, lives, bonus/Dragon Coins, three meter pickups and max score passed.");
   return result;
 }

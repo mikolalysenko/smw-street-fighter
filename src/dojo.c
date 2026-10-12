@@ -69,7 +69,7 @@ static void tick(Dojo *g,uint32_t buttons) {
   for(int i=0;i<ENEMIES;i++){targets[i]=g->enemy[i].target;targets[i].hit=false;}
   int horizontal=!!(buttons&FC_RIGHT)-!!(buttons&FC_LEFT);
   if(horizontal && !fc_busy(&g->fight) && !(buttons&FC_GUARD))g->facing=horizontal;
-  FcBody body={{g->x,g->y,16,32},g->facing,g->grounded};
+  FcBody body={{g->x,g->y,16,32},g->facing,g->grounded,false,false};
   fc_tick(&g->fight,buttons,body,targets,ENEMIES);
   if(g->fight.frozen){fc_audio_play(g->fight.events);return;}
   for(int i=0;i<ENEMIES;i++) {

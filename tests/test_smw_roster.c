@@ -71,6 +71,7 @@ uint32_t ww_test_input(void) {
   saw_air|=!f->body.grounded;
   for(int i=0;i<FC_MAX_SHOTS;i++)saw_shot|=f->shots[i].ttl>0;
   if(action_tick==75) {
+    if(action==4 && (selected==FC_BISON || selected==FC_DHALSIM))assert(player_xpos>=home_x+35);
     if(action && action!=9 && action!=10)assert(saw_move);
     if(action>=9)assert(saw_air);
     printf("%s action %d: move=%d hit=%d shot=%d air=%d\n",fc_roster[selected].name,action,saw_move,saw_hit,saw_shot,saw_air);

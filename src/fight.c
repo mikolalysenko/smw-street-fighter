@@ -1,10 +1,11 @@
 #include "fight.h"
 #include <string.h>
+#include <math.h>
 
 const FcCharacter fc_roster[FC_ROSTER_COUNT] = {
   {"RYU", "ANSATSUKEN", "HADOUKEN", "SHORYUKEN", "SHINKU HADOUKEN", 0x64e7ff,0xe8f3eb,0xefb381,100,2.3f},
   {"E. HONDA", "SUMO", "SUMO HEADBUTT", "HUNDRED HAND SLAP", "SUPER ONI MUSOU", 0x88adff,0x456fc0,0xeab382,125,1.85f},
-  {"CHUN-LI", "KUNG FU", "LIGHTNING LEGS", "SPINNING BIRD KICK", "SENRETSUKYAKU", 0xffcf65,0x4284ee,0xf5c398,90,2.75f},
+  {"CHUN-LI", "KUNG FU", "KIKOKEN", "SPINNING BIRD KICK", "SENRETSUKYAKU", 0xffcf65,0x4284ee,0xf5c398,90,2.75f},
   {"GUILE", "AIR FORCE", "SONIC BOOM", "FLASH KICK", "SONIC HURRICANE", 0x9bef91,0x82a65c,0xe8b684,110,2.2f},
   {"KEN", "ANSATSUKEN", "HADOUKEN", "SHORYUKEN", "SHORYUREPPA", 0xff7948,0xe63220,0xf2b078,100,2.5f},
   {"BLANKA", "WILD FIGHTING", "ROLLING ATTACK", "ELECTRIC THUNDER", "GROUND SHAVE ROLL", 0xa6ff42,0xe98f19,0x8ac940,115,2.6f},
@@ -23,11 +24,15 @@ bool fc_overlap(FcBox a,FcBox b) {
   return a.x<b.x+b.w && a.x+a.w>b.x && a.y<b.y+b.h && a.y+a.h>b.y;
 }
 void fc_meter(FcFight *f,int amount) { f->meter=imax(0,imin(300,f->meter+amount)); }
+bool fc_piledriver(const FcFight *f) {
+  return f->character==FC_ZANGIEF && (f->move==FC_THROW || f->move==FC_SUPER_MOVE);
+}
 void fc_init(FcFight *f,int character) {
   memset(f,0,sizeof(*f));
   f->character=character>=0 && character<FC_ROSTER_COUNT?character:FC_RYU;
   f->hp=fc_roster[f->character].vitality;
   f->facing=1;
+  f->grabbed=-1;
 }
 void fc_clear_actions(FcFight *f) {
   int character=f->character,hp=f->hp,meter=f->meter;
@@ -117,7 +122,7 @@ static void record_input(FcFight *f,uint32_t b) {
 static FcMove special_move(const FcFight *f,bool secondary) {
   switch(f->character) {
     case FC_HONDA:return secondary?FC_FLURRY:FC_RUSH;
-    case FC_CHUNLI:return secondary?FC_SPIN:FC_FLURRY;
+    case FC_CHUNLI:return secondary?FC_SPIN:FC_PROJECTILE;
     case FC_GUILE:return secondary?FC_RISING:FC_PROJECTILE;
     case FC_BLANKA:return secondary?FC_ELECTRIC:FC_RUSH;
     case FC_ZANGIEF:return secondary?FC_THROW:FC_SPIN;
@@ -143,7 +148,7 @@ static FcMove request(FcFight *f,uint32_t b,uint32_t edge) {
     if(f->character==FC_ZANGIEF && fc_motion(f,circle,4,32))return FC_THROW;
     if(f->character==FC_DHALSIM && fc_motion(f,hcf,5,26))return FC_FLAME;
     if((f->character==FC_RYU || f->character==FC_KEN || f->character==FC_SAGAT) && fc_motion(f,dp,3,20)) return FC_RISING;
-    if((f->character==FC_RYU || f->character==FC_KEN || f->character==FC_SAGAT || f->character==FC_DHALSIM) && fc_motion(f,qcf,3,20)) return FC_PROJECTILE;
+    if((f->character==FC_RYU || f->character==FC_KEN || f->character==FC_SAGAT || f->character==FC_DHALSIM || f->character==FC_CHUNLI) && fc_motion(f,qcf,3,20)) return FC_PROJECTILE;
     if((f->character==FC_GUILE || f->character==FC_HONDA || f->character==FC_BLANKA ||
         f->character==FC_BALROG || f->character==FC_VEGA || f->character==FC_BISON) &&
        (((b&FC_RIGHT) && f->charge_left>=30) || ((b&FC_LEFT) && f->charge_right>=30))) {
@@ -184,12 +189,26 @@ static FcMove request(FcFight *f,uint32_t b,uint32_t edge) {
   }
   return FC_IDLE;
 }
+static bool aerial_movement(const FcFight *f,FcMove move) {
+  switch(move) {
+    case FC_RISING:case FC_SPIN:case FC_RUSH:case FC_THROW:case FC_TELEPORT:case FC_DIVE:
+      return true;
+    case FC_SUPER_MOVE:
+      /* Ryu's air beam holds him aloft too. Guile and Dhalsim's projectile
+       * supers leave gravity in control and do not grant another air dash. */
+      return f->character!=FC_GUILE && f->character!=FC_DHALSIM;
+    default:return false;
+  }
+}
 static void start(FcFight *f,FcMove move) {
+  if(aerial_movement(f,move))f->air_move_used=true;
   f->air_attack=!f->body.grounded || (f->previous&FC_JUMP);
   f->crouching_attack=f->buffered_crouch && !f->air_attack && (move==FC_JAB || move==FC_ROUNDHOUSE);
   f->move=move; f->move_tick=0; f->move_hit=false;
+  f->grabbed=-1;f->grab_tick=0;f->grab_airborne=f->grab_slam=false;
   f->melee_mask=0; f->guarding=false; f->buffered=FC_IDLE; f->buffer_timer=0;
   f->motion_count=0;
+  f->rapid_timer=(move==FC_FLURRY || move==FC_ELECTRIC)?24:0;
   if(move==FC_SUPER_MOVE) {
     f->super_level=imin(3,f->meter/100);
     fc_meter(f,-f->super_level*100);
@@ -218,12 +237,16 @@ static void hit(FcFight *f,FcTarget *t,int damage,bool super) {
 }
 static void shot(FcFight *f,bool super) {
   for(int i=0;i<FC_MAX_SHOTS;i++) if(!f->shots[i].ttl) {
-    float h=super?48+f->super_level*8:20;
-    float w=super?48:20;
-    f->shots[i]=(FcShot){
-      {f->body.box.x+f->body.box.w/2+(f->facing>0?0:-w),
-       f->body.box.y+f->body.box.h-h+(super?12:2),w,h},
-      f->facing*(super?5.6f:3.8f),95,super?3*f->super_level:1,super?64:1,super,0,false};
+    bool shoto=f->character==FC_RYU || f->character==FC_KEN || f->character==FC_CHUNLI;
+    bool beam=super && f->character==FC_RYU && f->super_level==3;
+    float h=super?(beam?70:32+f->super_level*12):20;
+    float w=super?(beam?16:48+f->super_level*16):20;
+    float x=f->body.box.x+f->body.box.w/2;
+    float feet=f->body.box.y+f->body.box.h+f->sprite_y_offset;
+    float hand_x=x+f->facing*(shoto?38:24),hand_y=feet-(shoto?30:25);
+    f->shots[i]=(FcShot){.box={hand_x-(f->facing<0?w:0),hand_y-h/2,w,h},
+      .vx=f->facing*(super?7.0f:3.8f),.ttl=beam?66:95,
+      .damage=super?3*f->super_level:1,.pierce=super?64:1,.super=super,.beam=beam};
     return;
   }
 }
@@ -237,6 +260,7 @@ const char *fc_move_name(const FcFight *f) {
   if(f->move==FC_SUPER_MOVE) return fc_roster[f->character].super_name;
   if((f->character==FC_RYU || f->character==FC_KEN) && f->move==FC_SPIN)return "TATSUMAKI";
   if(f->move==FC_TELEPORT)return "YOGA TELEPORT";
+  if(f->character==FC_CHUNLI && f->move==FC_FLURRY)return "LIGHTNING LEGS";
   if(f->move==FC_THROW || f->move==FC_ELECTRIC || f->move==FC_FLAME || f->move==FC_DIVE)
     return fc_roster[f->character].secondary;
   if(f->move==FC_RISING || f->move==FC_SPIN || (f->move==FC_FLURRY && f->character==FC_HONDA))
@@ -247,13 +271,19 @@ const char *fc_move_name(const FcFight *f) {
   return "";
 }
 void fc_tick(FcFight *f,uint32_t buttons,FcBody body,FcTarget *targets,int count) {
+  /* All movement specials share one use between surface contacts. A move
+   * launched on the ground also spends that use once it leaves the floor.
+   * Walls, hits, recovery and ordinary attacks never refresh it. */
+  if(body.grounded || body.swimming || body.climbing)f->air_move_used=false;
+  else if(aerial_movement(f,f->move))f->air_move_used=true;
   float dx=body.box.x-f->body.box.x,dy=body.box.y-f->body.box.y;
   if(dx<0)dx=-dx;
+  float travel=sqrtf(dx*dx+dy*dy);
   if(!f->flash && !f->hitstop) {
     bool intent=(buttons&(FC_LEFT|FC_RIGHT)) && !(buttons&FC_DOWN);
-    f->moving=f->body_valid && body.grounded && intent && dx>0.1f && dx<16;
-    if(f->moving){f->walk_distance+=dx;f->walk_pause=0;}
-    else if(!intent || !body.grounded || dx>=16 || ++f->walk_pause>2)f->walk_distance=0;
+    f->moving=f->body_valid && body.grounded && intent && travel>0.1f && travel<16;
+    if(f->moving){f->walk_distance+=travel;f->walk_pause=0;}
+    else if(!intent || !body.grounded || travel>=16 || ++f->walk_pause>2)f->walk_distance=0;
     else if(f->walk_distance>0)f->moving=true;
     f->vertical_motion=f->body_valid?dy:0;
     if(body.grounded) {
@@ -281,6 +311,15 @@ void fc_tick(FcFight *f,uint32_t buttons,FcBody body,FcTarget *targets,int count
   if(!fc_busy(f) && body.facing) f->facing=body.facing;
   record_input(f,buttons);
   FcMove req=request(f,buttons,edge);
+  /* Repeated inputs sustain the active loop, without replaying startup or
+   * queuing a normal attack that would fire after the player stops tapping. */
+  bool rapid=(f->move==FC_FLURRY && (f->character==FC_HONDA || f->character==FC_CHUNLI)) ||
+    (f->move==FC_ELECTRIC && f->character==FC_BLANKA);
+  uint32_t mash_button=f->character==FC_CHUNLI?FC_KICK:FC_PUNCH;
+  if(rapid && ((edge&mash_button) || req==f->move)) {
+    f->rapid_timer=24;
+    if(req!=FC_SUPER_MOVE)req=FC_IDLE;
+  }
   if(req) { f->buffered=req; f->buffer_timer=7; f->buffered_crouch=!!(buttons&FC_DOWN); }
   /* Hitstop and the super flash freeze both combat and the host's physics.
    * Buffered inputs survive the freeze; velocities survive until consumed. */
@@ -290,7 +329,13 @@ void fc_tick(FcFight *f,uint32_t buttons,FcBody body,FcTarget *targets,int count
     f->frozen=true; return;
   }
   f->override_x=f->override_y=false;
-  dec(&f->invuln); dec(&f->combo_timer); dec(&f->mash_timer);
+  if(f->move==FC_IDLE && !f->stun && body.grounded) {
+    if((edge&FC_JUMP) && f->jump_charge>=45) {
+      f->jump_boost=36;f->jump_charge=0;
+    } else if(buttons&FC_DOWN)f->jump_charge=imin(50,f->jump_charge+1);
+    else dec(&f->jump_charge);
+  } else f->jump_charge=0;
+  dec(&f->invuln); dec(&f->combo_timer); dec(&f->mash_timer);dec(&f->rapid_timer);
   if(fc_psycho_flight(f) && f->combo)f->combo_timer=90;
   if(!f->combo_timer) f->combo=0;
   if(!f->mash_timer) f->mash_count=0;
@@ -309,15 +354,19 @@ void fc_tick(FcFight *f,uint32_t buttons,FcBody body,FcTarget *targets,int count
     if(f->stun==21 || (f->guarding && f->stun==7)) f->override_y=true;
   } else {
     bool normal=f->move==FC_JAB || f->move==FC_ROUNDHOUSE;
-    bool cancel=f->move_hit && ((normal && f->buffered>=FC_PROJECTILE) || f->buffered==FC_SUPER_MOVE);
+    bool mash_cancel=normal && (f->buffered==FC_FLURRY || f->buffered==FC_ELECTRIC);
+    bool cancel=mash_cancel || (f->move_hit && ((normal && f->buffered>=FC_PROJECTILE) || f->buffered==FC_SUPER_MOVE));
     if(f->buffer_timer && (f->move==FC_IDLE || cancel)) {
-      if(f->buffered!=FC_SUPER_MOVE || f->meter>=100) start(f,f->buffered);
-      else f->buffer_timer=0;
+      bool available=!(f->air_move_used && aerial_movement(f,f->buffered));
+      if(available && (f->buffered!=FC_SUPER_MOVE || f->meter>=100))start(f,f->buffered);
+      else {f->buffer_timer=0;f->buffered=FC_IDLE;}
     }
     f->guarding=(buttons&FC_GUARD) && f->move==FC_IDLE && body.grounded;
     if(f->flash) { f->frozen=true; return; }
     if(f->move) {
       ++f->move_tick;
+      if(rapid && f->rapid_timer && f->move_tick>(f->move==FC_ELECTRIC?40:37))
+        f->move_tick=f->move==FC_ELECTRIC?2:3;
       int t=f->move_tick,begin=4,end=7,total=17,damage=1;
       float reach=18,height=18;
       bool super=f->move==FC_SUPER_MOVE,melee=true;
@@ -347,15 +396,45 @@ void fc_tick(FcFight *f,uint32_t buttons,FcBody body,FcTarget *targets,int count
           f->override_x=true;f->velocity_x=0;
           begin=7;end=29;total=39;reach=23;damage=3;
           if(t>=begin && t<=end)f->velocity_x=f->facing*4.0f;
+          if(f->character==FC_HONDA && t>=begin && t<=end) {
+            f->override_y=true;f->velocity_y=0;
+          }
           if(f->character==FC_BLANKA || f->character==FC_BISON) {
             height=36;reach=40;f->invuln=2;
             if(!body.grounded){f->override_y=true;f->velocity_y=0;}
           }
           break;
         case FC_THROW:
-          begin=3;end=24;total=44;reach=50;height=54;damage=6;
-          f->override_x=true;f->velocity_x=0;f->invuln=2;
-          if(t==4){f->override_y=true;f->velocity_y=-5.0f;}
+        piledriver:
+          melee=false;total=44;f->override_x=true;f->velocity_x=0;f->invuln=2;
+          if(f->grabbed<0 && !f->grab_slam && t>=3 && t<=10) {
+            FcBox hands={body.box.x-28,body.box.y-32,body.box.w+56,body.box.h+44};
+            float nearest=1e9f;
+            for(int i=0;i<count && i<FC_MAX_TARGETS;i++)if(targets[i].active && targets[i].hp>0 && fc_overlap(hands,targets[i].box)) {
+              float d=targets[i].box.x+targets[i].box.w/2-(body.box.x+body.box.w/2);
+              if(d<0)d=-d;
+              if(d<nearest){nearest=d;f->grabbed=i;f->grabbed_box=targets[i].box;}
+            }
+            if(f->grabbed>=0) {
+              f->override_y=true;f->velocity_y=-6.5f;f->jump_boost=0;f->move_tick=t=11;
+            }
+          }
+          if(f->grabbed>=0) {
+            ++f->grab_tick;
+            if(!body.grounded && !body.swimming && !body.climbing)f->grab_airborne=true;
+            if(f->grab_airborne && (body.grounded || body.swimming || body.climbing)) {
+              int i=f->grabbed;
+              if(i<count && targets[i].active) {
+                targets[i].box.y=body.box.y+body.box.h-targets[i].box.h;
+                hit(f,&targets[i],targets[i].hp>1?(super?18:6):999,super);
+              }
+              f->grab_slam=true;f->grabbed=-1;f->move_tick=t=36;
+            } else if(f->grab_tick>180) {
+              /* A missed landing, room change or unusual platform cannot
+               * retain ownership of an object forever. Release intact. */
+              f->grabbed=-1;f->move_tick=t=36;
+            } else if(t>34)f->move_tick=t=34;
+          }
           break;
         case FC_TELEPORT:
           melee=false;total=24;f->invuln=2;
@@ -382,11 +461,21 @@ void fc_tick(FcFight *f,uint32_t buttons,FcBody body,FcTarget *targets,int count
           if(body.grounded){f->override_x=true;f->velocity_x=0;}
           begin=3;end=37;total=46;reach=30;damage=1;
           if(t%8==0)f->melee_mask=0;
+          if(f->character==FC_CHUNLI && t>=3 && t<=37 && t%8==0)f->events|=FC_SND_SPECIAL;
           break;
         case FC_SUPER_MOVE:
+          if(f->character==FC_ZANGIEF)goto piledriver;
           f->override_x=body.grounded;f->velocity_x=0;
           begin=1;end=44+f->super_level*8;total=end+8;reach=56;height=64;damage=3;
-          if(f->character==FC_RYU) { melee=false;if(t==3)shot(f,true); }
+          if(f->character==FC_RYU) {
+            melee=false;end+=30;total+=30;
+            /* An airborne cast holds its position through the charge and
+             * blast, so the longer voice wind-up cannot drop Ryu to ground. */
+            if(!body.grounded && t<=end) {
+              f->override_x=f->override_y=true;f->velocity_x=f->velocity_y=0;
+            }
+            if(t==33)shot(f,true);
+          }
           else if(f->character==FC_GUILE) {
             reach=64;height=52;
             if(t==3 || t==17 || (t==31 && f->super_level>1))shot(f,true);
@@ -405,15 +494,26 @@ void fc_tick(FcFight *f,uint32_t buttons,FcBody body,FcTarget *targets,int count
             f->velocity_y=((buttons&FC_DOWN)?3.0f:0)-((buttons&FC_UP)?3.0f:0);
             f->invuln=2;f->melee_mask=0;
           }
-          if(t==1)f->events|=FC_SND_SPECIAL;
+          if(t==(f->character==FC_RYU?30:1))f->events|=FC_SND_SPECIAL;
           if(t%8==0)f->melee_mask=0;
           break;
         default:break;
       }
-      if(f->character==FC_DHALSIM && f->move<=FC_ROUNDHOUSE)reach+=38;
+      if(f->character==FC_DHALSIM && f->move<=FC_ROUNDHOUSE) {
+        if(f->move==FC_JAB) {
+          reach=f->air_attack?72:f->crouching_attack?88:96;
+          if(!f->air_attack){end=11;total=23;} /* Let the full stretch read. */
+        } else reach=f->air_attack?88:f->crouching_attack?40:82;
+      }
       if(f->character==FC_VEGA && f->move<=FC_ROUNDHOUSE)reach+=12;
       if(f->crouching_attack && body.grounded && f->move<=FC_ROUNDHOUSE) {
         height=f->move==FC_JAB?14:9;f->override_x=true;f->velocity_x=0;
+        /* Original low slides carry the extended foot forward while SMW
+         * still owns collision with floors, walls, pipes and ledges. */
+        if((f->character==FC_DHALSIM || f->character==FC_BISON) && f->move==FC_ROUNDHOUSE) {
+          end=20;
+          if(t>=begin && t<=end)f->velocity_x=f->facing*(f->character==FC_BISON?4.5f:3.5f);
+        }
       }
       if(melee && t>=begin && t<=end) {
         FcBox box={body.box.x+(f->facing>0?body.box.w-8:8-reach),
@@ -432,15 +532,41 @@ void fc_tick(FcFight *f,uint32_t buttons,FcBody body,FcTarget *targets,int count
     }
   }
   dec(&f->buffer_timer);
+  if(f->jump_boost) {
+    if(f->stun || f->move!=FC_IDLE)f->jump_boost=0;
+    else {--f->jump_boost;f->override_y=true;f->velocity_y=-7;}
+  }
   if(!f->buffer_timer)f->buffered=FC_IDLE;
   for(int j=0;j<FC_MAX_SHOTS;j++) {
     FcShot *p=&f->shots[j];if(!p->ttl)continue;
-    float old_x=p->box.x; p->box.x+=p->vx; --p->ttl;
+    float old_x=p->box.x;++p->age;--p->ttl;
+    if(p->beam) {
+      if(f->move!=FC_SUPER_MOVE || f->hp<=0){p->ttl=0;continue;}
+      /* The expanding beam is attached to the casting hands. It reaches
+       * across the stage without moving the camera or touching exit data. */
+      float hand=f->body.box.x+f->body.box.w/2+f->facing*38;
+      p->box.w=(float)imin(8192,p->age*160);
+      p->box.x=hand-(f->facing<0?p->box.w:0);
+      p->box.y=f->body.box.y+f->body.box.h+f->sprite_y_offset-30-p->box.h/2;
+      if(p->age%12==0){p->hit_mask=0;p->pierce=64;}
+    } else p->box.x+=p->vx;
     FcBox sweep=p->box;
-    if(p->vx>0) { sweep.x=old_x;sweep.w+=p->vx; } else sweep.w-=p->vx;
+    /* Keep the visible shot at the palms, with a forgiving lower edge for
+     * SMW's ankle-height Goombas and shells. The art must not sink to match
+     * Mario's much shorter terrain hull. */
+    if(!p->super)sweep.h+=14;
+    if(!p->beam) {
+      if(p->vx>0) { sweep.x=old_x;sweep.w+=p->vx; } else sweep.w-=p->vx;
+    }
+    /* Catch close targets between the torso and palms on release too. */
+    if(p->age==1) {
+      float center=f->body.box.x+f->body.box.w/2;
+      if(p->vx>0){sweep.w+=sweep.x-center;sweep.x=center;}
+      else sweep.w=center-sweep.x;
+    }
     for(int i=0;i<count && i<FC_MAX_TARGETS && p->pierce;i++) {
       uint64_t bit=UINT64_C(1)<<i;
-      if(targets[i].active && targets[i].hp>0 && !(p->hit_mask&bit) && fc_overlap(sweep,targets[i].box)) {
+      if(i!=f->grabbed && targets[i].active && targets[i].hp>0 && !(p->hit_mask&bit) && fc_overlap(sweep,targets[i].box)) {
         p->hit_mask|=bit;hit(f,&targets[i],p->damage,p->super);--p->pierce;
         targets[i].knock_x=(p->vx>0?1:-1)*(p->super?6.5f:3.5f);
         if(!p->pierce)p->ttl=0;

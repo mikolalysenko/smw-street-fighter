@@ -1,11 +1,15 @@
 #ifndef WORLD_WARRIOR_TARGETS_H
 #define WORLD_WARRIOR_TARGETS_H
 #include "fight.h"
-enum { WW_TARGET_COUNT=54 };
+#include "draw.h"
+enum { WW_PIPE_TARGET=54,WW_TARGET_COUNT=55 };
 void ww_targets_reset(void);
 void ww_target_spawned(unsigned slot);
 void ww_targets_collect(FcFight *fight, FcTarget *targets);
 void ww_targets_apply(FcFight *fight, FcTarget *targets);
 void ww_scenery_hits(FcFight *fight);
 const FcOpponent *ww_opponent(void);
+void ww_grapple_sync(FcFight *fight);
+bool ww_grapple_sprite(uint8_t slot);
+void ww_grapple_render(FcCanvas canvas,bool front);
 #endif

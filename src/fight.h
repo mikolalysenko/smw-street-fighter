@@ -21,7 +21,7 @@ enum { FC_SND_SWING=1, FC_SND_HIT=2, FC_SND_HURT=4, FC_SND_KO=8,
 #define FC_MAX_SPARKS 64
 #define FC_MAX_BLASTS 24
 typedef struct { float x,y,w,h; } FcBox;
-typedef struct { FcBox box; int facing; bool grounded; } FcBody;
+typedef struct { FcBox box; int facing; bool grounded, swimming, climbing; } FcBody;
 typedef struct {
   const char *name;
   int hp, max_hp, ko_timer;
@@ -47,6 +47,8 @@ typedef struct {
   bool super;
   uint64_t hit_mask;
   bool scenery_hit;
+  bool beam;
+  int age;
 } FcShot;
 typedef struct { float x,y,vx,vy; int ttl; uint32_t color; } FcSpark;
 typedef struct { float x,y; int ttl; bool large; } FcBlast;
@@ -60,7 +62,7 @@ typedef struct {
   int move_tick, super_level, hitstop, flash, stun, invuln;
   int combo, combo_timer, ko_timer, buffer_timer;
   int charge_left, charge_right, charge_down, left_grace, right_grace, down_grace;
-  int mash_count, mash_timer, motion_count;
+  int mash_count, mash_timer, rapid_timer, motion_count;
   bool guarding, move_hit, frozen;
   bool override_x, override_y;
   float velocity_x, velocity_y;
@@ -73,11 +75,16 @@ typedef struct {
   FcReward rewards[6];
   int reward_count,score_gain,lives_gain,combo_award;
   FcBody body;
-  float walk_distance, vertical_motion;
+  float walk_distance, vertical_motion, sprite_y_offset;
   int air_tick,fall_tick,walk_pause;
   uint32_t animation_tick;
   bool moving, body_valid, victory;
   bool crouching_attack, buffered_crouch,air_attack,jump_forward;
+  bool air_move_used;
+  int jump_charge,jump_boost;
+  int grabbed,grab_tick;
+  bool grab_airborne,grab_slam;
+  FcBox grabbed_box;
 } FcFight;
 
 void fc_init(FcFight *f, int character);
@@ -92,5 +99,6 @@ bool fc_overlap(FcBox a, FcBox b);
 bool fc_motion(const FcFight *f, const uint8_t *sequence, int count, int window);
 bool fc_busy(const FcFight *f);
 bool fc_psycho_flight(const FcFight *f);
+bool fc_piledriver(const FcFight *f);
 const char *fc_move_name(const FcFight *f);
 #endif

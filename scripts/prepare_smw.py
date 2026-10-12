@@ -83,6 +83,7 @@ def prepare():
          'void DamagePlayer_PitFall() {  // 00f60a\n  ww_on_death();\n  io_music_ch1 = ww_enabled() ? 0 : 9;'),
         ('void UpdatePlayerSpritePosition() {  // 00dc2d',
          'void UpdatePlayerSpritePosition() {  // 00dc2d\n  ww_velocity();\n  if (ww_psycho_position()) return;'),
+        ('  player_yspeed = tmp8a;\n}', '  player_yspeed = tmp8a;\n  ww_position_end();\n}'),
         ('void HandlePlayerLevelCollision() {  // 00e92b',
          'void HandlePlayerLevelCollision() {  // 00e92b\n  if (ww_psycho_collision()) { ResetPlayerLevelCollisionRAM(); return; }'),
         ('void PlayerDraw() {  // 00e2bd',
@@ -116,11 +117,19 @@ def prepare():
          'void InitializeNormalSpriteRAMTables(uint8 k) {\n  ww_target_spawned(k);'),
     ])
     patch('src/smw_01.c', [
-        ('#include "consts.h"', '#include "ww_smw.h"\n#include "consts.h"'),
+        ('#include "consts.h"', '#include "ww_smw.h"\n#include "ww_targets.h"\n#include "consts.h"'),
+        ('void ProcessNormalSprites_HandleSprite(uint8 k) {  // 018127',
+         'void WW_OriginalHandleSprite(uint8 k);\n'
+         'void ProcessNormalSprites_HandleSprite(uint8 k) { if (!ww_grapple_sprite(k)) WW_OriginalHandleSprite(k); }\n\n'
+         'void WW_OriginalHandleSprite(uint8 k) {  // 018127'),
+        ('  SetSprYPos(k, py + v4);', '  SetSprYPos(k, py + v4);\n  ww_carried_position(k);'),
+        ('if (StandardSpriteToSpriteCollisionChecks_CheckContact(&ci) && !spr_decrementing_table154c[k]) {',
+         'if ((StandardSpriteToSpriteCollisionChecks_CheckContact(&ci) || ww_keyhole_contact(k)) && !spr_decrementing_table154c[k]) {'),
         ('spr_table00c2[k] == 1 && (io_controller_press1 & 0x40) != 0',
          'spr_table00c2[k] == 1 && (ww_enabled() ? ww_yoshi_tongue_pressed() : (io_controller_press1 & 0x40) != 0)'),
         ('void SprXXX_PowerUps_01C538(uint8 k, uint8 a) {  // 01c538',
-         'void SprXXX_PowerUps_01C538(uint8 k, uint8 a) {  // 01c538\n  if (a == 0x74) ww_mushroom();'),
+         'void SprXXX_PowerUps_01C538(uint8 k, uint8 a) {  // 01c538\n'
+         '  if (ww_powerup(a)) { SprXXX_PowerUps_01C56F(k); return; }'),
         ('uint8 SolidSpriteBlock(uint8 k) {  // 01b457',
          'uint8 SolidSpriteBlock(uint8 k) {  // 01b457\n  if (ww_psycho_collision()) return 0;'),
     ])
@@ -135,6 +144,8 @@ def prepare():
     ])
     patch('src/smw_05.c', [
         ('#include "consts.h"', '#include "ww_smw.h"\n#include "consts.h"'),
+        ('  ProcessScrollSprites_Layer1();\n  ProcessScrollSprites_Layer2();',
+         '  if (!ww_fast_scroll()) {\n    ProcessScrollSprites_Layer1();\n    ProcessScrollSprites_Layer2();\n  }'),
         ('  uint16 v7 = 2;\n  LOBYTE(v4) = stripe_image_upload + 4;',
          '  if (ww_enabled()) {\n'
          '    for (int i = 4; i < 14; i += 2) stripe_image_upload_data[stripe_image_upload + i] = 0xfc;\n'

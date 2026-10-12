@@ -10,6 +10,7 @@ from urllib.request import urlopen
 from concurrent.futures import ThreadPoolExecutor
 from PIL import Image, ImageSequence
 from alpha_assets import append_alpha
+from chunli_audio import import_chunli_audio
 from sf2_motion_assets import load_sprites, pack_frame
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -57,6 +58,15 @@ def main():
                 continue
             if name.endswith('.gif'):
                 gif=Image.open(source/'Game/assets/images/sprites/characters'/name)
+                if 'frames' in animation:
+                    for spec in animation['frames']:
+                        gif.seek(spec['frame']);im=gif.convert('RGBA')
+                        x,y,w,h=spec['rect'];im=im.crop((x,y,x+w,y+h))
+                        if spec.get('trim'):im=im.crop(im.getbbox())
+                        w,h=im.size
+                        pixels=b''.join(struct.pack('<I',0xff000000|r<<16|g<<8|b if a>=128 else 0) for r,g,b,a in im.getdata())
+                        records.append(struct.pack('<7H',character,pose,spec['ticks'],w,h,w//2,h//2)+pixels)
+                    continue
                 for gif_frame in ImageSequence.Iterator(gif):
                     im=gif_frame.convert('RGBA');w,h=im.size
                     if pose==25:
@@ -155,6 +165,7 @@ def main():
     }
     for dest, src in sounds.items():
         shutil.copy2(source / 'Game/assets/sfx' / (src+'.wav'), out / 'audio' / (dest+'.wav'))
+    import_chunli_audio(out/'audio')
     ko=json.loads((ROOT/'config/ko-asset.json').read_text())
     mp3=source/'ko.mp3'
     if not mp3.exists():mp3.write_bytes(urlopen(ko['url'],timeout=30).read())
@@ -173,7 +184,7 @@ def main():
         music=source/'Game/assets/music'/f'{name}.ogg'
         subprocess.run(['ffmpeg','-y','-hide_banner','-loglevel','error','-i',str(music),
                         '-ac','1','-ar','48000',str(out/'audio'/f'{name}.wav')],check=True)
-    print(f'Packed {len(records)} original sprite frames, {len(sounds)+5} effects/voices and SF2 menu music into {out}')
+    print(f'Packed {len(records)} original sprite frames, {len(sounds)+10} effects/voices and SF2 menu music into {out}')
 
 
 if __name__ == '__main__':

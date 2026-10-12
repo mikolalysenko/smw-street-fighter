@@ -102,8 +102,10 @@ phase. Original sprite origins prevent frame-to-frame sliding. Neutral and
 forward jumps follow ascent/descent, normal attacks show their impact frame
 when damage activates, and aerial normals end on landing. Animation clocks
 freeze with hitstop and super activation. Specials extend their active frames
-for supers without replaying startup. The Continue menu lets the native death finish,
-then re-enters the current overworld node through SMW's normal midpoint loader.
+for supers without replaying startup. The Continue menu lets the native death
+finish behind its overlay, then opens character select over the restored world
+map. Confirming a fighter leaves the player on the map; the confirmation must
+be released before a fresh press can enter a level through SMW's midpoint loader.
 
 Bison's level-three flight respects the original scrolling controller. Its
 position stays inside the viewport, and ending flight searches for visible

@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 
-static FcBody player={{100,100,16,32},1,true};
+static FcBody player={{100,100,16,32},1,true,false,false};
 static void tick(FcFight *f,uint32_t buttons,FcTarget *targets,int n) {
   fc_tick(f,buttons,player,targets,n);
 }
@@ -58,7 +58,7 @@ static void test_hurricane_kick(void) {
   player.facing=1;player.grounded=true;
 }
 static void test_roster(void) {
-  static const FcMove primary[]={FC_PROJECTILE,FC_RUSH,FC_FLURRY,FC_PROJECTILE,FC_PROJECTILE,FC_RUSH,
+  static const FcMove primary[]={FC_PROJECTILE,FC_RUSH,FC_PROJECTILE,FC_PROJECTILE,FC_PROJECTILE,FC_RUSH,
     FC_SPIN,FC_PROJECTILE,FC_RUSH,FC_RUSH,FC_PROJECTILE,FC_RUSH};
   static const FcMove alternate[]={FC_RISING,FC_FLURRY,FC_SPIN,FC_RISING,FC_RISING,FC_RISING,
     FC_THROW,FC_FLAME,FC_RISING,FC_DIVE,FC_RISING,FC_DIVE};
@@ -67,7 +67,12 @@ static void test_roster(void) {
     fc_init(&f,c);tick(&f,FC_UP|FC_SPECIAL,NULL,0);assert(f.move==alternate[c]);
     for(int meter=100;meter<=300;meter+=100) {
       FcTarget t={{116,100,40,40},50,true,false,0,0};fc_init(&f,c);f.meter=meter;
-      tick(&f,FC_SUPER,&t,1);frames(&f,150,&t,1);
+      tick(&f,FC_SUPER,&t,1);
+      for(int n=0;n<150;n++) {
+        player.grounded=c!=FC_ZANGIEF || n<25 || n>=70;
+        tick(&f,0,&t,1);
+      }
+      player.grounded=true;
       assert(t.hp<50 && f.meter==0);
     }
   }
@@ -90,7 +95,7 @@ static void test_hits(void) {
 }
 static void test_projectiles(void) {
   FcFight f;fc_init(&f,0);
-  FcTarget targets[]={{{153,112,16,16},1,true,false,0,0},{{197,112,16,16},1,true,false,0,0}};
+  FcTarget targets[]={{{153,102,16,16},1,true,false,0,0},{{197,102,16,16},1,true,false,0,0}};
   tick(&f,FC_SPECIAL,targets,2);frames(&f,100,targets,2);
   assert(targets[0].hp==0 && targets[1].hp==1);
   targets[0].hp=targets[1].hp=3;
@@ -152,13 +157,14 @@ static void test_stress(void) {
   }
 }
 static void test_air_attacks_and_animation(void) {
-  FcFight f;FcBody b={{100,100,16,32},1,false};
+  FcFight f;FcBody b={{100,100,16,32},1,false,false,false};
   const uint32_t attacks[]={FC_PUNCH,FC_KICK,FC_SPECIAL,FC_UP|FC_SPECIAL,FC_SUPER};
   for(int character=0;character<FC_ROSTER_COUNT;character++)for(int a=0;a<5;a++) {
     fc_init(&f,character);f.meter=300;
     FcTarget target={{116,100,24,32},30,true,false,0,0};
     int impulse=0,shots=0,hits=0;
     for(int t=0;t<100;t++) {
+      b.grounded=character==FC_ZANGIEF && (a==3 || a==4) && t>=60;
       fc_tick(&f,FC_JUMP|(t==0?attacks[a]:0),b,&target,1);
       impulse|=f.override_y && f.velocity_y<0;hits|=target.hit;
       for(int j=0;j<FC_MAX_SHOTS;j++)shots|=f.shots[j].ttl>0;
@@ -178,6 +184,26 @@ static void test_air_attacks_and_animation(void) {
   b.grounded=false;b.box.y-=3;fc_tick(&f,FC_JUMP,b,NULL,0);assert(f.air_tick==1);
   b.box.y-=3;fc_tick(&f,FC_JUMP,b,NULL,0);assert(f.air_tick==2 && f.vertical_motion<0);
   b.grounded=true;fc_tick(&f,0,b,NULL,0);assert(!f.air_tick);
+}
+static void test_grab_and_high_jump(void) {
+  FcBody b=player;FcFight f;fc_init(&f,FC_ZANGIEF);
+  FcTarget target={{110,45,96,96},1,true,false,0,0};
+  for(int t=0;t<4;t++)fc_tick(&f,t?0:FC_UP|FC_SPECIAL,b,&target,1);
+  assert(f.grabbed==0 && target.hp==1 && !target.hit);
+  assert(f.override_y || f.move_tick>=11);
+  b.grounded=false;
+  for(int t=0;t<65;t++){b.box.y=t<30?99-t:69+(t-30);fc_tick(&f,0,b,&target,1);assert(target.hp==1 && !target.hit);}
+  b.grounded=true;fc_tick(&f,0,b,&target,1);
+  assert(!target.hp && target.hit && f.grab_slam && f.grabbed==-1);
+  fc_init(&f,FC_ZANGIEF);
+  for(int t=0;t<70;t++)fc_tick(&f,t?0:FC_UP|FC_SPECIAL,b,NULL,0);
+  assert(f.move==FC_IDLE && f.grabbed==-1);
+  fc_init(&f,FC_RYU);
+  for(int t=0;t<50;t++)fc_tick(&f,FC_DOWN,b,NULL,0);
+  fc_tick(&f,FC_JUMP|FC_RIGHT,b,NULL,0);assert(f.jump_boost && f.override_y && f.velocity_y==-7);
+  b.grounded=false;
+  for(int t=0;t<70;t++)fc_tick(&f,FC_JUMP,b,NULL,0);
+  assert(!f.jump_boost);fc_tick(&f,0,b,NULL,0);fc_tick(&f,FC_JUMP,b,NULL,0);assert(!f.jump_boost);
 }
 static void test_crouching_attacks(void) {
   for(int id=0;id<FC_ROSTER_COUNT;id++)for(int kick=0;kick<2;kick++) {
@@ -211,10 +237,138 @@ static void test_combo_rewards(void) {
   tick(&f,0,NULL,0);assert(!f.reward_count && !f.score_gain && !f.lives_gain);
   f.move=FC_IDLE;frames(&f,91,NULL,0);assert(!f.combo);
 }
+static void test_stretch_and_slides(void) {
+  for(int facing=-1;facing<=1;facing+=2)for(int crouch=0;crouch<2;crouch++) {
+    FcFight f;fc_init(&f,FC_DHALSIM);FcBody b={{100,100,16,32},facing,true,false,false};
+    FcTarget t[]={{{facing>0?190:18,124,8,8},10,true,false,0,0},
+                  {{facing>0?230:-22,124,8,8},10,true,false,0,0}};
+    for(int n=0;n<40;n++)fc_tick(&f,(crouch?FC_DOWN:0)|(n==0?FC_PUNCH:0),b,t,2);
+    assert(t[0].hp==9 && t[1].hp==10 && f.move==FC_IDLE);
+  }
+  for(int c=0;c<2;c++)for(int facing=-1;facing<=1;facing+=2) {
+    FcFight f;fc_init(&f,c?FC_BISON:FC_DHALSIM);FcBody b={{100,100,16,32},facing,true,false,false};
+    float x=facing>0?188:20;
+    FcTarget t[]={{{x,124,8,8},10,true,false,0,0},{{x,100,8,10},10,true,false,0,0},
+                  {{facing>0?260:-60,124,8,8},10,true,false,0,0}};
+    for(int n=0;n<60;n++) {
+      fc_tick(&f,FC_DOWN|(n==0?FC_KICK:0),b,t,3);
+      if(f.override_x && !f.frozen)b.box.x+=f.velocity_x;
+    }
+    assert((b.box.x-100)*facing>=40 && f.move==FC_IDLE);
+    assert(t[0].hp==8 && t[1].hp==10 && t[2].hp==10);
+  }
+}
+static void test_rapid_specials(void) {
+  for(int c=0;c<3;c++) {
+    FcFight f;fc_init(&f,c==0?FC_HONDA:c==1?FC_CHUNLI:FC_BLANKA);
+    FcMove move=c==2?FC_ELECTRIC:FC_FLURRY;
+    uint32_t button=c==1?FC_KICK:FC_PUNCH;
+    FcTarget target={{116,106,12,26},10000,true,false,0,0};
+    for(int t=0;t<900;t++) {
+      uint32_t b=t%8==0?button:0;
+      if(c==2)b=FC_DOWN|(t%8==0?FC_SPECIAL:0);
+      tick(&f,b,&target,1);
+      if(t>24)assert(f.move==move);
+    }
+    assert(target.hp<9980); /* Every loop remains an attack, not just art. */
+    frames(&f,100,NULL,0);assert(f.move==FC_IDLE);
+    fc_init(&f,c==0?FC_HONDA:c==1?FC_CHUNLI:FC_BLANKA);
+    for(int t=0;t<200;t++)tick(&f,c==2?FC_DOWN|FC_SPECIAL:button,NULL,0);
+    assert(f.move==FC_IDLE); /* Holding a button is not repeated tapping. */
+  }
+  FcFight f;fc_init(&f,FC_HONDA);player.grounded=false;
+  tick(&f,FC_SPECIAL,NULL,0);
+  for(int t=2;t<=29;t++) {
+    tick(&f,0,NULL,0);
+    if(t>=7)assert(f.override_y && f.velocity_y==0 && f.velocity_x==4);
+  }
+  player.grounded=true;
+}
+static void test_muzzles_and_beam(void) {
+  for(int c=0;c<2;c++)for(int facing=-1;facing<=1;facing+=2) {
+    FcFight f;fc_init(&f,c?FC_KEN:FC_RYU);player.facing=facing;
+    tick(&f,FC_SPECIAL,NULL,0);frames(&f,5,NULL,0);
+    FcShot *p=&f.shots[0];assert(p->ttl && !p->beam);
+    assert(p->box.y+p->box.h/2==player.box.y+player.box.h-30);
+    float hand=player.box.x+player.box.w/2+facing*38;
+    assert((p->box.x+(facing<0?p->box.w:0)-hand)*facing>0);
+    fc_init(&f,FC_RYU);f.meter=300;
+    FcTarget targets[]={{{facing>0?400:-300,90,32,48},200,true,false,0,0},
+      {{facing>0?1400:-1300,90,32,48},200,true,false,0,0}};
+    tick(&f,FC_SUPER,targets,2);
+    bool wide=false;
+    for(int t=0;t<240;t++) {
+      tick(&f,0,targets,2);
+      if(f.shots[0].ttl && f.shots[0].box.w>1500)wide=true;
+    }
+    assert(wide && targets[0].hp<180 && targets[1].hp<190 && f.move==FC_IDLE);
+    assert(!f.shots[0].ttl && !f.meter);
+  }
+  player.facing=1;
+}
+static void test_one_air_move(void) {
+  const struct { int character; uint32_t input; FcMove move; } cases[]={
+    {FC_RYU,FC_UP|FC_SPECIAL,FC_RISING},{FC_RYU,FC_DOWN|FC_SPECIAL,FC_SPIN},
+    {FC_HONDA,FC_SPECIAL,FC_RUSH},{FC_CHUNLI,FC_UP|FC_SPECIAL,FC_SPIN},
+    {FC_GUILE,FC_UP|FC_SPECIAL,FC_RISING},{FC_KEN,FC_UP|FC_SPECIAL,FC_RISING},
+    {FC_BLANKA,FC_SPECIAL,FC_RUSH},{FC_BLANKA,FC_UP|FC_SPECIAL,FC_RISING},
+    {FC_ZANGIEF,FC_SPECIAL,FC_SPIN},{FC_ZANGIEF,FC_UP|FC_SPECIAL,FC_THROW},
+    {FC_DHALSIM,FC_DOWN|FC_SPECIAL,FC_TELEPORT},{FC_BALROG,FC_SPECIAL,FC_RUSH},
+    {FC_VEGA,FC_SPECIAL,FC_RUSH},{FC_VEGA,FC_UP|FC_SPECIAL,FC_DIVE},
+    {FC_SAGAT,FC_UP|FC_SPECIAL,FC_RISING},{FC_BISON,FC_SPECIAL,FC_RUSH},
+    {FC_BISON,FC_UP|FC_SPECIAL,FC_DIVE}
+  };
+  FcBody air={{100,100,16,32},1,false,false,false};
+  for(unsigned c=0;c<sizeof(cases)/sizeof(cases[0]);c++) {
+    FcFight f;fc_init(&f,cases[c].character);
+    fc_tick(&f,cases[c].input,air,NULL,0);assert(f.move==cases[c].move && f.air_move_used);
+    for(int t=0;t<180;t++) {
+      fc_tick(&f,t%8==0?cases[c].input:0,air,NULL,0);
+      assert(!(f.events&FC_SND_SPECIAL));
+    }
+    assert(f.move==FC_IDLE);
+    /* Each real support type refreshes the shared allowance. */
+    for(int contact=0;contact<3;contact++) {
+      FcBody supported=air;
+      supported.grounded=contact==0;supported.swimming=contact==1;supported.climbing=contact==2;
+      fc_tick(&f,0,supported,NULL,0);assert(!f.air_move_used);
+      fc_tick(&f,cases[c].input,air,NULL,0);assert(f.move==cases[c].move);
+      for(int t=0;t<70;t++)fc_tick(&f,0,air,NULL,0);
+    }
+  }
+  for(int c=0;c<FC_ROSTER_COUNT;c++)if(c!=FC_GUILE && c!=FC_DHALSIM) {
+    FcFight f;fc_init(&f,c);f.meter=300;fc_tick(&f,FC_SUPER,air,NULL,0);
+    assert(f.move==FC_SUPER_MOVE && f.air_move_used && !f.meter);
+    for(int t=0;t<1400;t++)fc_tick(&f,0,air,NULL,0);
+    f.meter=300;fc_tick(&f,FC_SUPER,air,NULL,0);
+    assert(f.move==FC_IDLE && f.meter==300 && !(f.events&FC_SND_SUPER));
+  }
+  /* A grounded launcher cannot refund itself in startup, and a connected
+   * air uppercut cannot bypass the limit by cancelling into a super. */
+  FcFight f;fc_init(&f,FC_RYU);FcBody ground=air;ground.grounded=true;
+  fc_tick(&f,FC_UP|FC_SPECIAL,ground,NULL,0);fc_tick(&f,0,ground,NULL,0);
+  fc_tick(&f,0,air,NULL,0);assert(f.air_move_used);
+  f.move_hit=true;f.meter=300;fc_tick(&f,FC_SUPER,air,NULL,0);
+  assert(f.move==FC_RISING && f.meter==300);
+  for(int t=0;t<70;t++)fc_tick(&f,0,air,NULL,0);
+  fc_tick(&f,FC_DOWN|FC_SPECIAL,air,NULL,0);assert(f.move==FC_IDLE);
+  /* Normal attacks and fireballs still work after spending the air move. */
+  fc_tick(&f,0,air,NULL,0);
+  for(int i=0;i<3;i++) {
+    fc_tick(&f,FC_SPECIAL,air,NULL,0);assert(f.move==FC_PROJECTILE);
+    for(int t=0;t<30;t++)fc_tick(&f,0,air,NULL,0);
+  }
+  fc_tick(&f,FC_PUNCH,air,NULL,0);assert(f.move==FC_JAB);
+  for(int t=0;t<30;t++)fc_tick(&f,0,air,NULL,0);
+  f.invuln=0;assert(fc_hurt(&f,1,1));
+  for(int t=0;t<80;t++)fc_tick(&f,0,air,NULL,0);
+  fc_tick(&f,FC_UP|FC_SPECIAL,air,NULL,0);assert(f.move==FC_IDLE && f.air_move_used);
+}
 int main(void) {
   test_motions();test_super_meter();test_hurricane_kick();test_hits();test_projectiles();test_reactions();
   test_charge_and_roster();test_cancel_and_buffer();test_air_attacks_and_animation();test_crouching_attacks();test_stress();test_roster();
-  test_combo_rewards();
-  puts("Combat: 13 suites passed, including twelve fighters, all super levels, hurricane inputs, Psycho flight and combo rewards.");
+  test_combo_rewards();test_stretch_and_slides();test_rapid_specials();test_muzzles_and_beam();
+  test_one_air_move();test_grab_and_high_jump();
+  puts("Combat: 18 suites passed, including air limits, charged jumps and delayed piledriver impacts.");
   return 0;
 }

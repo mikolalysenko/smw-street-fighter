@@ -15,7 +15,7 @@
 #include <stdlib.h>
 #include <string.h>
 static int tick,title_ticks,map_ticks,level_ticks,select_ticks,done,reload;
-static int title_captured,file_captured,hits;
+static int title_captured,file_captured,player_menu_captured,hits;
 static uint32_t expected,enemy_score;
 int ww_upstream_main(int,char**);
 static void save(uint8_t *pixels,size_t pitch,int w,int h,const char *name) {
@@ -77,13 +77,14 @@ void ww_test_render(uint8_t *pixels,size_t pitch,int w,int h) {
     ww_title_end(g_my_ppu);assert(!memcmp(vram,g_my_ppu->vram,sizeof(vram)));
   }
   if(misc_game_mode==8 && !file_captured++)save(pixels,pitch,w,h,"title-file-menu.bmp");
+  if(misc_game_mode==0x0a && !player_menu_captured++)save(pixels,pitch,w,h,"title-player-menu.bmp");
   if(level_ticks==175)save(pixels,pitch,w,h,"score-hud.bmp");
 }
 int main(void) {
   reload=getenv("WW_TEST_RELOAD")!=NULL;setvbuf(stdout,NULL,_IONBF,0);
   char *args[]={"test-title-score","--config","test-play.ini",NULL};
   int result=ww_upstream_main(3,args);assert(done && title_captured);
-  if(!reload)assert(file_captured && hits && level_ticks>=180);
+  if(!reload)assert(file_captured && player_menu_captured && hits && level_ticks>=180);
   printf("Title and score: %s, high score %u; original file menu and VRAM intact.\n",
     reload?"record survived process restart and attract mode":"combat and bonus points saved; new game preserves record",expected);
   return result;

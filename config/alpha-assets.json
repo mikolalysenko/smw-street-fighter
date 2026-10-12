@@ -45,6 +45,10 @@
     {
       "path": "script/audio/mbison.ogg.js",
       "sha256": "2a366f54b810a4cc440dfe79356fea790f00497fa96394a34e9297dc4ca46579"
+    },
+    {
+      "path": "script/audio/ryu.ogg.js",
+      "sha256": "2d38fd1bff46fe8846ff614517b40d95c05b5242b0dd5512301ebd864ad20e08"
     }
   ]
 }

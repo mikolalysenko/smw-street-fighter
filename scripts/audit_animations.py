@@ -15,7 +15,7 @@ LABELS = {0:'Idle',1:'Walk',2:'Jump up',3:'Crouch',4:'Punch',5:'Kick',6:'Firebal
           7:'Rising',8:'Spin',9:'Rush',10:'Flurry / flame',20:'Win',21:'Air punch',
           22:'Air kick',23:'Crouch punch',24:'Crouch kick',37:'Throw',38:'Teleport',
           39:'Dive',43:'Jump forward'}
-SPECIALS = [[6,7,8],[9,10],[10,8],[6,7],[6,7,8],[9,7,10],
+SPECIALS = [[6,7,8],[9,10],[6,10,8],[6,7],[6,7,8],[9,7,10],
             [8,37],[6,10,38],[9,7],[9,39],[6,7],[9,39]]
 
 

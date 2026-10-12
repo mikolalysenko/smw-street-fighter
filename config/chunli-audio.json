@@ -1,0 +1,26 @@
+{
+  "source": "https://network.mugenguild.com/jmorphman/characters/chun-li",
+  "url": "https://network.mugenguild.com/jmorphman/wp-content/uploads/characters/Chun-Li.7z",
+  "sha256": "dc0cf4e91c75356a75b3689af7f76186e9d7f550328d561da21523acb5fe8a01",
+  "member": "Chun-Li/Sound.snd",
+  "clips": [
+    {
+      "name": "lightning_kick",
+      "group": 1,
+      "index": 3,
+      "sha256": "2eb4bfd7000c51bf503fd8fbdc7b31a255a2a29f1a9c223cb6dab471787971f3"
+    },
+    {
+      "name": "chun_attack",
+      "group": 4,
+      "index": 2,
+      "sha256": "14ed3f3ba411114234a7bab7c14abf1084e40b5f9181fc4e29db58235266d70e"
+    },
+    {
+      "name": "kikoken",
+      "group": 1000,
+      "index": 0,
+      "sha256": "d2829c33e74632e4f8010732adcd4bf917b1f7962290e316b7cbc94d98093781"
+    }
+  ]
+}

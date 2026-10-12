@@ -93,11 +93,21 @@ def pack_frame(sprites, character, pose, frame):
         ax, ay = im.width//2, im.height//2
     else:
         # SF2's origin is a few pixels above the feet on its perspective floor.
-        # Apply one constant per fighter for SMW's exact platform collision
-        # plane; keep every animation's relative pivot unchanged.
+        # Keep airborne pivots relative to one constant fighter baseline;
+        # grounded poses below need an exact platform contact instead.
         order = (0,1,5,3,4,2,6,7,10,11,9,8)
         standing, _, ground_y = sprites[0, order[character]*100]
         ay += standing.height-ground_y
+        if (pose in (0, 1, 3, 4, 5, 6, 10, 13, 20, 23, 24)
+                or (character == 8 and pose in (7, 9))
+                or (character == 6 and pose in (8, 37))):
+            # Grounded art is sampled at half size by the game. A toe that
+            # exists only on an odd source row can otherwise disappear and
+            # leave a visible gap. Align the lowest sampled opaque pixel,
+            # including Vega's separate claw layer, to the platform plane.
+            bottom = max(y//2 for y in range(0, im.height, 2)
+                         if any(im.getpixel((x, y))[3] for x in range(0, im.width, 2)))
+            ay = (bottom+1)*2
     # WWA1 uses unsigned origins. Pad instead of moving the original axis.
     left, top = max(0, -ax), max(0, -ay)
     if left or top:

@@ -31,15 +31,17 @@ for(let tick=1;tick<4200;tick++) {
       if(level>=175 && level<195)input=1;
       if(level===182)input|=512|16;
       rising ||= state(7)===4 && state(13)<-50;
-      if(level>=365 && level<395)input=32;
-      if(level===365)input|=2;
+      // Allow Shinku's spoken charge and sustained blast to recover before
+      // testing new normals; attack inputs during recovery expire normally.
+      if(level>=410 && level<440)input=32;
+      if(level===410)input|=2;
       crouchPunch ||= state(7)===1 && !!state(17);
       if(level===265)input=2048;
       superSeen ||= state(7)===8;
-      if(level>=415 && level<450)input=32;
-      if(level===415)input|=256;
+      if(level>=460 && level<495)input=32;
+      if(level===460)input|=256;
       crouchKick ||= state(7)===2 && !!state(17);
-      if(level>460)break;
+      if(level>505)break;
     }
   } else input=tick%45===0?8:tick%45===22?1:0;
   assert.equal(g._ww_web_step(input),1);

@@ -73,6 +73,10 @@ def append_alpha(records, output):
     hat=hat.crop((42,11,65,20))
     pack(34,hat,60,(hat.width//2,hat.height))
     pack(35,original('fb-charge-6.png'),60)
+    for i in range(2):
+        pack(44,original(f'air-fb-{i}.png'),6 if i==0 else 14)
+    for i in range(1,7):
+        pack(45,original(f'r-uppercut-p1-{i}.png'),4)
     # Original Alpha Psycho Crusher spin, used only for Bison's level 3.
     # The reference clip's enormous wake is composed around these pixels.
     metadata=(root/'script/player-mbison-spritedata.js').read_text()
@@ -88,7 +92,9 @@ def append_alpha(records, output):
     for file, name, dest in [('match','audio/misc/super-charge.zzz','alpha_charge'),
                              ('akuma','audio/akuma/super-0.zzz','akuma_super'),
                              ('akuma','audio/akuma/warp-0.zzz','akuma_warp'),
-                             ('mbison','audio/mbison/psycho-crusher.zzz','psycho_super')]:
+                             ('mbison','audio/mbison/psycho-crusher.zzz','psycho_super'),
+                             ('ryu','audio/ryu/sinku.zzz','shinku'),
+                             ('ryu','audio/ryu/haduken.zzz','alpha_hadouken')]:
         data=(root/f'script/audio/{file}.ogg.js').read_text()
         match=re.search(r'loadBase64\("'+re.escape(name)+r'"[^\n]*?data:audio/ogg;base64,([^"\s]+)',data)
         if not match:raise ValueError('Missing original Alpha audio: '+name)
