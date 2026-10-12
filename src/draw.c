@@ -23,7 +23,8 @@ static const uint8_t letters[36][7]={
 };
 void fc_rect(FcCanvas c,int x,int y,int w,int h,uint32_t color) {
   int x2=x+w,y2=y+h;if(x<0)x=0;if(y<0)y=0;
-  if(x2>c.w)x2=c.w;if(y2>c.h)y2=c.h;
+  if(x2>c.w)x2=c.w;
+  if(y2>c.h)y2=c.h;
   for(int j=y;j<y2;j++)for(int i=x;i<x2;i++)c.pixels[j*c.pitch+i]=0xff000000|color;
 }
 static void frame(FcCanvas c,int x,int y,int w,int h,uint32_t color) {
@@ -279,7 +280,9 @@ static void hud_icon(FcCanvas c,int x,int y,FcCanvas icon) {
   }
 }
 static void life_bar(FcCanvas c,int x,int y,int w,int hp,int maximum,bool reverse,bool loss) {
-  if(maximum<1)maximum=1;if(hp<0)hp=0;if(hp>maximum)hp=maximum;
+  if(maximum<1)maximum=1;
+  if(hp<0)hp=0;
+  if(hp>maximum)hp=maximum;
   fc_rect(c,x-2,y-2,w+4,11,0x080808);frame(c,x-1,y-1,w+2,9,0xfffbe1);
   for(int row=0;row<7;row++)for(int col=0;col<w;col++)
     fc_rect(c,x+col,y+row,1,1,loss?(((row+col)&1)?0xec2828:0x40587e):0x15182b);
