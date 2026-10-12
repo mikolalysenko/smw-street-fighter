@@ -1,6 +1,6 @@
-import createWorldWarrior from './game.mjs?v=20261012-052209';
-import {keyMap,gamepadButtons} from './input.mjs?v=20261012-052209';
-import {createPresenter} from './presenter.mjs?v=20261012-052209';
+import createWorldWarrior from './game.mjs?v=20261012-062049';
+import {keyMap,gamepadButtons} from './input.mjs?v=20261012-062049';
+import {createPresenter} from './presenter.mjs?v=20261012-062049';
 
 const $=selector=>document.querySelector(selector);
 const status=$('#status'), play=$('#play'), cabinet=$('#cabinet');
@@ -121,7 +121,7 @@ try {
     status.textContent=kind+' · Loading original game assets…';
   });
   game=await createWorldWarrior({
-    locateFile:path=>path+'?v=20261012-052209',
+    locateFile:path=>path+'?v=20261012-062049',
     printErr:message=>console.warn(message),
   });
   if(!game._ww_web_init())throw new Error('Engine initialization failed');
@@ -129,6 +129,6 @@ try {
   const pointer=game._ww_web_pixels();presenter.draw(game.HEAPU8.subarray(pointer,pointer+256*224*4));
   play.disabled=false;play.textContent='PLAY';
   $('#export').disabled=false;
-  status.textContent=presenter.kind+' · WASM · 20261012-052209';
+  status.textContent=presenter.kind+' · WASM · 20261012-062049';
   requestAnimationFrame(animate);
 } catch(error) {failure(error);}

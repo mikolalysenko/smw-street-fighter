@@ -41,7 +41,7 @@ if (ENVIRONMENT_IS_NODE) {
 
 // --pre-jses are emitted after the Module integration code, so that they can
 // refer to Module (if they choose; they can also define Module)
-// include: /var/folders/k8/ht4rgp0d7jj_fxhhwjg3tmr00000gn/T/tmp9orjx6wr.js
+// include: /var/folders/k8/ht4rgp0d7jj_fxhhwjg3tmr00000gn/T/tmpvj4qw8kt.js
 if (!Module["expectedDataFileDownloads"]) Module["expectedDataFileDownloads"] = 0;
 
 Module["expectedDataFileDownloads"]++;
@@ -323,17 +323,17 @@ Module["expectedDataFileDownloads"]++;
     }, {
       "filename": "/sf2/sprites.dat",
       "start": 10595082,
-      "end": 69482456
+      "end": 69765800
     }, {
       "filename": "/smw_assets.dat",
-      "start": 69482456,
-      "end": 69838324
+      "start": 69765800,
+      "end": 70121668
     } ],
-    "remote_package_size": 69838324
+    "remote_package_size": 70121668
   });
 }))();
 
-// end include: /var/folders/k8/ht4rgp0d7jj_fxhhwjg3tmr00000gn/T/tmp9orjx6wr.js
+// end include: /var/folders/k8/ht4rgp0d7jj_fxhhwjg3tmr00000gn/T/tmpvj4qw8kt.js
 var programArgs = [];
 
 var thisProgram = "./this.program";
@@ -7888,7 +7888,7 @@ Module["FS_createLazyFile"] = FS_createLazyFile;
 // End JS library exports
 // end include: postlibrary.js
 var ASM_CONSTS = {
-  401585: () => {
+  401697: () => {
     if (typeof (AudioContext) !== "undefined") {
       return true;
     } else if (typeof (webkitAudioContext) !== "undefined") {
@@ -7896,7 +7896,7 @@ var ASM_CONSTS = {
     }
     return false;
   },
-  401732: () => {
+  401844: () => {
     if ((typeof (navigator.mediaDevices) !== "undefined") && (typeof (navigator.mediaDevices.getUserMedia) !== "undefined")) {
       return true;
     } else if (typeof (navigator.webkitGetUserMedia) !== "undefined") {
@@ -7904,7 +7904,7 @@ var ASM_CONSTS = {
     }
     return false;
   },
-  401966: $0 => {
+  402078: $0 => {
     if (typeof (Module["SDL2"]) === "undefined") {
       Module["SDL2"] = {};
     }
@@ -7928,11 +7928,11 @@ var ASM_CONSTS = {
     }
     return SDL2.audioContext === undefined ? -1 : 0;
   },
-  402518: () => {
+  402630: () => {
     var SDL2 = Module["SDL2"];
     return SDL2.audioContext.sampleRate;
   },
-  402586: ($0, $1, $2, $3) => {
+  402698: ($0, $1, $2, $3) => {
     var SDL2 = Module["SDL2"];
     var have_microphone = function(stream) {
       if (SDL2.capture.silenceTimer !== undefined) {
@@ -7974,7 +7974,7 @@ var ASM_CONSTS = {
       }, have_microphone, no_microphone);
     }
   },
-  404279: ($0, $1, $2, $3) => {
+  404391: ($0, $1, $2, $3) => {
     var SDL2 = Module["SDL2"];
     SDL2.audio.scriptProcessorNode = SDL2.audioContext["createScriptProcessor"]($1, 0, $0);
     SDL2.audio.scriptProcessorNode["onaudioprocess"] = function(e) {
@@ -8006,7 +8006,7 @@ var ASM_CONSTS = {
       SDL2.audio.silenceTimer = setInterval(silence_callback, ($1 / SDL2.audioContext.sampleRate) * 1e3);
     }
   },
-  405454: ($0, $1) => {
+  405566: ($0, $1) => {
     var SDL2 = Module["SDL2"];
     var numChannels = SDL2.capture.currentCaptureBuffer.numberOfChannels;
     for (var c = 0; c < numChannels; ++c) {
@@ -8025,7 +8025,7 @@ var ASM_CONSTS = {
       }
     }
   },
-  406059: ($0, $1) => {
+  406171: ($0, $1) => {
     var SDL2 = Module["SDL2"];
     var buf = $0 >>> 2;
     var numChannels = SDL2.audio.currentOutputBuffer["numberOfChannels"];
@@ -8039,7 +8039,7 @@ var ASM_CONSTS = {
       }
     }
   },
-  406548: $0 => {
+  406660: $0 => {
     var SDL2 = Module["SDL2"];
     if ($0) {
       if (SDL2.capture.silenceTimer !== undefined) {
@@ -8073,7 +8073,7 @@ var ASM_CONSTS = {
       SDL2.audioContext = undefined;
     }
   },
-  407554: ($0, $1, $2) => {
+  407666: ($0, $1, $2) => {
     var w = $0;
     var h = $1;
     var pixels = $2;
@@ -8144,7 +8144,7 @@ var ASM_CONSTS = {
     }
     SDL2.ctx.putImageData(SDL2.image, 0, 0);
   },
-  409020: ($0, $1, $2, $3, $4) => {
+  409132: ($0, $1, $2, $3, $4) => {
     var w = $0;
     var h = $1;
     var hot_x = $2;
@@ -8181,18 +8181,18 @@ var ASM_CONSTS = {
     stringToUTF8(url, urlBuf, url.length + 1);
     return urlBuf;
   },
-  410008: $0 => {
+  410120: $0 => {
     if (Module["canvas"]) {
       Module["canvas"].style["cursor"] = UTF8ToString($0);
     }
   },
-  410091: () => {
+  410203: () => {
     if (Module["canvas"]) {
       Module["canvas"].style["cursor"] = "none";
     }
   },
-  410160: () => window.innerWidth,
-  410190: () => window.innerHeight
+  410272: () => window.innerWidth,
+  410302: () => window.innerHeight
 };
 
 // Imports from the Wasm binary.
