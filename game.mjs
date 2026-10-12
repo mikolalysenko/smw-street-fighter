@@ -41,7 +41,7 @@ if (ENVIRONMENT_IS_NODE) {
 
 // --pre-jses are emitted after the Module integration code, so that they can
 // refer to Module (if they choose; they can also define Module)
-// include: /var/folders/k8/ht4rgp0d7jj_fxhhwjg3tmr00000gn/T/tmpvizk6alj.js
+// include: /var/folders/k8/ht4rgp0d7jj_fxhhwjg3tmr00000gn/T/tmpekjwq78w.js
 if (!Module["expectedDataFileDownloads"]) Module["expectedDataFileDownloads"] = 0;
 
 Module["expectedDataFileDownloads"]++;
@@ -60,7 +60,7 @@ Module["expectedDataFileDownloads"]++;
       // web worker
       PACKAGE_PATH = encodeURIComponent(location.pathname.substring(0, location.pathname.lastIndexOf("/")) + "/");
     }
-    var PACKAGE_NAME = "/Users/mikolalysenko/smw-street-fighter/build/release-source-v0.6.1/dist/web/game.data";
+    var PACKAGE_NAME = "/Users/mikolalysenko/smw-street-fighter/build/release-source-v0.6.2/dist/web/game.data";
     var REMOTE_PACKAGE_BASE = "game.data";
     var REMOTE_PACKAGE_NAME = Module["locateFile"] ? Module["locateFile"](REMOTE_PACKAGE_BASE, "") : REMOTE_PACKAGE_BASE;
     var REMOTE_PACKAGE_SIZE = metadata["remote_package_size"];
@@ -135,9 +135,9 @@ Module["expectedDataFileDownloads"]++;
           // canOwn this data in the filesystem, it is a slice into the heap that will never change
           Module["FS_createDataFile"](name, null, data, true, true, true);
         }
-        Module["removeRunDependency"]("datafile_/Users/mikolalysenko/smw-street-fighter/build/release-source-v0.6.1/dist/web/game.data");
+        Module["removeRunDependency"]("datafile_/Users/mikolalysenko/smw-street-fighter/build/release-source-v0.6.2/dist/web/game.data");
       }
-      Module["addRunDependency"]("datafile_/Users/mikolalysenko/smw-street-fighter/build/release-source-v0.6.1/dist/web/game.data");
+      Module["addRunDependency"]("datafile_/Users/mikolalysenko/smw-street-fighter/build/release-source-v0.6.2/dist/web/game.data");
       if (!Module["preloadResults"]) Module["preloadResults"] = {};
       Module["preloadResults"][PACKAGE_NAME] = {
         fromCache: false
@@ -333,7 +333,7 @@ Module["expectedDataFileDownloads"]++;
   });
 }))();
 
-// end include: /var/folders/k8/ht4rgp0d7jj_fxhhwjg3tmr00000gn/T/tmpvizk6alj.js
+// end include: /var/folders/k8/ht4rgp0d7jj_fxhhwjg3tmr00000gn/T/tmpekjwq78w.js
 var programArgs = [];
 
 var thisProgram = "./this.program";

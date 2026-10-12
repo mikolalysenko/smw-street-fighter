@@ -1,4 +1,4 @@
-import {keyMap} from './input.mjs?v=20261012-140056';
+import {keyMap} from './input.mjs?v=20261012-142949';
 
 export function isPhone(nav = navigator) {
   const ua = nav.userAgent || '';

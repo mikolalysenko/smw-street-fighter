@@ -1,8 +1,8 @@
-import createWorldWarrior from './game.mjs?v=20261012-140056';
-import {keyMap,gamepadButtons} from './input.mjs?v=20261012-140056';
-import {createPresenter} from './presenter.mjs?v=20261012-140056';
-import {installTouchControls} from './touch.mjs?v=20261012-140056';
-import {createGameAudio} from './audio.mjs?v=20261012-140056';
+import createWorldWarrior from './game.mjs?v=20261012-142949';
+import {keyMap,gamepadButtons} from './input.mjs?v=20261012-142949';
+import {createPresenter} from './presenter.mjs?v=20261012-142949';
+import {installTouchControls} from './touch.mjs?v=20261012-142949';
+import {createGameAudio} from './audio.mjs?v=20261012-142949';
 
 const $=selector=>document.querySelector(selector);
 const status=$('#status'), play=$('#play'), cabinet=$('#cabinet');
@@ -137,10 +137,10 @@ $('#export').onclick=()=>{
 try {
   presenter=await createPresenter($('#screen'),kind=>{
     document.documentElement.dataset.renderer=kind;
-    status.textContent=kind+(game?' · WASM · 20261012-140056':' · Loading original game assets…');
+    status.textContent=kind+(game?' · WASM · 20261012-142949':' · Loading original game assets…');
   });
   game=await createWorldWarrior({
-    locateFile:path=>path+'?v=20261012-140056',
+    locateFile:path=>path+'?v=20261012-142949',
     printErr:message=>console.warn(message),
   });
   game._ww_web_set_debug(debug?1:0);
@@ -149,7 +149,7 @@ try {
   const pointer=game._ww_web_pixels();presenter.draw(game.HEAPU8.subarray(pointer,pointer+256*224*4));
   play.disabled=false;play.textContent='PLAY';
   $('#export').disabled=false;
-  status.textContent=presenter.kind+' · WASM · 20261012-140056';
+  status.textContent=presenter.kind+' · WASM · 20261012-142949';
   requestAnimationFrame(animate);
 } catch(error) {failure(error);}
 
