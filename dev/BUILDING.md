@@ -42,7 +42,7 @@ Windows x86-64, and separate Apple Silicon and Intel Mac packages on native runn
 
 ```sh
 make smw
-python3 dev/package_native.py --version 0.6.1
+python3 dev/package_native.py --version 0.6.2
 python3 dev/smoke_package.py dist/releases/super-mario-world-ii-macos-arm64
 ```
 

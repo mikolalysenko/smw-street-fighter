@@ -26,6 +26,7 @@ static int death_ticks,clear_ticks;
 static bool fighter_drawn;
 static bool level_hurt,perfect_announced;
 static bool tongue_pressed;
+static bool pickup_held,pickup_punch;
 static bool psycho_was_active,psycho_safe;
 static uint16 psycho_safe_x,psycho_safe_y;
 static int psycho_exit_tick,psycho_exit_from_x,psycho_exit_from_y,psycho_exit_x,psycho_exit_y;
@@ -43,6 +44,7 @@ void ww_init(void) {
   chosen=was_level=false;menu=choice=pause_choice=0;previous=0;
   death_prompt=continue_pending=death_transition=map_confirm_held=fighter_drawn=false;death_ticks=clear_ticks=0;
   level_hurt=perfect_announced=tongue_pressed=false;
+  pickup_held=pickup_punch=false;
   psycho_was_active=psycho_safe=false;
   psycho_exit_tick=0;
   boss_practice=false;
@@ -96,7 +98,7 @@ static FcBody body(void) {
 }
 static void quit(void) { SDL_Event e={0};e.type=SDL_QUIT;SDL_PushEvent(&e); }
 bool ww_before_frame(uint32_t *inputs) {
-  tongue_pressed=false;
+  tongue_pressed=pickup_held=false;
   if(!initialized)return true;
   ww_title_tick();
   uint32_t b=decode(*inputs),edge=b&~previous;previous=b;
@@ -222,10 +224,15 @@ bool ww_before_frame(uint32_t *inputs) {
   }
   /* Keep the terrain hull; power-up pickups now refill the super meter. */
   player_current_power_up=1;
-  bool carrying=false;
-  for(int k=0;k<12;k++)if(spr_current_status[k]==11 && spr_spriteid[k]!=0x7d)carrying=true;
-  bool release=carrying && (b&FC_GUARD) && (edge&FC_PUNCH);
-  if(release){b&=~FC_PUNCH;edge&=~FC_PUNCH;}
+  /* The native run button also grabs/holds objects. Gate those interactions
+   * separately, so automatic running cannot pick things up. The grab chord
+   * leaves directions/jump available and consumes Punch until it is released,
+   * even if Guard is released first. It must not punch or activate Yoshi. */
+  pickup_held=(b&(FC_GUARD|FC_PUNCH))==(FC_GUARD|FC_PUNCH);
+  if(pickup_held)pickup_punch=true;
+  else if(!(b&FC_PUNCH))pickup_punch=false;
+  if(pickup_punch){b&=~FC_PUNCH;edge&=~FC_PUNCH;}
+  if(pickup_held)b&=~FC_GUARD;
   ww_grapple_sync(&fight);
   FcTarget targets[WW_TARGET_COUNT];ww_targets_collect(&fight,targets);
   FcBody player=body();
@@ -251,11 +258,7 @@ bool ww_before_frame(uint32_t *inputs) {
    * preserves SMW's long jumps without a second held face button. */
   *inputs&=~(2u|4u|8u|(1u<<8)|(1u<<9)|(1u<<10)|(1u<<11));
   if(b&(FC_LEFT|FC_RIGHT))*inputs|=2;
-  if(fight.override_x || (fight.guarding && !release))*inputs&=~(0xc0u|2u);
-  /* Auto-run used to drop keys whenever the player stopped or attacked.
-   * Guard can grab an item, and carried items stay held until Guard+Punch. */
-  if(carrying || (b&FC_GUARD))*inputs|=2u;
-  if(release)*inputs&=~2u;
+  if(fight.override_x || fight.guarding)*inputs&=~(0xc0u|2u);
   if((fight.crouching_attack || (fight.guarding && fight.crouching_guard)) && player.grounded)*inputs|=1u<<5;
   /* Held jump still controls SMW's variable jump arc during air attacks. */
   if(fight.stun)*inputs&=~1u;
@@ -459,6 +462,7 @@ bool ww_take_damage(int amount,int direction) {
 }
 bool ww_perfect_clear(void) { return ww_enabled() && timer_end_level && !level_hurt; }
 bool ww_yoshi_tongue_pressed(void) { return tongue_pressed; }
+bool ww_pickup_held(void) { return ww_enabled() && pickup_held; }
 bool ww_powerup(uint8_t sprite) {
   if(!ww_enabled())return false;
   int bars=sprite==0x74?1:sprite==0x75?2:sprite==0x77?3:0;

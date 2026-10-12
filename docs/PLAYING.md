@@ -74,6 +74,7 @@ At the goal he leaves the beam and jumps down continuously to the finish floor.
 | Extra special / Hurricane Kick | Down + Y | Down + A |
 | Super | RB | S |
 | Guard | LB | D |
+| Pick up / carry (hold) | LB + X | D + X |
 | Crouch block | Down + LB | Down + D |
 | Pause / confirm | Start | Enter |
 | Back / pause | Back | Escape |
@@ -141,14 +142,22 @@ Ordinary punches, kicks and fireballs remain usable in the air.
 **High jump:** hold Down for about three quarters of a second, then Jump.
 Keep Jump held for height and steer in the air. Every fighter can reach Donut
 Plains 1's secret platform without the green switch blocks.
-Walk into a key or shell to pick it up, or hold Guard while touching it.
-It stays held when you stop and attack. **Guard + Punch** releases it; add
-Down to drop or Up to throw upward. Keys still activate the original keyholes.
+Hold **Guard + Punch** while touching a shell, key, switch, springboard or
+carryable block to pick it up. Walking into things, Guard alone and Punch alone
+do not pick them up. Keep both buttons held to carry; you can still move and
+jump. Release either button to let go. Hold **Down** when releasing to drop it,
+or **Up** to throw upward; moving sideways releases it forward. Keys still
+activate the original keyholes while carried.
+
+On a keyboard, hold **D + X**; on an Xbox-style controller, **LB + X**.
+On a phone, hold the **Guard** and **Punch** touch buttons together. This gesture
+does not throw a punch or activate Yoshi's tongue.
 
 Zangief's **Up + Special** grabs nearby enemies and pipes. A successful grab
 launches, spins the held object upside down, and damages it only on landing.
 A whiff only reaches. **Super** can also grab Akuma with the entire clown car.
-Required objects and pipe entrances remain usable after their slam.
+The slam destroys even required objects and pipe entrances. Pause and return
+to the map if you destroy something needed to finish the level.
 Triangle blocks rotate the fighter into the wall run, with a walking cycle.
 
 Enemy contact causes health loss, hitstop, hit stun, knockback and SF2 hurt

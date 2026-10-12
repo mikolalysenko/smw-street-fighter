@@ -69,6 +69,7 @@ Gamepad labels use Xbox / Steam button positions.
 | Extra special | Down + A | Down + Y |
 | Super | S | RB |
 | Guard / crouch guard | D / Down + D | LB / Down + LB |
+| Pick up / carry (hold) | D + X | LB + X |
 | Start / pause | Enter | Start |
 | Back | Escape | Back |
 | Fullscreen | F11 | Browser button / launcher option |
@@ -83,11 +84,13 @@ Gamepad labels use Xbox / Steam button positions.
 Punches and kicks bonk enemies or flip shells, and bump blocks like a jump hit.
 An aerial **Down + Punch / Kick** strikes blocks below you. Specials and supers
 keep their destructive power; Shinku Hadouken also shatters blocks in its path.
-Keys, exits and essential platforms remain usable.
+Keys, exits and essential platforms remain usable, except when Zangief slams
+them: his piledriver deliberately destroys anything he grabs.
 
-Hold **Down**, then **Jump** for a charged high jump. Walk into a key or shell
-to carry it; **Guard + Punch** releases it. Add **Down** to drop it or **Up** to
-throw upward. Mobility specials reset when you land, swim or climb.
+Hold **Down**, then **Jump** for a charged high jump. Hold **Guard + Punch**
+while touching a shell, key or carryable block to pick it up. Keep both buttons
+held to carry it; release either to let go. Hold **Down** when releasing to drop
+it, or **Up** to throw upward. Mobility specials reset when you land, swim or climb.
 
 [Full move list, HUD, secrets and boss tips →](docs/PLAYING.md)
 

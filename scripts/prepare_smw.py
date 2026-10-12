@@ -138,6 +138,8 @@ def prepare():
          'void UpdateStatusBarCounters_DrawItemBoxItem() {  // 009079\n  if (ww_hide_native_hud()) return;'),
         ('void CheckPowerUpSpecificPlayerAttacks() {  // 00d062',
          'void CheckPowerUpSpecificPlayerAttacks() {  // 00d062\n  if (ww_enabled()) return;'),
+        ('j == 46 && (io_controller_press1 & 0x40) != 0',
+         'j == 46 && (ww_enabled() ? ww_pickup_held() : (io_controller_press1 & 0x40) != 0)'),
     ])
     patch('src/smw_rtl.c', [
         ('#include "smw_rtl.h"', '#include "smw_rtl.h"\n#include "ww_smw.h"\n#include "ww_title.h"\n#include "ww_score.h"'),
@@ -167,6 +169,12 @@ def prepare():
          'void ProcessNormalSprites_HandleSprite(uint8 k) { if (!ww_grapple_sprite(k)) WW_OriginalHandleSprite(k); }\n\n'
          'void WW_OriginalHandleSprite(uint8 k) {  // 018127'),
         ('  SetSprYPos(k, py + v4);', '  SetSprYPos(k, py + v4);\n  ww_carried_position(k);'),
+        ('yoshi_in_pipe || (io_controller_hold1 & 0x40) != 0',
+         'yoshi_in_pipe || (ww_enabled() ? ww_pickup_held() : (io_controller_hold1 & 0x40) != 0)'),
+        ('if ((io_controller_hold1 & 0x40) != 0 && !(player_riding_yoshi_flag | player_carrying_something_flag1)) {\n      spr_current_status[k] = 11;',
+         'if ((ww_enabled() ? ww_pickup_held() : (io_controller_hold1 & 0x40) != 0) && !(player_riding_yoshi_flag | player_carrying_something_flag1)) {\n      spr_current_status[k] = 11;'),
+        ('if ((io_controller_hold1 & 0x40) != 0 && !(player_riding_yoshi_flag | player_carrying_something_flag1)) {\n    spr_current_status[k] = 11;',
+         'if ((ww_enabled() ? ww_pickup_held() : (io_controller_hold1 & 0x40) != 0) && !(player_riding_yoshi_flag | player_carrying_something_flag1)) {\n    spr_current_status[k] = 11;'),
         ('if (StandardSpriteToSpriteCollisionChecks_CheckContact(&ci) && !spr_decrementing_table154c[k]) {',
          'if ((StandardSpriteToSpriteCollisionChecks_CheckContact(&ci) || ww_keyhole_contact(k)) && !spr_decrementing_table154c[k]) {'),
         ('spr_table00c2[k] == 1 && (io_controller_press1 & 0x40) != 0',

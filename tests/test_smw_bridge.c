@@ -25,6 +25,28 @@ static void enemy(int slot,int id) {
   InitializeNormalSpriteRAMTables((uint8)slot);
   SetSprXYPos((uint8)slot,118,114);
 }
+static void test_manual_pickup(void) {
+  const int ids[]={4,0xf,0x3e,0x80}; /* Shell, stunned Goomba, switch, key. */
+  const uint32_t inputs[]={128,1024,2,1024|2,128|1024|2};
+  for(unsigned i=0;i<sizeof(ids)/sizeof(ids[0]);i++)
+    for(unsigned j=0;j<sizeof(inputs)/sizeof(inputs[0]);j++) {
+      enter();uint32_t b=inputs[j];assert(ww_before_frame(&b));
+      bool grab=(inputs[j]&(1024|2))==(1024|2);
+      if(inputs[j]&128)assert(b&2); /* Automatic running still works. */
+      assert(ww_pickup_held()==grab);
+      if(grab)assert(ww_fight_state()->move==FC_IDLE && !ww_fight_state()->guarding);
+      enemy(0,ids[i]);spr_current_slotid=0;spr_current_status[0]=9;
+      io_controller_hold1=0x40; /* Run must never substitute for the chord. */
+      CheckPlayerToNormalSpriteColl_01AA42(0);
+      assert((spr_current_status[0]==11)==grab);
+    }
+  enter();player_riding_yoshi_flag=1;frame(1024|2);
+  assert(!ww_yoshi_tongue_pressed());
+  frame(2);assert(ww_fight_state()->move==FC_IDLE); /* Release Guard first. */
+  frame(0);frame(2);assert(ww_yoshi_tongue_pressed());
+  assert(ww_fight_state()->move==FC_JAB);
+  puts("Pickup requires held Guard + Punch; running/guard/punch alone cannot grab, and the chord does not attack or lick.");
+}
 static void test_projectile_height(void) {
   for(int character=FC_RYU;character<=FC_KEN;character+=FC_KEN-FC_RYU) {
     for(int y=-32;y<=96;y+=32) {
@@ -371,6 +393,7 @@ int main(void) {
   test_projectile_height();test_normal_bonks();test_all_targets();test_progression_objects();test_swinging_balls();test_castle_plungers();test_bosses();
   test_mount_and_perfect();test_scenery();test_combo_score();test_psycho_exits();test_psycho_camera();test_practice_menu();
   test_meter_pickups();
+  test_manual_pickup();
   fc_audio_shutdown();SDL_Quit();puts("SMW bridge: broad targeting, progression objects, boss deaths, slot reuse, hurt, movement, transitions, KO and pause passed.");
   return 0;
 }

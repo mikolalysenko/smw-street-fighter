@@ -139,7 +139,7 @@ def windows_libraries(exe, dest, notices):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument('--version', default='0.6.1')
+    ap.add_argument('--version', default='0.6.2')
     ap.add_argument('--data-only', action='store_true')
     args = ap.parse_args()
     out = ROOT / 'dist/releases'

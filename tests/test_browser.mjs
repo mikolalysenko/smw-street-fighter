@@ -49,6 +49,21 @@ async function playWithTouch(page,diagnostics,name) {
   assert((await diagnostics()).guard && (await diagnostics()).crouchGuard,'Touch Down + Guard crouch-blocks in the actual game');
   await page.evaluate(()=>{
     window.testTouch('#touch-controls','pointerup',4);window.testTouch('#touch-controls','pointerup',5);
+  });
+  const beforeCarry=(await diagnostics()).x;
+  await page.evaluate(()=>{
+    const pad=document.querySelector('[data-dpad]'),r=pad.getBoundingClientRect();
+    window.testTouch('[data-key=KeyD]','pointerdown',6);
+    window.testTouch('[data-key=KeyX]','pointerdown',7);
+    window.testTouch('[data-dpad]','pointerdown',8,r.right-2,r.y+r.height/2);
+  });
+  await page.waitForTimeout(180);
+  const carry=await diagnostics();
+  assert.equal(carry.touch,1024|2|128);
+  assert.equal(carry.move,0,'Guard + Punch does not attack');
+  assert(!carry.guard && carry.x>beforeCarry,'Held pickup chord allows movement on a phone');
+  await page.evaluate(()=>{
+    for(const id of [6,7,8])window.testTouch('#touch-controls','pointerup',id);
     delete document.querySelector('#touch-controls').setPointerCapture;
   });
   await tap('Enter');await page.waitForTimeout(150);

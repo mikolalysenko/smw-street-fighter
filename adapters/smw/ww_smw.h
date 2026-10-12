@@ -19,6 +19,7 @@ bool ww_psycho_position(void);
 bool ww_psycho_collision(void);
 bool ww_fast_scroll(void);
 void ww_carried_position(uint8_t slot);
+bool ww_pickup_held(void);
 bool ww_keyhole_contact(uint8_t slot);
 void ww_on_death(void);
 void ww_velocity(void);
