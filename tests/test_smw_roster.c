@@ -12,12 +12,13 @@
 #include <stdio.h>
 static int tick,map_ticks,level_ticks,selected,select_ticks,menu_ticks,action,action_tick;
 static int home_x,home_y,started,done,flight_ticks,flight_start,flight_end;
-static int saw_move,saw_hit,saw_shot,selections;
+static int saw_move,saw_hit,saw_shot,saw_air,selections;
+enum { ACTION_COUNT=17 };
 static const uint32_t actions[]={0,2,256,32|2,32|256,512,16|512,32|512,2048};
 int ww_upstream_main(int,char**);
 uint32_t ww_test_input(void) {
   ++tick;FcFight *f=(FcFight*)ww_fight_state();
-  if(done || tick>22000){SDL_Event e={0};e.type=SDL_QUIT;SDL_PushEvent(&e);return 0;}
+  if(done || tick>32000){SDL_Event e={0};e.type=SDL_QUIT;SDL_PushEvent(&e);return 0;}
   if(fc_audio_selection_active()) {
     if(!select_ticks++)selections++;
     if(selected && select_ticks==2)return 128;
@@ -44,7 +45,7 @@ uint32_t ww_test_input(void) {
     if(player_in_air_flag)return 0;
     home_x=player_xpos;home_y=player_ypos;started=1;select_ticks=0;
   }
-  if(selected==FC_BISON && action==9) {
+  if(selected==FC_BISON && action==ACTION_COUNT) {
     if(!flight_ticks) {
       fc_clear_actions(f);f->meter=300;player_xpos=home_x;player_ypos=home_y;
       player_xspeed=player_yspeed=0;player_in_air_flag=0;flight_start=player_xpos;
@@ -64,19 +65,28 @@ uint32_t ww_test_input(void) {
     for(int k=0;k<12;k++)spr_current_status[k]=0;
     spr_spriteid[10]=0x46;spr_current_status[10]=8;InitializeNormalSpriteRAMTables(10);
     SetSprXYPos(10,home_x+36,home_y+6);spr_yspeed[10]=0;
-    saw_move=saw_hit=saw_shot=0;
+    saw_move=saw_hit=saw_shot=saw_air=0;
   }
   saw_move|=f->move!=FC_IDLE;saw_hit|=!spr_current_status[10];
+  saw_air|=!f->body.grounded;
   for(int i=0;i<FC_MAX_SHOTS;i++)saw_shot|=f->shots[i].ttl>0;
   if(action_tick==75) {
-    if(action)assert(saw_move);
-    printf("%s action %d: move=%d hit=%d shot=%d\n",fc_roster[selected].name,action,saw_move,saw_hit,saw_shot);
+    if(action && action!=9 && action!=10)assert(saw_move);
+    if(action>=9)assert(saw_air);
+    printf("%s action %d: move=%d hit=%d shot=%d air=%d\n",fc_roster[selected].name,action,saw_move,saw_hit,saw_shot,saw_air);
     ++action;action_tick=0;
-    if(action==9 && selected!=FC_BISON){++selected;menu_ticks=1;}
+    if(action==ACTION_COUNT && selected!=FC_BISON){++selected;menu_ticks=1;}
     return 0;
   }
   int n=action_tick++;
   if(action==0)return n<30?128:0;
+  if(action>=9) {
+    static const uint32_t air_actions[]={2,256,512,16|512,32|512,2048};
+    uint32_t b=n>=1 && n<18?1:0;
+    if(action==10 && n<35)b|=128;
+    if(action>=11 && n==10)b|=air_actions[action-11];
+    return b;
+  }
   return n==4?actions[action]:0;
 }
 static void save(FcCanvas c,const char *name) {
@@ -85,8 +95,8 @@ static void save(FcCanvas c,const char *name) {
 }
 void ww_test_render(uint8_t *pixels,size_t pitch,int w,int h) {
   if(!started)return;
-  if(action_tick==12 || (flight_ticks==90 && !flight_end)) {
-    char name[80];snprintf(name,sizeof(name),"roster-%02d-%d.bmp",selected,action);
+  if(action_tick==8 || action_tick==16 || action_tick==30 || (flight_ticks==90 && !flight_end)) {
+    char name[80];snprintf(name,sizeof(name),"roster-%02d-%d-%02d.bmp",selected,action,action_tick);
     save((FcCanvas){(uint32_t*)pixels,w,h,(int)(pitch/4)},name);
   }
   if(timer_end_level && !flight_end)save((FcCanvas){(uint32_t*)pixels,w,h,(int)(pitch/4)},"psycho-goal.bmp");

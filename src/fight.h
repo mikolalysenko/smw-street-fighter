@@ -74,9 +74,10 @@ typedef struct {
   int reward_count,score_gain,lives_gain,combo_award;
   FcBody body;
   float walk_distance, vertical_motion;
-  int air_tick;
+  int air_tick,fall_tick,walk_pause;
+  uint32_t animation_tick;
   bool moving, body_valid, victory;
-  bool crouching_attack, buffered_crouch;
+  bool crouching_attack, buffered_crouch,air_attack,jump_forward;
 } FcFight;
 
 void fc_init(FcFight *f, int character);

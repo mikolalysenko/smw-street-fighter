@@ -3,6 +3,7 @@
 #include "fight.h"
 #include <stddef.h>
 typedef struct { uint32_t *pixels; int w,h,pitch; } FcCanvas;
+typedef struct { int pose; unsigned tick; } FcAnimation;
 /* Native stage counters and original item art, shared by the SDL/WASM HUD. */
 typedef struct {
   unsigned score,high_score;
@@ -14,6 +15,7 @@ void fc_rect(FcCanvas c,int x,int y,int w,int h,uint32_t color);
 void fc_text(FcCanvas c,int x,int y,const char *text,uint32_t color,int scale);
 void fc_center(FcCanvas c,int y,const char *text,uint32_t color,int scale);
 void fc_fighter(FcCanvas c,const FcFight *f,int x,int feet,int scale,uint32_t tint);
+FcAnimation fc_animation(const FcFight *f);
 void fc_effects(FcCanvas c,const FcFight *f,float camera_x,float camera_y);
 void fc_hud(FcCanvas c,const FcFight *f);
 void fc_battle_hud(FcCanvas c,const FcFight *f,const FcOpponent *opponent,const FcStageHud *stage);

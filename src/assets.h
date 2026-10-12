@@ -10,10 +10,12 @@ enum { FC_POSE_IDLE,FC_POSE_WALK,FC_POSE_JUMP,FC_POSE_DUCK,FC_POSE_PUNCH,
   FC_POSE_SUPER_CHARGE,FC_POSE_AKUMA_PILOT,FC_POSE_AKUMA_FIRE,FC_POSE_AKUMA_DEMON,
   FC_POSE_AKUMA_SHOT,FC_POSE_BISON_HAT,FC_POSE_AKUMA_WARP,
   FC_POSE_PSYCHO,FC_POSE_THROW,FC_POSE_TELEPORT,FC_POSE_DIVE,
-  FC_POSE_HUD_PORTRAIT,FC_POSE_ROUND_MARK,FC_POSE_HUD_FONT,FC_POSE_COUNT };
+  FC_POSE_HUD_PORTRAIT,FC_POSE_ROUND_MARK,FC_POSE_HUD_FONT,
+  FC_POSE_JUMP_FORWARD,FC_POSE_COUNT };
 bool fc_assets_load(const char *path);
 void fc_assets_free(void);
 bool fc_assets_ready(void);
+unsigned fc_sprite_duration(int character,int pose);
 void fc_sprite(FcCanvas c,int character,int pose,unsigned tick,int x,int feet,
                int facing,int numerator,int denominator,uint32_t tint);
 #endif

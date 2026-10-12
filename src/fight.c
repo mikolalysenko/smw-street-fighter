@@ -185,7 +185,8 @@ static FcMove request(FcFight *f,uint32_t b,uint32_t edge) {
   return FC_IDLE;
 }
 static void start(FcFight *f,FcMove move) {
-  f->crouching_attack=f->buffered_crouch && f->body.grounded && (move==FC_JAB || move==FC_ROUNDHOUSE);
+  f->air_attack=!f->body.grounded || (f->previous&FC_JUMP);
+  f->crouching_attack=f->buffered_crouch && !f->air_attack && (move==FC_JAB || move==FC_ROUNDHOUSE);
   f->move=move; f->move_tick=0; f->move_hit=false;
   f->melee_mask=0; f->guarding=false; f->buffered=FC_IDLE; f->buffer_timer=0;
   f->motion_count=0;
@@ -248,10 +249,31 @@ const char *fc_move_name(const FcFight *f) {
 void fc_tick(FcFight *f,uint32_t buttons,FcBody body,FcTarget *targets,int count) {
   float dx=body.box.x-f->body.box.x,dy=body.box.y-f->body.box.y;
   if(dx<0)dx=-dx;
-  f->moving=f->body_valid && body.grounded && dx>0.1f && dx<16;
-  if(f->moving)f->walk_distance+=dx;else f->walk_distance=0;
-  f->vertical_motion=f->body_valid?dy:0;
-  f->air_tick=body.grounded?0:(!f->body_valid || f->body.grounded?1:f->air_tick+1);
+  if(!f->flash && !f->hitstop) {
+    bool intent=(buttons&(FC_LEFT|FC_RIGHT)) && !(buttons&FC_DOWN);
+    f->moving=f->body_valid && body.grounded && intent && dx>0.1f && dx<16;
+    if(f->moving){f->walk_distance+=dx;f->walk_pause=0;}
+    else if(!intent || !body.grounded || dx>=16 || ++f->walk_pause>2)f->walk_distance=0;
+    else if(f->walk_distance>0)f->moving=true;
+    f->vertical_motion=f->body_valid?dy:0;
+    if(body.grounded) {
+      if(f->body_valid && !f->body.grounded && f->air_attack &&
+          (f->move==FC_JAB || f->move==FC_ROUNDHOUSE)) {
+        f->move=FC_IDLE;f->move_tick=0;f->air_attack=false;
+      }
+      f->air_tick=f->fall_tick=0;
+    } else {
+      if(!f->body_valid || f->body.grounded) {
+        f->air_tick=f->fall_tick=0;
+        f->jump_forward=dx>0.1f || (buttons&(FC_LEFT|FC_RIGHT));
+      }
+      if(dy<0 && f->fall_tick)f->air_tick=f->fall_tick=0;
+      ++f->air_tick;
+      if(dy>0 || f->fall_tick)++f->fall_tick;
+      if(f->move==FC_JAB || f->move==FC_ROUNDHOUSE)f->air_attack=true;
+    }
+    ++f->animation_tick;
+  }
   f->body_valid=true;
   f->events=0; f->body=body; ++f->tick;
   f->reward_count=f->score_gain=f->lives_gain=0;
@@ -406,7 +428,7 @@ void fc_tick(FcFight *f,uint32_t buttons,FcBody body,FcTarget *targets,int count
           }
         }
       }
-      if(t>=total) { f->move=FC_IDLE;f->move_tick=0;f->crouching_attack=false; }
+      if(t>=total) { f->move=FC_IDLE;f->move_tick=0;f->crouching_attack=f->air_attack=false; }
     }
   }
   dec(&f->buffer_timer);

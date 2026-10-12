@@ -1,20 +1,5 @@
 [
   {
-    "name": "chunli-walk.gif",
-    "url": "https://www.fightersgeneration.com/characters/chunli-walkforwards-sf2.gif",
-    "sha256": "ec55f87ab1a0db2bcaef5ecd6d99604847581cd49a0f6ae4b82c5ed332d9277d"
-  },
-  {
-    "name": "chunli-idle.gif",
-    "url": "https://www.fightersgeneration.com/np7/char/gifs/chun-sf2-stance.gif",
-    "sha256": "b4f1e7a5a0ed0ae27fff19a97c8968d07dd3dc9063d4c01fb5c2dbe7b8da254b"
-  },
-  {
-    "name": "chunli-punch.png",
-    "url": "https://raw.githubusercontent.com/vomira/street-fighter/973a13fb1101a12406ac0bb14b531d3010b5c508/assets/chun-li-punch-right.png",
-    "sha256": "530b34693964834f43b0f788d1b031df06e020ef63c646c78b15246464e359f3"
-  },
-  {
     "name": "continue-ryu.gif",
     "url": "https://sfgalleries.net/art/sf2/sf2ww/series2/ryu.gif",
     "sha256": "9227d62a2261cd1362333b113213fb0622430e2b429a81943e85eaac51867f13"

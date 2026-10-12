@@ -10,6 +10,7 @@ from urllib.request import urlopen
 from concurrent.futures import ThreadPoolExecutor
 from PIL import Image, ImageSequence
 from alpha_assets import append_alpha
+from sf2_motion_assets import load_sprites, pack_frame
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -40,6 +41,7 @@ def main():
     sheets = {}
     records = []
     mapping = json.loads((ROOT / 'config/sf2-sprites.json').read_text())
+    original_sprites = load_sprites()
     def sheet_path(name):
         if name.startswith('ui/'):return source/'Game/assets/images'/name
         return source/'Game/assets/images/sprites/characters'/name
@@ -47,9 +49,12 @@ def main():
         animations=list(enumerate(entry['poses']))
         animations += [(20,entry['victory']),(21,entry['air_punch']),(22,entry['air_kick']),
                        (23,entry['crouch_punch']),(24,entry['crouch_kick']),(25,entry['continue_portrait'])]
-        animations += [(pose,entry[name]) for pose,name in ((37,'throw'),(38,'teleport'),(39,'dive')) if name in entry]
+        animations += [(pose,entry[name]) for pose,name in ((37,'throw'),(38,'teleport'),(39,'dive'),(43,'jump_forward')) if name in entry]
         for pose, animation in animations:
             name = animation['sheet']
+            if name == 'sf2ww.sff':
+                records.extend(pack_frame(original_sprites, character, pose, frame) for frame in animation['frames'])
+                continue
             if name.endswith('.gif'):
                 gif=Image.open(source/'Game/assets/images/sprites/characters'/name)
                 for gif_frame in ImageSequence.Iterator(gif):

@@ -21,33 +21,43 @@ music and sound data. Levels are not approximated or redrawn.
 
 ## Street Fighter II
 
-Source: [Rengrow / Street Fighter II: Gamusinos Fighters](https://github.com/Rengrow/Street-Fighter-II-Gamusinos-Fighters-),
+Fighter animations: [N64Mario's original SFII World Warrior sprite rip](http://gcnmario.free.fr/mugen/sf2ww.html).
+`config/sf2-motion-source.json` pins the sprite-only SFF archive by SHA-256.
+`scripts/sf2_motion_assets.py` reads its indexed images, shared palettes and
+signed axes as data. Vega's separate claw layer is composited at its original
+axis. One constant floor adjustment per fighter fits SMW's platform collision
+plane while preserving relative frame origins, including airborne spins.
+`config/sf2-sprites.json` records the selected frame identifiers and durations.
+All twelve fighters use these original walking, jumping, crouching, normal
+attack and special-move frames. Forward and neutral jumps have separate clips.
+Normal attacks reach their strike frames when combat damage becomes active;
+specials have startup, active and recovery sections. Boss fighters' limited
+World Warrior moves are adapted to the common controls: Balrog uses punches on
+both attack buttons, Sagat uses his tucked aerial elbow pose for an air jab,
+and Vega uses his original aerial claw slash. Throws, air specials and supers
+remain platformer adaptations, not a frame-exact recreation of arcade combat.
+
+UI, audio and supplementary sheets: [Rengrow / Street Fighter II: Gamusinos Fighters](https://github.com/Rengrow/Street-Fighter-II-Gamusinos-Fighters-),
 revision `f6ed596a92d96f7f6dbcad9d92967d1e2dec2e1f`.
 
 The asset tree preserves ripped SF2 sprites, portraits, selection map and WAV
 effects/voices. `config/community-assets.json` pins the source revision and
-SHA-256 of each downloaded file. `config/sf2-sprites.json` records each selected
-frame rectangle and the prototype's animation duration.
+SHA-256 of each downloaded file. `config/sf2-sprites.json` also records selected
+rectangles from these supplementary sheets.
 
-`scripts/import_community_sf2.py` packs 1080 frame records (including repeated
+`scripts/import_community_sf2.py` packs the selected frame records (including repeated
 frames, crouching attacks, portraits, original fonts, KO lettering, countdown
 lamps, victory poses, map, original title II/subtitle, small HUD portraits,
 system font, round markers and Alpha effects), 34 effects/voices and the selection/continue music.
 It does not generate replacement
 art. All twelve SF2 fighters render at half arcade size to fit Mario's
-levels. Cropping, nearest-neighbor scaling, foot anchors and animation timings
-are adaptations. These sheets are SF2-family community rips, not a verified
-frame-for-frame `sf2ua` extraction; variants and palette differences are possible.
+levels. Cropping, nearest-neighbor scaling and animation timings are adaptations.
+The supplementary sheets are SF2-family community rips; variants and palette
+differences are possible. No claim is made to a verified `sf2ua` ROM extraction.
 The HUD's coins, bonus stars and four reserve items are decoded from SMW's
 original common graphics and palettes into private buffers. They remain correct
 when boss rooms replace the live VRAM with Mode 7 art.
-Chun-Li's missing idle and walk clips come from the original SF2 animations at
-[The Fighters Generation](https://www.fightersgeneration.com/characters/chunli-a2.html).
-Her standing punch comes from
-[vomira/street-fighter](https://github.com/vomira/street-fighter), commit
-`973a13fb1101a12406ac0bb14b531d3010b5c508`.
-`config/animation-assets.json` pins these files by URL and SHA-256. GIF frames
-retain their common canvas origin so feet do not shift between walking frames.
+`config/animation-assets.json` pins supplementary GIFs by URL and SHA-256.
 The four original World Warrior defeated portraits come from
 [Street Fighter Galleries](https://sfgalleries.net/art/sf2/sf2ww/series2/), also
 pinned in that manifest. Their green color key is made transparent at import.
@@ -98,6 +108,7 @@ The start prompt and high score use the original SF2 font sheet.
 - `local/smw-rebuilt.sfc`: rebuilt original data, ignored.
 - `local/smw_assets.dat`: extracted SMW runtime data, ignored.
 - `local/community-sf2/`: downloaded source rips, ignored.
+- `local/sf2-motion/`: original arcade fighter sprite archive, ignored.
 - `local/community-sfa/`: pinned Alpha sprite/audio data, ignored.
 - `local/sf2/`: packed fighter sprites and WAVs, ignored.
 - `build/smw/`, `dist/`: local runtime copies, ignored.

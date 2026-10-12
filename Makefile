@@ -9,7 +9,7 @@ SDL_LIBS = $(shell $(SDL_CONFIG) --libs)
 CORE = src/fight.c
 MEDIA = src/draw.c src/audio.c src/assets.c
 
-.PHONY: all dojo run tv test sanitize smoke capture smw test-smw test-play test-bosses test-movement test-presentation test-hud test-audio assets original-assets package clean web serve-web test-web
+.PHONY: all dojo run tv test sanitize smoke capture smw test-smw test-play test-bosses test-movement test-presentation test-hud test-audio test-animations audit-animations test-roster test-scroll assets original-assets package clean web serve-web test-web
 all: smw
 dojo: build/world-warrior-dojo
 build:
@@ -28,6 +28,12 @@ test: build/test-fight build/test-assets
 	./build/test-fight
 	./build/test-assets
 	$(PYTHON) -m unittest discover -s tests -p 'test_*.py' -v
+build/test-animation: src/fight.c src/draw.c src/assets.c src/fight.h src/draw.h src/assets.h tests/test_animation.c | build
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(WARNINGS) -Werror -std=c11 src/fight.c src/draw.c src/assets.c tests/test_animation.c -o $@ -lm
+test-animations: build/test-animation
+	./build/test-animation
+audit-animations:
+	build/asset-tools/bin/python3 scripts/audit_animations.py
 sanitize: | build
 	$(CC) $(CPPFLAGS) -O1 -g $(WARNINGS) -std=c11 -fsanitize=address,undefined -fno-omit-frame-pointer $(CORE) tests/test_fight.c -o build/test-fight-sanitize -lm
 	./build/test-fight-sanitize

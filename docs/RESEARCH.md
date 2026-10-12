@@ -96,9 +96,20 @@ so the unsigned native rise-to-death test can finish. Aggregate boss health
 emits the KO sound once and supplies the opposing health bar.
 
 Air attacks preserve SMW's held-jump arc and normal horizontal control.
-Walking animation uses distance traveled, and jump/normal clips no longer
-loop on the global clock. The Continue menu lets the native death finish,
+Walking animation uses distance traveled with directional input, so moving
+platforms do not trigger a walking pose. Subpixel steps preserve the stride
+phase. Original sprite origins prevent frame-to-frame sliding. Neutral and
+forward jumps follow ascent/descent, normal attacks show their impact frame
+when damage activates, and aerial normals end on landing. Animation clocks
+freeze with hitstop and super activation. Specials extend their active frames
+for supers without replaying startup. The Continue menu lets the native death finish,
 then re-enters the current overworld node through SMW's normal midpoint loader.
+
+Bison's level-three flight respects the original scrolling controller. Its
+position stays inside the viewport, and ending flight searches for visible
+safe ground. A cancellation over a gap waits for ground instead of dropping
+the player outside the scrolling camera. The original smasher-room replay
+tests cancellation, restarting flight, landing and entry through the boss door.
 
 The three-segment gauge, super flash and multi-hit rushes are new,
 Alpha-inspired behavior. World Warrior itself is only the fighter-move
@@ -108,8 +119,9 @@ reference; no claim is made to extracting Alpha mechanics from that source.
 
 The NAS was unavailable, so the implementation now builds original SMW data
 from pinned SMWDisX/Asar sources and verifies the USA ROM hash. The native host
-loads that exact game's levels, graphics and audio. SF2 sprite sheets and WAV
-rips come from the pinned Gamusinos Fighters asset tree. See [ASSETS.md](ASSETS.md)
+loads that exact game's levels, graphics and audio. SF2 fighter animation rips
+come from N64Mario's pinned archive; UI and WAV rips come from the pinned
+Gamusinos Fighters asset tree. See [ASSETS.md](ASSETS.md)
 for file hashes, credits and animation limitations.
 
 The automated replay boots a fresh game, confirms the fighter, dismisses the
@@ -149,7 +161,10 @@ of malformed/truncated data. The bridge tests link the actual patched SMW object
 and exercise all 201 normal sprite IDs, extended/cluster targets, essential
 objects, slot reuse, damage, transitions and menus. Asset-backed replays cover
 the real boot and PPU, all ten boss rooms, ten jump/attack combinations,
-Continue and goal clear. The audio test verifies the KO sample and selection
+17 actions for each of twelve fighters, the scrolling smasher room, Continue
+and goal clear. Packed-art checks cover both facings, visible strike frames,
+air landing and freeze timing; contact sheets support visual review of the
+actual imported sprites. The audio test verifies the KO sample and selection
 loop. The WASM test boots the compiled browser engine through Node and verifies
 air specials, movement, audio, pixels and SRAM without replacing the C engine.
 

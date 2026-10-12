@@ -170,7 +170,11 @@ static void test_air_attacks_and_animation(void) {
   fc_init(&f,0);b.grounded=true;fc_tick(&f,FC_RIGHT,b,NULL,0);
   assert(!f.moving);b.box.x+=3;fc_tick(&f,FC_RIGHT,b,NULL,0);
   assert(f.moving && f.walk_distance==3);
-  fc_tick(&f,FC_RIGHT,b,NULL,0);assert(!f.moving); /* Pushing against a wall. */
+  fc_tick(&f,FC_RIGHT,b,NULL,0);assert(f.moving && f.walk_distance==3);
+  b.box.x+=1;fc_tick(&f,FC_RIGHT,b,NULL,0);assert(f.walk_distance==4);
+  for(int i=0;i<3;i++)fc_tick(&f,FC_RIGHT,b,NULL,0);
+  assert(!f.moving && f.walk_distance==0); /* Sustained wall contact. */
+  b.box.x+=2;fc_tick(&f,0,b,NULL,0);assert(!f.moving); /* Carried by a platform. */
   b.grounded=false;b.box.y-=3;fc_tick(&f,FC_JUMP,b,NULL,0);assert(f.air_tick==1);
   b.box.y-=3;fc_tick(&f,FC_JUMP,b,NULL,0);assert(f.air_tick==2 && f.vertical_motion<0);
   b.grounded=true;fc_tick(&f,0,b,NULL,0);assert(!f.air_tick);

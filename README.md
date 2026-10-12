@@ -236,7 +236,10 @@ make test-bosses # Ten actual boss rooms, attacks, KO and native endings
 make test-movement # Jump/air attacks, Continue and original goal tape
 make test-presentation # Moving platforms, Yoshi and new/resumed file selection
 make test-hud    # Native timer/pause, coins, lives, reserve, max counters and HUD captures
-make test-roster # All twelve fighters and Bison's full-stage goal/exit replay
+make test-roster # All twelve fighters: 17 ground/air actions, Bison's stage exit
+make test-scroll # Bison in the original scrolling smasher room, through its door
+make test-animations # Packed art: both facings, strike timing, landing and freeze
+make audit-animations # Sprite contact sheets and loops in build/animation-audit
 make test-audio  # Voices, original Alpha charge and selection/continue music
 make test-web    # Built WASM module through the original game flow
 ```

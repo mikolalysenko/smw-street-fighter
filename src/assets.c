@@ -35,16 +35,22 @@ bool fc_assets_load(const char *path) {
 fail:
   fclose(f);fc_assets_free();return false;
 }
+unsigned fc_sprite_duration(int character,int pose) {
+  unsigned duration=0;
+  for(unsigned i=0;i<count;i++)if(frames[i].character==character && frames[i].pose==pose)duration+=(unsigned)frames[i].ticks;
+  return duration;
+}
 void fc_sprite(FcCanvas c,int character,int pose,unsigned tick,int x,int feet,
                int facing,int num,int den,uint32_t tint) {
   if(num<1||den<1)return;
-  unsigned duration=0;
-  for(unsigned i=0;i<count;i++)if(frames[i].character==character && frames[i].pose==pose)duration+=(unsigned)frames[i].ticks;
+  unsigned duration=fc_sprite_duration(character,pose);
   if(!duration)return;
   bool once=pose==FC_POSE_KO || pose==FC_POSE_JUMP || pose==FC_POSE_WIN ||
     pose==FC_POSE_PUNCH || pose==FC_POSE_KICK || pose==FC_POSE_AIR_PUNCH ||
     pose==FC_POSE_AIR_KICK || pose==FC_POSE_CROUCH_PUNCH || pose==FC_POSE_CROUCH_KICK ||
-    pose==FC_POSE_RISE || pose==FC_POSE_FIRE;
+    pose==FC_POSE_RISE || pose==FC_POSE_FIRE || pose==FC_POSE_JUMP_FORWARD ||
+    pose==FC_POSE_SPIN || pose==FC_POSE_RUSH || pose==FC_POSE_FLURRY ||
+    pose==FC_POSE_THROW || pose==FC_POSE_DIVE || pose==FC_POSE_TELEPORT;
   if(once && tick>=duration)tick=duration-1;else tick%=duration;
   const Frame *p=NULL;
   for(unsigned i=0;i<count;i++)if(frames[i].character==character && frames[i].pose==pose) {

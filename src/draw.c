@@ -62,8 +62,31 @@ void fc_dim(FcCanvas c,int amount) {
       ((((p>>8)&255)*(unsigned)amount/256)<<8)|((p&255)*(unsigned)amount/256);
   }
 }
-void fc_fighter(FcCanvas c,const FcFight *f,int x,int feet,int scale,uint32_t tint) {
-  int pose=FC_POSE_IDLE;unsigned tick=f->tick;
+/* Supers extend the active part of their original move, preserving its
+ * wind-down. They never replay the startup while already flying/spinning. */
+static unsigned super_tick(const FcFight *f,int pose,unsigned t) {
+  unsigned end=44+f->super_level*8;
+  if(f->character==FC_RYU) {
+    if(t<2)return t*2;
+    return t<end?5+(t-2)%13:18+(t-end)*7/8;
+  }
+  if(f->character==FC_GUILE) {
+    unsigned last=f->super_level>1?30:16;
+    if(t>=last+12)return 24;
+    unsigned phase=t%14;
+    return phase<2?phase*2:5+(phase-2)*19/12;
+  }
+  if(f->character==FC_KEN || f->character==FC_SAGAT) {
+    unsigned last=f->super_level>1?40:20;
+    unsigned phase=t<=last?t%20:t-last;
+    return phase<20?phase:20+(phase-20)*14/20;
+  }
+  unsigned begin=pose==FC_POSE_RUSH?6:pose==FC_POSE_SPIN?3:f->character==FC_DHALSIM?5:2;
+  unsigned active=pose==FC_POSE_RUSH?23:pose==FC_POSE_SPIN?28:f->character==FC_DHALSIM?28:35;
+  return t<end?begin+t%active:begin+active+(t-end);
+}
+FcAnimation fc_animation(const FcFight *f) {
+  int pose=FC_POSE_IDLE;unsigned tick=f->animation_tick;
   if(f->hp<=0){pose=FC_POSE_KO;tick=(unsigned)f->ko_timer;}
   else if(f->stun){pose=FC_POSE_HURT;tick=(unsigned)(22-f->stun);}
   else if(f->victory){pose=FC_POSE_WIN;tick=f->move_tick;}
@@ -72,9 +95,9 @@ void fc_fighter(FcCanvas c,const FcFight *f,int x,int feet,int scale,uint32_t ti
     static const int poses[]={FC_POSE_IDLE,FC_POSE_PUNCH,FC_POSE_KICK,FC_POSE_FIRE,
       FC_POSE_RISE,FC_POSE_SPIN,FC_POSE_RUSH,FC_POSE_FLURRY,FC_POSE_FIRE,
       FC_POSE_THROW,FC_POSE_TELEPORT,FC_POSE_FLURRY,FC_POSE_FLURRY,FC_POSE_DIVE};
-    pose=poses[f->move];tick=(unsigned)f->move_tick;
-    if(!f->body.grounded && f->move==FC_JAB)pose=FC_POSE_AIR_PUNCH;
-    if(!f->body.grounded && f->move==FC_ROUNDHOUSE)pose=FC_POSE_AIR_KICK;
+    pose=poses[f->move];tick=f->move_tick?(unsigned)f->move_tick-1:0;
+    if((f->air_attack || !f->body.grounded) && f->move==FC_JAB)pose=FC_POSE_AIR_PUNCH;
+    if((f->air_attack || !f->body.grounded) && f->move==FC_ROUNDHOUSE)pose=FC_POSE_AIR_KICK;
     if(f->body.grounded && f->crouching_attack) {
       if(f->move==FC_JAB)pose=FC_POSE_CROUCH_PUNCH;
       if(f->move==FC_ROUNDHOUSE)pose=FC_POSE_CROUCH_KICK;
@@ -83,11 +106,23 @@ void fc_fighter(FcCanvas c,const FcFight *f,int x,int feet,int scale,uint32_t ti
       static const int super_pose[]={FC_POSE_FIRE,FC_POSE_RUSH,FC_POSE_FLURRY,FC_POSE_FIRE,
         FC_POSE_RISE,FC_POSE_RUSH,FC_POSE_SPIN,FC_POSE_FLURRY,FC_POSE_RUSH,FC_POSE_RUSH,FC_POSE_RISE,FC_POSE_RUSH};
       pose=super_pose[f->character];
-      if(f->character==FC_BISON && f->move_tick>8)tick=12;
+      tick=f->flash?0:super_tick(f,pose,tick);
     }
-  } else if(!f->body.grounded){pose=FC_POSE_JUMP;tick=f->air_tick;}
+  } else if(!f->body.grounded){
+    pose=f->jump_forward?FC_POSE_JUMP_FORWARD:FC_POSE_JUMP;
+    unsigned duration=fc_sprite_duration(f->character,pose),half=duration/2;
+    /* Hold the apex on a long jump and unfold on descent, including short
+     * hops. An aerial special must not leave a completed flip frozen in air. */
+    if(f->fall_tick)tick=half+(unsigned)f->fall_tick*half/12;
+    else tick=(f->air_tick<16?(unsigned)f->air_tick:16)*half/16;
+  }
   else if(f->previous&FC_DOWN)pose=FC_POSE_DUCK;
-  else if(f->moving){pose=FC_POSE_WALK;tick=(unsigned)(f->walk_distance*0.65f);}
+  else if(f->moving){pose=FC_POSE_WALK;tick=(unsigned)(f->walk_distance*fc_sprite_duration(f->character,pose)/48.0f);}
+  return (FcAnimation){pose,tick};
+}
+void fc_fighter(FcCanvas c,const FcFight *f,int x,int feet,int scale,uint32_t tint) {
+  FcAnimation animation=fc_animation(f);
+  int pose=animation.pose;unsigned tick=animation.tick;
   if(f->invuln && !f->stun && f->move==FC_IDLE && f->hp>0 && ((f->tick/4)%2))return;
   if(fc_psycho_flight(f) && !f->flash) {
     /* The level-three joke from Psycho Crusher, FTW: a blue-white comet
@@ -104,7 +139,6 @@ void fc_fighter(FcCanvas c,const FcFight *f,int x,int feet,int scale,uint32_t ti
     fc_sprite(c,0,FC_POSE_PSYCHO,f->tick,x,cy,f->facing,scale,2,tint);
     return;
   }
-  if(f->character==FC_BISON && f->move==FC_RUSH && tick>8)tick=12;
   if(f->move==FC_TELEPORT && f->move_tick>5 && f->move_tick<19)
     tint=(f->tick/3)%2?0x9b6ed3:0x413063;
   fc_sprite(c,f->character,pose,tick,x,feet,f->facing,scale,2,tint);
