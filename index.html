@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="theme-color" content="#080b22">
+<meta name="theme-color" content="#101217">
 <title>Super Mario World II — The World Warrior</title>
 <meta name="description" content="Hadoukens in Dinosaur Land. Play twelve Street Fighter fighters through Super Mario World, with three-bar supers, an Akuma finale and character endings. Play free in your browser or download for Mac, Linux and Windows.">
 <link rel="canonical" href="https://mikolalysenko.github.io/smw-street-fighter/">
@@ -23,17 +23,19 @@
 <meta name="twitter:image" content="https://mikolalysenko.github.io/smw-street-fighter/media/og-image.jpg">
 <link rel="icon" type="image/png" sizes="32x32" href="media/favicon.png">
 <link rel="apple-touch-icon" sizes="180x180" href="media/apple-touch-icon.png">
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="style.css?v=20261012-145547">
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"VideoGame","name":"Super Mario World II — The World Warrior","url":"https://mikolalysenko.github.io/smw-street-fighter/","image":"https://mikolalysenko.github.io/smw-street-fighter/media/og-image.jpg","description":"An unofficial arcade crossover: twelve Street Fighter fighters in Mario’s original world, with supers and an Akuma finale.","genre":["Platformer","Fighting"],"playMode":"SinglePlayer","gamePlatform":["Web browser","macOS","Linux","Windows"],"trailer":{"@type":"VideoObject","name":"Super Mario World II — The World Warrior gameplay teaser","description":"Actual gameplay: character select, Shinku Hadouken, Lightning Legs, Psycho Crusher, Akuma and a clown-car piledriver.","thumbnailUrl":"https://mikolalysenko.github.io/smw-street-fighter/media/cover.jpg","contentUrl":"https://mikolalysenko.github.io/smw-street-fighter/media/teaser.mp4","uploadDate":"2026-10-12","duration":"PT23S"}}
 </script>
 </head>
 <body>
 <main>
-  <header><div><p class="eyebrow">THE WORLD WARRIOR</p><h1>SUPER MARIO WORLD II</h1></div><span class="tag">ARCADE CROSSOVER</span></header>
+  <header><h1>Super Mario World II</h1><p>The World Warrior</p></header>
   <section id="cabinet" aria-label="Super Mario World II — The World Warrior">
-    <canvas id="screen" width="256" height="224" tabindex="0" aria-label="Game screen. Press Enter to start. Arrow keys move, Z jumps, X punches, A performs a special, S performs a super."></canvas>
-    <button id="play" class="play" disabled>LOADING…</button>
+    <div class="playfield">
+      <canvas id="screen" width="256" height="224" tabindex="0" aria-label="Game screen. Press Enter to start. Arrow keys move, Z jumps, X punches, A performs a special, S performs a super."></canvas>
+      <button id="play" class="play" disabled>Loading…</button>
+    </div>
     <div id="touch-controls" hidden aria-label="Touch game controls">
       <div class="touch-menu"><button data-key="Escape" aria-label="Back">BACK</button><button data-key="Enter" aria-label="Start or pause">START</button><button id="touch-expand" aria-label="Expand or restore game">EXPAND</button></div>
       <div class="touch-dpad" data-dpad aria-label="Movement pad; slide for diagonals">
@@ -41,38 +43,41 @@
       </div>
       <div class="touch-actions"><button data-key="KeyD">GUARD</button><button data-key="KeyA">SPECIAL</button><button data-key="KeyS">SUPER</button><button data-key="KeyX">PUNCH</button><button data-key="KeyC">KICK</button><button data-key="KeyZ" class="touch-jump">JUMP</button></div>
     </div>
+    <nav class="player-toolbar" aria-label="Game controls">
+      <div class="player-actions"><button id="pause">Pause</button><button id="mute">Sound on</button><button id="fullscreen">Fullscreen</button></div>
+      <a class="repo-link" href="https://github.com/mikolalysenko/smw-street-fighter" target="_blank" rel="noopener noreferrer" aria-label="Star the repository on GitHub (opens a new tab)"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9Z"/></svg>Star on GitHub</a>
+    </nav>
+    <p id="status" role="status">Loading game…</p>
   </section>
-  <nav aria-label="Game controls"><span id="status" role="status">Loading…</span><div><button id="pause">PAUSE</button><button id="mute">SOUND ON</button><button id="fullscreen">FULLSCREEN</button></div></nav>
-  <div class="product-links"><span>Hadoukens in Dinosaur Land.</span><a href="#teaser">WATCH THE TEASER</a><a href="https://github.com/mikolalysenko/smw-street-fighter/releases/latest">DOWNLOAD</a><a href="https://github.com/mikolalysenko/smw-street-fighter/blob/main/docs/PLAYING.md">PLAYER GUIDE</a></div>
-  <section class="controls" aria-label="How to play">
-    <p class="phone-help"><strong>TOUCH</strong><span>Hold the direction pad and an attack together. Slide diagonally for special motions. START opens menus; JUMP confirms. Turn your phone sideways for a larger play area.</span></p>
-    <p><strong>KEYBOARD</strong><span><kbd>← ↑ ↓ →</kbd> Move <kbd>Z</kbd> Jump <kbd>X</kbd> Punch <kbd>C</kbd> Kick</span><span><kbd>↓ X / C</kbd> Crouching attacks <kbd>A</kbd> Special <kbd>↑ A</kbd> Alternate <kbd>S</kbd> Super <kbd>D</kbd> Guard <kbd>Enter</kbd> Start</span></p>
-    <p><strong>CONTROLLER</strong><span>D-pad / stick · Move &nbsp; A · Jump &nbsp; X · Punch &nbsp; B · Kick</span><span>Y · Special &nbsp; RB · Super &nbsp; LB · Guard &nbsp; Start · Pause</span></p>
-    <p><strong>EXPLORING</strong><span>Hold Down, then Jump · charged high jump. Hold Guard + Punch to pick up and carry shells, keys and carryable blocks. Release either to let go; hold Down to drop or Up to throw upward.</span><span>Punches and kicks bonk enemies and bump blocks. Airborne Down + Punch / Kick strikes blocks below you. Shinku Hadouken shatters blocks.</span><span>Mobility specials: one per jump; land, swim or climb to reset. Zangief: Up + Special grabs; piledrivers destroy enemies, pipes, blocks and even bosses on landing. Destroying a required object can make the level unwinnable.</span></p>
-    <p><strong>SPECIAL MOVES</strong><span>Ryu / Ken: Down + Special · Hurricane Kick. Ryu: three bars + Super · Shinku beam. Bison: three bars + Super · full-stage Psycho Crusher; Up / Down steer, Guard lands. Up + Special · Head Press breaks blocks above and below.</span><span>Mushroom · +1 bar. Fire Flower · +2 bars. Feather · +3 bars. Honda: tap Punch · hand slaps. Chun-Li: tap Kick · lightning legs; Special · Kikoken. Blanka: tap Down + Special · electricity.</span><span data-debug hidden>Pause → Akuma Battle · jump to the final fight with full health and three bars.</span></p>
-    <p><strong>HUD</strong><span>1P · Mario score &nbsp; HI · Saved record &nbsp; TIME · Level timer &nbsp; Portrait × · Lives</span><span>Five medals · Dragon Coins &nbsp; Star · Bonus stars &nbsp; Right bar · Coins to 1UP / boss health</span></p>
-    <p><strong>COUNTERS</strong><span>Tap Guard just before a frontal hit · parry for no damage and extra meter. Holding Guard blocks with chip damage. Down + Guard crouch-blocks.</span><span>Akuma: punch, kick or parry fireballs back at him. Bounce on the clown car's rim for an aerial follow-up. Watch for slam markers, charge wind-ups and warp silhouettes; attack during recovery.</span></p>
-  </section>
-  <footer><span id="save-status">Progress and high score persist in this browser.</span><button id="export" disabled>EXPORT SAVE</button></footer>
-  <section class="showcase" id="teaser" aria-labelledby="teaser-title">
-    <p class="eyebrow">PICK A FIGHTER. BREAK THE RULES.</p>
-    <h2 id="teaser-title">A familiar world. Twelve new ways to fight.</h2>
-    <p>Mario’s original levels, secrets and Yoshi meet Street Fighter sprites, voices and arcade combat. Build three bars of super, chase a PERFECT clear, and face Akuma in Bowser’s flying clown car. Every fighter gets an ending.</p>
-    <video id="teaser-video" controls playsinline preload="none" poster="media/cover.jpg?v=20261012-142949" width="1920" height="1080" aria-label="Gameplay teaser featuring character select, super moves and the Akuma finale">
-      <source src="media/teaser.mp4?v=20261012-142949" type="video/mp4">
+  <div class="player-options">
+    <details id="help">
+      <summary>Controls &amp; help</summary>
+      <div class="controls">
+        <p class="phone-help"><strong>Touch</strong><span>Hold the direction pad and attack buttons together. Slide for diagonals. Start opens menus; Jump confirms. Turn your phone sideways for a larger play area.</span></p>
+        <p><strong>Keyboard</strong><span><kbd>← ↑ ↓ →</kbd> Move · <kbd>Z</kbd> Jump<br><kbd>X</kbd> Punch · <kbd>C</kbd> Kick<br><kbd>A</kbd> Special · <kbd>S</kbd> Super<br><kbd>D</kbd> Guard · <kbd>Enter</kbd> Start</span></p>
+        <p><strong>Controller</strong><span>D-pad / stick · Move<br>A · Jump · X · Punch · B · Kick<br>Y · Special · RB · Super<br>LB · Guard · Start · Pause</span></p>
+        <p><strong>Good to know</strong><span>Hold Down to crouch. Up / Down + Special changes your move. Hold Down, then Jump for a high jump.</span><span>Hold Guard + Punch to pick up and carry. Release either to let go; add Down to drop or Up to throw upward.</span><span>Mushroom +1 super bar · Flower +2 · Feather +3.</span></p>
+      </div>
+      <p data-debug hidden>Debug: Pause → Player Select / Akuma Battle.</p>
+      <div class="save-tools"><span id="save-status">Progress and high score stay in this browser.</span><button id="export" disabled>Export save</button></div>
+    </details>
+    <nav class="quick-links" aria-label="Game resources"><a href="https://github.com/mikolalysenko/smw-street-fighter/blob/main/docs/PLAYING.md" target="_blank" rel="noopener noreferrer">Player guide</a><a href="https://github.com/mikolalysenko/smw-street-fighter/releases/latest" target="_blank" rel="noopener noreferrer">Download</a></nav>
+  </div>
+  <details class="showcase" id="teaser">
+    <summary>Gameplay teaser &amp; screenshots</summary>
+    <video id="teaser-video" controls playsinline preload="none" poster="media/cover.jpg?v=20261012-145547" width="1920" height="1080" aria-label="Gameplay teaser featuring character select, super moves and the Akuma finale">
+      <source src="media/teaser.mp4?v=20261012-145547" type="video/mp4">
       <a href="media/teaser.mp4">Download the gameplay teaser.</a>
     </video>
-    <p class="media-note">Actual gameplay and game audio. <a href="media/teaser.mp4" download>Download video</a> · <a href="https://github.com/mikolalysenko/smw-street-fighter/blob/main/dev/media/README.md">Scene guide</a></p>
     <div class="gallery">
       <figure><a href="media/shinku.png"><img src="media/shinku.png" width="768" height="672" loading="lazy" alt="Ryu unleashes a level-three Shinku Hadouken beam in Dinosaur Land."></a><figcaption>Three bars. One giant beam.</figcaption></figure>
       <figure><a href="media/psycho-crusher.png"><img src="media/psycho-crusher.png" width="768" height="672" loading="lazy" alt="M. Bison flies across an original Mario level with Psycho Crusher."></a><figcaption>Psycho Crusher, all the way.</figcaption></figure>
       <figure><a href="media/akuma.png"><img src="media/akuma.png" width="768" height="672" loading="lazy" alt="Akuma attacks Ryu from Bowser’s flying clown car."></a><figcaption>A very different final challenger.</figcaption></figure>
       <figure><a href="media/piledriver.png"><img src="media/piledriver.png" width="768" height="672" loading="lazy" alt="Zangief turns Akuma and his clown car upside down during a piledriver."></a><figcaption>Yes. The entire clown car.</figcaption></figure>
     </div>
-    <div class="download-panel"><div><h2>Take it to the big screen.</h2><p>Complete downloads for Mac, Linux and Windows. Keyboard and gamepad support. Phone controls appear automatically in the browser.</p></div><a class="download-button" href="https://github.com/mikolalysenko/smw-street-fighter/releases/latest">GET THE GAME →</a></div>
-    <p class="credits">An unofficial fan crossover. Original characters and assets belong to Nintendo and Capcom. <a href="https://github.com/mikolalysenko/smw-street-fighter">Source &amp; README</a> · <a href="ASSETS.md">Credits</a> · <a href="https://github.com/mikolalysenko/smw-street-fighter/issues">Report an issue</a></p>
-  </section>
+  </details>
+  <footer>Unofficial fan game. Original characters and assets by Nintendo and Capcom. <a href="ASSETS.md">Credits</a> · <a href="https://github.com/mikolalysenko/smw-street-fighter/issues" target="_blank" rel="noopener noreferrer">Report an issue</a></footer>
 </main>
-<script type="module" src="app.mjs?v=20261012-142949"></script>
+<script type="module" src="app.mjs?v=20261012-145547"></script>
 </body>
 </html>
