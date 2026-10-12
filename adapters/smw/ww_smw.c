@@ -205,9 +205,11 @@ bool ww_before_frame(uint32_t *inputs) {
     fc_tick(&fight,0,body(),NULL,0);fight.previous=b;
     *inputs=0;return true;
   }
-  if(player_current_state==0x0a) {
+  if(player_current_state==0x0a || player_current_state==5 || player_current_state==6) {
     /* Entrance scenes drive Mario themselves. Animate their real movement
      * without requiring a direction button from the player. */
+    if((player_current_state==5 || player_current_state==6) &&
+        (fight.move!=FC_IDLE || fight.stun || fight.hitstop || fight.invuln))fc_clear_actions(&fight);
     uint32_t walking=(int8)player_xspeed>0?FC_RIGHT:(int8)player_xspeed<0?FC_LEFT:0;
     fc_tick(&fight,walking,body(),NULL,0);return true;
   }
@@ -546,6 +548,49 @@ void ww_player_draw(void) {
   WW_OriginalPlayerDraw();
   memcpy(oam_buf,old_oam,sizeof(old_oam));memcpy(sprites_oamtile_size_buffer,old_sizes,sizeof(old_sizes));
 }
+static bool pipe_tile(int x,int y) {
+  unsigned t=level_tile(x,y);
+  return t>=0x133 && t<=0x13f;
+}
+static void draw_pipe_fighter(FcCanvas c,FcFight drawing,int x,int feet) {
+  /* Enter and exit actions share a direction; an exit's pipe interior is
+   * behind that direction. Find the actual exposed Map16 rim, not Mario's
+   * small OAM rectangle or a timer-dependent guessed clipping position. */
+  int direction=player_pipe_action&3;
+  if(player_pipe_action>=4)direction^=1;
+  bool vertical=direction>=2;
+  int dx=vertical?0:direction==0?-16:16,dy=vertical?(direction==2?-16:16):0;
+  int px=(player_xpos+8)&~15,py=(player_ypos+16)&~15;
+  int rim=0,nearest=1000;
+  for(int d=-128;d<=128;d+=16) {
+    int tx=px+(vertical?0:d),ty=py+(vertical?d:0);
+    if(!pipe_tile(tx,ty) || pipe_tile(tx-dx,ty-dy))continue;
+    int edge=(vertical?ty:tx)+((direction==0 || direction==2)?16:0);
+    int distance=abs(edge-(vertical?player_ypos+16:player_xpos+8));
+    if(distance<nearest){nearest=distance;rim=edge;}
+  }
+  if(nearest==1000)return; /* Fully inside the pipe: no overlay above it. */
+  drawing.move=FC_IDLE;drawing.stun=drawing.invuln=drawing.landing_tick=0;
+  drawing.guarding=drawing.crouching_guard=drawing.victory=false;
+  drawing.body.grounded=true;
+  drawing.previous=vertical?FC_DOWN:0;
+  drawing.moving=!vertical;
+  int left=0,top=0,right=c.w,bottom=c.h;
+  if(vertical) {
+    rim-=(int16)mirror_current_layer1_ypos;
+    if(direction==3)bottom=rim;else top=rim;
+  } else {
+    rim-=(int16)mirror_current_layer1_xpos;
+    if(direction==1)right=rim;else left=rim;
+  }
+  if(left<0)left=0;
+  if(top<0)top=0;
+  if(right>c.w)right=c.w;
+  if(bottom>c.h)bottom=c.h;
+  if(right<=left || bottom<=top)return;
+  FcCanvas outside={c.pixels+top*c.pitch+left,right-left,bottom-top,c.pitch};
+  fc_fighter(outside,&drawing,x-left,feet-top,1,0);
+}
 void ww_render(uint8_t *pixels,size_t pitch,int width,int height) {
   if(!initialized)return;
   FcCanvas c={(uint32_t*)pixels,width,height,(int)(pitch/4)};
@@ -578,7 +623,9 @@ void ww_render(uint8_t *pixels,size_t pitch,int width,int height) {
       drawing.victory=flag_show_victory_pose_during_level_end!=0;
       drawing.move_tick=clear_ticks;
     }
-    if(player_current_state==0x0a && (misc_level_tileset_setting==1 ||
+    if(player_current_state==5 || player_current_state==6) {
+      draw_pipe_fighter(c,drawing,x,feet);
+    } else if(player_current_state==0x0a && (misc_level_tileset_setting==1 ||
         misc_level_tileset_setting==5 || misc_level_tileset_setting==13) &&
         (player_timer_pipe_warping==14 || player_timer_pipe_warping>=37)) {
       /* The original house foreground occludes Mario's OAM. The replacement

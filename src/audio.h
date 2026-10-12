@@ -3,6 +3,9 @@
 #include <stdint.h>
 #include "fight.h"
 void fc_audio_init(const char *directory);
+/* Native SMW and the crossover share one output device. Call before init. */
+void fc_audio_use_shared_device(void);
+void fc_audio_mix_s16(int16_t *stereo,int frames,float music_gain);
 void fc_audio_context(const FcFight *fight);
 void fc_audio_play(uint32_t events);
 /* The web host mixes effects into the original SPC stream at 48 kHz. */

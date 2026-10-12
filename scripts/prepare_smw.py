@@ -69,7 +69,7 @@ def prepare():
         ('    uint32 inputs = g_input_state | g_gamepad[0].axis_buttons | g_gamepad[1].axis_buttons << 12;',
          '    uint32 inputs = g_input_state | ww_pending_buttons | g_gamepad[0].axis_buttons | g_gamepad[1].axis_buttons << 12;\n'
          '    ww_pending_buttons = 0;'),
-        ('  bool custom_size =', '  ww_init();\n  if (!fc_assets_ready()) Die("Missing fighter assets: keep the complete release folder together.");\n  bool custom_size ='),
+        ('  bool custom_size =', '  fc_audio_use_shared_device();\n  ww_init();\n  if (!fc_assets_ready()) Die("Missing fighter assets: keep the complete release folder together.");\n  bool custom_size ='),
         ('    uint8 is_replay = RtlRunFrame(inputs | GetActiveControllers());',
          '    uint8 is_replay = 0;\n    if (ww_before_frame(&inputs))\n      is_replay = RtlRunFrame(inputs | GetActiveControllers());'),
         ('  g_renderer_funcs.EndDraw();',
@@ -82,7 +82,12 @@ def prepare():
          '    if (!g_snes->disableRender && !g_config.disable_frame_delay) {'),
         ('static void SDLCALL AudioCallback(void *userdata, Uint8 *stream, int len) {',
          'static void SDLCALL AudioCallback(void *userdata, Uint8 *stream, int len) {\n'
-         '  if (fc_audio_music_active()) { SDL_memset(stream, 0, len); return; }'),
+         '  Uint8 *ww_output=stream; int ww_frames=len/4;\n'
+         '  bool ww_music=fc_audio_music_active();'),
+        ('  SDL_UnlockMutex(g_audio_mutex);\n}\n\n\n// State for sdl renderer',
+         '  SDL_UnlockMutex(g_audio_mutex);\n'
+         '  fc_audio_mix_s16((int16*)ww_output,ww_frames,ww_music?0.0f:0.65f);\n}\n\n\n// State for sdl renderer'),
+        ('    want.freq = g_config.audio_freq;', '    want.freq = 48000; // Shared with the 48 kHz fighter voices.'),
         ('static void HandleCommand(uint32 j, bool pressed) {',
          'static void HandleCommand(uint32 j, bool pressed) {\n'
          '  // Legacy snapshots/replays omit combat state; do not create corrupt saves.\n'

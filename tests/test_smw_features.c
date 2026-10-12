@@ -59,6 +59,62 @@ static void blocks(void) {
   }
   puts("Normals: native item/turn blocks, aerial down-strikes, intact cement/pipes/ground and both facings/crouches passed.");
 }
+static void super_blocks(void) {
+  unsigned ids[]={0x11e,0x12e,0x130,0x132,0x137,0x100,0x25,0x11f};
+  for(int face=-1;face<=1;face+=2)for(int level=1;level<=3;level++)for(unsigned type=0;type<8;type++) {
+    for(int y=64;y<208;y+=16)for(int x=0;x<512;x+=16)tile(x,y,0x25);
+    memset(bounce_spr_spriteid,0,4);memset(spr_current_status,0,12);
+    FcFight f;fc_init(&f,FC_RYU);f.meter=level*100;
+    FcBody body={{160,128,16,32},face,true,false,false};
+    int frame=0;
+    do {fc_tick(&f,frame++?0:FC_SUPER,body,NULL,0);assert(frame<120);}while(!f.shots[0].ttl);
+    FcBox box=f.shots[0].box;
+    int x=((int)box.x+8)&~15,y=((int)box.y+8)&~15;
+    if(x<0)x=0;
+    int outside=((int)(box.y+box.h)+31)&~15;
+    tile(x,y,ids[type]);tile(x,outside,0x130);
+    blocks_xpos=300;blocks_ypos=321;misc_current_layer_being_processed=1;
+    ww_scenery_hits(&f);
+    assert(blocks_xpos==300 && blocks_ypos==321 && misc_current_layer_being_processed==1);
+    if(type<4)assert(get_tile(x,y)==0x25);
+    else if(type==7)assert(bounce_spr_spriteid[3]);
+    else assert(get_tile(x,y)==ids[type]);
+    assert(get_tile(x,outside)==0x130);
+  }
+  /* A turning block must not respawn after being shattered mid-spin. */
+  FcFight f;fc_init(&f,FC_RYU);tile(128,128,0x152);
+  memset(bounce_spr_spriteid,0,4);bounce_spr_spriteid[0]=7;
+  bounce_spr_xpos_lo[0]=128;bounce_spr_ypos_lo[0]=128;
+  bounce_spr_xpos_hi[0]=bounce_spr_ypos_hi[0]=0;
+  f.shots[0]=(FcShot){.box={128,128,16,16},.ttl=1,.super=true};
+  ww_scenery_hits(&f);assert(!bounce_spr_spriteid[0] && get_tile(128,128)==0x25);
+  puts("Shinku: all three levels/both directions break blocks, preserve items/routes/terrain and stay within the beam.");
+}
+static void pipe_clipping(void) {
+  uint32_t pixels[256*224];FcFight *f=(FcFight*)ww_fight_state();
+  for(int character=0;character<12;character++)for(int action=0;action<8;action++)for(int camera=0;camera<=16;camera+=16) {
+    for(int y=32;y<224;y+=16)for(int x=0;x<288;x+=16)tile(x,y,0x25);
+    int inside=action&3;if(action>=4)inside^=1;
+    int rim=(inside>=2?144:128)+camera;
+    for(int d=0;d<80;d+=16)for(int cross=0;cross<32;cross+=16) {
+      int along=inside==0 || inside==2?rim-16-d:rim+d;
+      tile(inside>=2?112+camera+cross:along,inside>=2?along:128+camera+cross,0x135);
+    }
+    fc_init(f,character);player_xpos=120+camera;player_ypos=(inside>=2?122:128)+camera;
+    mirror_current_layer1_xpos=mirror_current_layer1_ypos=camera;
+    player_current_state=inside>=2?6:5;player_pipe_action=action;player_timer_pipe_warping=16;
+    player_in_air_flag=player_riding_yoshi_flag=player_hide_player_tile_flags=timer_end_level=0;
+    ww_begin_frame();ww_player_draw();memset(pixels,0,sizeof(pixels));ww_render((uint8_t*)pixels,1024,256,224);
+    int visible=0;
+    for(int y=80;y<190;y++)for(int x=32;x<224;x++) {
+      bool interior=inside==0?x<128:inside==1?x>=128:inside==2?y<144:y>=144;
+      if(interior)assert(!pixels[y*256+x]);else visible+=pixels[y*256+x]!=0;
+    }
+    assert(visible>5);
+  }
+  player_current_state=0;mirror_current_layer1_xpos=mirror_current_layer1_ypos=0;
+  puts("Pipe clipping: all 12 fighters, all four directions, entering/exiting and scrolled camera offsets passed.");
+}
 static void endings(void) {
   uint8 old_mode=misc_game_mode;
   uint32_t pixels[256*224];FcCanvas c={pixels,256,224,256};uint64_t hashes[12];
@@ -101,7 +157,7 @@ uint32_t ww_test_input(void) {
   }
   if(n==40) {
     assert(player_ducking_flag && !player_in_air_flag);
-    n=0;if(++character==FC_ROSTER_COUNT){blocks();endings();done=1;}
+    n=0;if(++character==FC_ROSTER_COUNT){blocks();super_blocks();pipe_clipping();endings();done=1;}
     return 0;
   }
   ++n;return 32|1024;

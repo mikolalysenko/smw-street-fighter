@@ -74,6 +74,10 @@ jobs:
         run: |
           make smw SDLFLAGS="$(sdl2-config --libs) -lm"
           python dev/package_native.py --version 0.6.0
+      - name: Test Windows package without MSYS2 on PATH
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
           python dev/smoke_package.py dist/releases/super-mario-world-ii-windows-x86_64
       - name: Upload complete player package
         uses: actions/upload-artifact@v4

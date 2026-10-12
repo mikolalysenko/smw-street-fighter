@@ -514,11 +514,35 @@ static void normal_blocks(FcFight *f) {
     if(solid)break; /* A punch cannot collect items through a wall. */
   }
 }
+static void super_blocks(FcFight *f,FcBox box) {
+  for(int y=(int)box.y&~15;y<box.y+box.h;y+=16)
+    for(int x=(int)box.x&~15;x<box.x+box.w;x+=16) {
+      unsigned tile=map_tile(x,y);
+      int spinning=-1;
+      for(int i=0;i<4;i++)if(bounce_spr_spriteid[i]==7 &&
+          ((bounce_spr_xpos_lo[i]|(bounce_spr_xpos_hi[i]<<8))&~15)==x &&
+          ((bounce_spr_ypos_lo[i]|(bounce_spr_ypos_hi[i]<<8))&~15)==y)spinning=i;
+      if(tile==0x11e || tile==0x12e || tile==0x130 || tile==0x132 || spinning>=0) {
+        if(spinning>=0)bounce_spr_spriteid[spinning]=0;
+        uint16 old_x=blocks_xpos,old_y=blocks_ypos;
+        uint8 old_layer=misc_current_layer_being_processed,old_tile=blocks_map16_to_generate;
+        blocks_xpos=x;blocks_ypos=y;misc_current_layer_being_processed=0;
+        SpawnBrickPieces(0);blocks_map16_to_generate=2;GenerateTile();
+        blocks_xpos=old_x;blocks_ypos=old_y;
+        misc_current_layer_being_processed=old_layer;blocks_map16_to_generate=old_tile;
+        fc_explode(f,x+8,y+8,true);
+      } else if(tile>=0x111 && tile<=0x12d) {
+        strike_block(f,x,y); /* Keep item contents, vines and switches working. */
+      }
+    }
+}
 void ww_scenery_hits(FcFight *f) {
   if(f->frozen)return;
   for(int i=0;i<FC_MAX_SHOTS;i++) {
     FcShot *p=&f->shots[i];
-    if(!p->ttl || p->scenery_hit)continue;
+    if(!p->ttl)continue;
+    if(p->super){super_blocks(f,p->box);continue;}
+    if(p->scenery_hit)continue;
     /* One impact at the projectile's nose, not a burning trail along every
      * floor tile touched by the forgiving combat hitbox. */
     FcBox nose={p->box.x+(p->vx>0?p->box.w:0),p->box.y+p->box.h/2,1,1};

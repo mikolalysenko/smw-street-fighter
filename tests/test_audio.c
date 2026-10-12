@@ -53,5 +53,17 @@ int main(void) {
   expect_sample("bird",FC_SPIN,1.0f);
   f.character=FC_BISON;f.move=FC_SUPER_MOVE;fc_audio_context(&f);
   fc_audio_play(FC_SND_SPECIAL);assert(energy(180)>1);
+  int16_t mixed[2400];
+  for(int i=0;i<2400;i++)mixed[i]=10000;
+  fc_audio_mix_s16(mixed,1200,0.65f);
+  for(int i=0;i<2400;i++)assert(mixed[i]==6500);
+  fc_audio_play(FC_SND_BOSS_KO);
+  int changed=0;
+  for(int t=0;t<20;t++) {
+    for(int i=0;i<2400;i++)mixed[i]=10000;
+    fc_audio_mix_s16(mixed,1200,0);
+    for(int i=0;i<2400;i++)changed+=mixed[i]!=0;
+  }
+  assert(changed>100);
   fc_audio_shutdown();SDL_Quit();puts("Audio: KO voice, fighter death, selection loop, continue music and stop passed.");
 }

@@ -9,6 +9,8 @@ enum { RATE=48000, SOUND_COUNT=41, VOICE_COUNT=12 };
 typedef struct { float *data; int length; } Sample;
 typedef struct { int sound,position; bool active; } Voice;
 static SDL_AudioDeviceID device;
+static SDL_mutex *voice_mutex;
+static bool shared_device;
 static Sample samples[SOUND_COUNT];
 static Voice voices[VOICE_COUNT];
 static int next_voice;
@@ -18,6 +20,7 @@ static SDL_atomic_t music_track;
 static int music_position;
 
 void fc_audio_mix(float *out,int frames) {
+  if(voice_mutex)SDL_LockMutex(voice_mutex);
   for(int i=0;i<frames;i++) {
     float v=0;
     int track=SDL_AtomicGet(&music_track);
@@ -32,6 +35,19 @@ void fc_audio_mix(float *out,int frames) {
     }
     if(v>0.85f)v=0.85f;if(v<-0.85f)v=-0.85f;
     out[i*2]=out[i*2+1]=v*0.5f;
+  }
+  if(voice_mutex)SDL_UnlockMutex(voice_mutex);
+}
+void fc_audio_use_shared_device(void) { shared_device=true; }
+void fc_audio_mix_s16(int16_t *out,int frames,float music_gain) {
+  float effects[1024];
+  while(frames>0) {
+    int count=frames<512?frames:512;fc_audio_mix(effects,count);
+    for(int i=0;i<count*2;i++) {
+      float value=out[i]*music_gain+effects[i]*32768.0f;
+      out[i]=(int16_t)(value>32767?32767:value<-32768?-32768:value);
+    }
+    frames-=count;out+=count*2;
   }
 }
 #if !defined(__EMSCRIPTEN__) && !defined(FC_AUDIO_MANUAL)
@@ -87,6 +103,7 @@ static bool load_sample(const char *dir,const char *name,Sample *dest) {
 }
 void fc_audio_init(const char *directory) {
   if(loaded)return;
+  voice_mutex=SDL_CreateMutex();
   static const char *names[]={"swing","hit","hurt","ko","special","super","block","select",
     "hadouken","shoryuken","tatsumaki","honda","sonic","bird","chun_hurt","chun_ko","confirm","you","lose","boss_ko","player_select","continue","perfect","alpha_charge","akuma_super","akuma_warp",
     "blanka","electric","zangief","yoga_fire","yoga_flame","vega","tiger","tiger_uppercut","psycho","psycho_super","shinku","alpha_hadouken","kikoken","lightning_kick","chun_attack"};
@@ -100,11 +117,13 @@ void fc_audio_init(const char *directory) {
   }
   loaded=true;
 #if !defined(__EMSCRIPTEN__) && !defined(FC_AUDIO_MANUAL)
+  if(!shared_device) {
   SDL_AudioSpec wanted={0};wanted.freq=RATE;wanted.format=AUDIO_F32SYS;
   wanted.channels=2;wanted.samples=512;wanted.callback=mix;
   device=SDL_OpenAudioDevice(NULL,0,&wanted,NULL,0);
   if(device)SDL_PauseAudioDevice(device,0);
   else fprintf(stderr,"Audio unavailable: %s\n",SDL_GetError());
+  }
 #endif
 }
 void fc_audio_context(const FcFight *f) { character=f->character;move=f->move;move_tick=f->move_tick; }
@@ -114,13 +133,13 @@ void fc_audio_selection(bool active) { fc_audio_music(active?FC_MUSIC_SELECT:FC_
 void fc_audio_music(int track) {
   if(track<FC_MUSIC_NONE || track>FC_MUSIC_CONTINUE)return;
   if(track==SDL_AtomicGet(&music_track))return;
-  if(device)SDL_LockAudioDevice(device);
+  if(voice_mutex)SDL_LockMutex(voice_mutex);
   music_position=0;SDL_AtomicSet(&music_track,track);
-  if(device)SDL_UnlockAudioDevice(device);
+  if(voice_mutex)SDL_UnlockMutex(voice_mutex);
 }
 void fc_audio_play(uint32_t events) {
   if(!loaded || !events)return;
-  if(device)SDL_LockAudioDevice(device);
+  if(voice_mutex)SDL_LockMutex(voice_mutex);
   for(int i=0;i<12;i++)if(events&(1u<<i)) {
     int sound=i==11?25:i==10?24:i==9?22:i==8?19:i;
     if(character==FC_CHUNLI && i==2)sound=14;
@@ -160,10 +179,11 @@ void fc_audio_play(uint32_t events) {
     if(!samples[sound].data)continue;
     voices[next_voice]=(Voice){sound,0,true};next_voice=(next_voice+1)%VOICE_COUNT;
   }
-  if(device)SDL_UnlockAudioDevice(device);
+  if(voice_mutex)SDL_UnlockMutex(voice_mutex);
 }
 void fc_audio_shutdown(void) {
   if(device)SDL_CloseAudioDevice(device);device=0;loaded=false;
+  if(voice_mutex)SDL_DestroyMutex(voice_mutex);voice_mutex=NULL;
   for(int i=0;i<SOUND_COUNT;i++){free(samples[i].data);samples[i]=(Sample){0};}
   SDL_memset(voices,0,sizeof(voices));next_voice=0;
   SDL_AtomicSet(&music_track,0);music_position=0;

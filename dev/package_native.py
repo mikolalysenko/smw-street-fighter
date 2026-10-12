@@ -51,7 +51,7 @@ def mac_libraries(exe, frameworks, notices):
     pending = [exe]
     # SDL2-compat opens SDL3 dynamically, so it does not appear in otool -L.
     for dep in macho_deps(exe):
-        if 'sdl2' in dep.lower() and 'homebrew' in dep:
+        if 'sdl2' in dep.lower():
             sdl3 = Path(run('brew', '--prefix', 'sdl3')) / 'lib/libSDL3.dylib'
             copy(sdl3, frameworks / 'libSDL3.dylib')
             pending.append(frameworks / 'libSDL3.dylib')
