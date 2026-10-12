@@ -8,6 +8,14 @@ including the four bosses, with character specials and a three-level super gauge
 The actual SMW game is the default build. The earlier placeholder dojo is only
 a combat test fixture. The native and browser builds share the same game engine.
 
+Original levels, twelve fighters, aerial specials, Alpha-style supers, an SF2
+HUD, persistent scores, and an Akuma finale in Bowser's clown car. Keyboard and
+controller support are included, with fullscreen play for Linux/Bazzite and TVs.
+
+The `main` branch contains the source. The `gh-pages` branch contains the compiled
+WASM demo, ready for GitHub Pages. See [publishing instructions](docs/PUBLISHING.md)
+to create the GitHub repository and enable hosting.
+
 ## Play in a browser
 
 ```sh
@@ -30,7 +38,6 @@ without recompiling. See [BAZZITE.md](docs/BAZZITE.md) for the TV setup.
 Open `dist/Super Mario World II - The World Warrior.app`, or:
 
 ```sh
-cd /Users/mikolalysenko/smw-street-fighter
 make run
 # Fullscreen:
 make tv
@@ -77,6 +84,8 @@ remain visible during boss fights. Bowser/Akuma
 has an unlimited clock, displayed as infinity. The bottom gauge shows super
 levels, and hit combos show their current points or extra-life award.
 
+## Controls
+
 | Action | Xbox/Steam gamepad | Keyboard |
 | --- | --- | --- |
 | Move / menu | D-pad or left stick | Arrows |
@@ -96,6 +105,8 @@ levels, and hit combos show their current points or extra-life award.
 SMW's introduction and message boxes accept Jump. On the overworld,
 Start + Back together quits. Controller labels use SDL's Xbox button positions;
 Steam Input can map other controllers to this layout.
+
+## Fighters and moves
 
 | Fighter | Special | Secondary | Super |
 | --- | --- | --- | --- |
@@ -193,6 +204,9 @@ Requirements: C/C++ compilers, Make, SDL2 development files, Git, Python 3 with
 venv support, CMake, ffmpeg and bsdtar (libarchive-tools on Linux). On macOS: `brew install sdl2 cmake ffmpeg` and Xcode command
 line tools. Linux/Bazzite instructions are in [BAZZITE.md](docs/BAZZITE.md).
 
+Clone this repository with its submodules, or initialize them in an existing
+checkout before building:
+
 ```sh
 git submodule update --init
 make original-assets
@@ -216,9 +230,34 @@ make smw
 ```
 
 Game data, downloads and generated builds remain in ignored `local/`, `build/`
-and `dist/`. `make package` creates a bundle for the current platform. The Mac
+and `dist/` on `main`. The prepared `gh-pages` branch contains the browser runtime
+and its packed game data. `make package` creates a bundle for the current platform. The Mac
 bundle uses the installed SDL library; the Linux bundle should run in its build
 Distrobox until a portable release is prepared.
+
+## Tests and publishing
+
+```sh
+make test sanitize test-smw              # Core tests and SMW hooks; no game data needed
+make test-animations test-audio          # Requires prepared original assets
+make test-play test-bosses test-movement # Replays against the original game
+make web test-web                       # Build and exercise the actual WASM module
+make pages-branch                       # Build, test, and commit a local gh-pages update
+```
+
+Run native replay targets serially because they share a generated build tree.
+`make pages-branch` prepares a local branch without pushing or changing the
+current checkout. Start from committed source; the deployment includes its
+source revision and build timestamp. [PUBLISHING.md](docs/PUBLISHING.md) covers
+the first push and later updates.
+
+The shared combat and drawing code is in `src/`, engine hooks in `adapters/smw/`,
+and the WASM interface in `adapters/web/`. `web/` supplies the browser shell;
+`scripts/` builds and imports the pinned assets. `references/` contains pinned
+upstream submodules.
+
+New code and documentation are MIT licensed. Original game content retains its
+separate rights and credits; see [asset provenance](docs/ASSETS.md) and [LICENSE](LICENSE).
 
 ## Current limits
 

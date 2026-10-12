@@ -1,8 +1,10 @@
 # Original asset provenance
 
 The runtime now uses original game data and ripped SF2 art/audio. The new C
-combat code and UI layout are separate from the original game content. No game
-binaries or extracted sprites/sounds are tracked by this repository.
+combat code and UI layout are separate from the original game content. The
+`main` branch tracks code, import manifests and credits. The `gh-pages` branch
+contains the compiled browser demo and its packed runtime assets; raw ROMs and
+downloaded source archives are not included in either branch.
 
 ## Super Mario World
 

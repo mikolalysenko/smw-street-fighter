@@ -9,7 +9,7 @@ SDL_LIBS = $(shell $(SDL_CONFIG) --libs)
 CORE = src/fight.c
 MEDIA = src/draw.c src/audio.c src/assets.c
 
-.PHONY: all dojo run tv test sanitize smoke capture smw test-smw test-play test-bosses test-movement test-presentation test-hud test-audio test-animations audit-animations test-roster test-scroll test-collision test-pipes test-specials test-entrances test-grapple test-carry test-wallrun assets original-assets package clean web serve-web test-web
+.PHONY: all dojo run tv test sanitize smoke capture smw test-smw test-play test-bosses test-movement test-presentation test-hud test-audio test-animations audit-animations test-roster test-scroll test-collision test-pipes test-specials test-entrances test-grapple test-carry test-wallrun assets original-assets package clean web serve-web test-web pages-branch
 all: smw
 dojo: build/world-warrior-dojo
 build:
@@ -97,5 +97,8 @@ serve-web:
 	$(PYTHON) -m http.server 8765 --bind 127.0.0.1 --directory dist/web
 test-web:
 	node tests/test_web.mjs
+pages-branch: web
+	$(MAKE) test-web
+	$(PYTHON) scripts/prepare_pages.py
 clean:
 	rm -rf build

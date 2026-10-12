@@ -2,6 +2,7 @@
 """Build the original SMW crossover as a self-contained local web app."""
 from pathlib import Path
 import os
+import json
 import shutil
 import subprocess
 from datetime import datetime, timezone
@@ -40,6 +41,12 @@ def main():
         for module in ('game.mjs','app.mjs','input.mjs','presenter.mjs'):
             s=s.replace(module, module+'?v='+build)
         p.write_text(s)
+    revision=subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip()
+    dirty=bool(subprocess.check_output(['git','status','--porcelain'],cwd=ROOT,text=True).strip())
+    (out/'build.json').write_text(json.dumps({
+        'build':build,'source_revision':revision,'source_dirty':dirty,
+    },indent=2)+'\n')
+    (out/'.nojekyll').touch()
     shutil.copy2(ROOT/'LICENSE',out/'LICENSE.txt')
     shutil.copy2(ROOT/'references/smw/LICENSE.txt',out/'SMW-LICENSE.txt')
     shutil.copy2(ROOT/'docs/ASSETS.md',out/'ASSETS.md')
