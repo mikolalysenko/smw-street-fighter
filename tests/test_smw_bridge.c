@@ -138,6 +138,35 @@ static void test_psycho_exits(void) {
   for(int i=0;i<25;i++)frame(0);
   assert(!ww_opponent()->hp && spr_table151c[0]==4);
 }
+static void test_psycho_camera(void) {
+  for(int vertical=0;vertical<2;vertical++) {
+    enter();misc_screens_in_lvl=14;misc_level_layout_flags=vertical;
+    l1_l2_scroll_spr_spriteid[0]=12;
+    FcFight *f=(FcFight*)ww_fight_state();fc_init(f,FC_BISON);
+    f->move=FC_SUPER_MOVE;f->super_level=3;f->move_tick=1198;
+    player_xpos=100;player_ypos=160;
+    for(int i=0;i<500;i++) {
+      mirror_current_layer1_xpos=vertical?80:i;
+      mirror_current_layer1_ypos=vertical?500-i:160;
+      if(i>100)f->previous=FC_GUARD; /* No visible floor: safely wait over a gap. */
+      assert(ww_psycho_position() && fc_psycho_flight(f));
+      int x=player_xpos-mirror_current_layer1_xpos,y=player_ypos-mirror_current_layer1_ypos;
+      assert(x>=24 && x<=208 && y>=48 && y<=176);
+      assert(f->move_tick<1200 && !player_current_state);
+    }
+    /* A floor enters the camera; cancellation must land there, never back at
+     * the starting position or on a platform above/below the visible room. */
+    int ground=(mirror_current_layer1_ypos+175)&~15;
+    for(int x=mirror_current_layer1_xpos;x<mirror_current_layer1_xpos+256;x+=16) {
+      if(vertical && x>=512)break;
+      unsigned p=vertical?GetLevelLayoutPtr_Vertical(ground>>8)+((x>>8)<<8)+(ground&0xf0)+((x&255)>>4):
+        GetLevelLayoutPtr_Horizontal(x>>8)+((ground>>8)<<8)+(ground&0xf0)+((x&255)>>4);
+      g_ram[p]=0;g_ram[p+0x10000]=1;
+    }
+    assert(ww_psycho_position() && !fc_psycho_flight(f));
+    assert(player_ypos==ground-32 && player_xpos>=mirror_current_layer1_xpos+16);
+  }
+}
 static void test_practice_menu(void) {
   enter();player_mario_score_lo=12;player_current_life_count=4;
   frame(8);frame(0);frame(32);frame(0);frame(32);frame(0);frame(8);
@@ -246,7 +275,7 @@ int main(void) {
   ww_before_frame(&input);assert(ww_fight_state()->facing==-1);
   assert((input&1) && !ww_fight_state()->override_x);
   test_all_targets();test_progression_objects();test_castle_plungers();test_bosses();
-  test_mount_and_perfect();test_scenery();test_combo_score();test_psycho_exits();test_practice_menu();
+  test_mount_and_perfect();test_scenery();test_combo_score();test_psycho_exits();test_psycho_camera();test_practice_menu();
   test_reserve_capacity();
   fc_audio_shutdown();SDL_Quit();puts("SMW bridge: broad targeting, progression objects, boss deaths, slot reuse, hurt, movement, transitions, KO and pause passed.");
   return 0;

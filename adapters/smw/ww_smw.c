@@ -229,11 +229,17 @@ static unsigned level_tile(int x,int y) {
   return g_ram[offset]+256*g_ram[offset+0x10000];
 }
 static bool floor_tile(unsigned t) { return t>=0x100 && t<0x1d8; }
+static bool psycho_scrolling(void) { return l1_l2_scroll_spr_spriteid[0]!=0; }
+static bool psycho_visible(int x,int y) {
+  return x>=(int)mirror_current_layer1_xpos+16 && x<=(int)mirror_current_layer1_xpos+216 &&
+    y>=(int)mirror_current_layer1_ypos+32 && y<=(int)mirror_current_layer1_ypos+192;
+}
 static bool remember_landing(int x) {
   int bottom=(misc_level_layout_flags&1)?misc_screens_in_lvl*256:432;
   int top=(misc_level_layout_flags&1)?(int16)player_ypos-64:48;
   if(top<32)top=32;
   for(int y=(top+15)&~15;y<bottom;y+=16) {
+    if(psycho_scrolling() && !psycho_visible(x,y-32))continue;
     if(floor_tile(level_tile(x+8,y)) && !floor_tile(level_tile(x+8,y-16)) &&
        !floor_tile(level_tile(x+8,y-32))) {
       psycho_safe_x=(uint16)x;psycho_safe_y=(uint16)(y-32);psycho_safe=true;return true;
@@ -241,21 +247,32 @@ static bool remember_landing(int x) {
   }
   return false;
 }
-static void psycho_land(void) {
+static bool psycho_land(void) {
   int x=player_xpos;
+  /* A platform behind the forced camera is no longer a safe fallback. */
+  if(psycho_scrolling())psycho_safe=false;
   for(int back=0;back<=160;back+=16)if(remember_landing(x-back))break;
+  if(psycho_scrolling() && !psycho_safe) {
+    for(int ahead=16;ahead<=160;ahead+=16)if(remember_landing(x+ahead))break;
+    if(!psycho_safe) {
+      /* Keep flying over a gap until a visible floor arrives. Never cancel
+       * into a pit or rewind the camera/room to a stale entry platform. */
+      fight.move=FC_SUPER_MOVE;fight.super_level=3;fight.move_tick=1198;
+      return false;
+    }
+  }
   if(psycho_safe){player_xpos=psycho_safe_x;player_ypos=psycho_safe_y;}
   fc_clear_actions(&fight);fight.invuln=90;timer_player_hurt=90;
   player_xspeed=player_yspeed=0;player_in_air_flag=11;
   psycho_was_active=false;
+  return true;
 }
 bool ww_psycho_collision(void) {
   return ww_enabled() && fc_psycho_flight(&fight) && !fight.flash && !ww_opponent()->active && !timer_end_level;
 }
 bool ww_psycho_position(void) {
   if(!ww_psycho_collision()) {
-    if(psycho_was_active && !timer_end_level && !player_current_state)psycho_land();
-    return false;
+    if(!psycho_was_active || timer_end_level || player_current_state || psycho_land())return false;
   }
   bool vertical=misc_level_layout_flags&1;
   if(!psycho_was_active) {
@@ -273,6 +290,13 @@ bool ww_psycho_position(void) {
     x+=7;y+=(fight.previous&FC_DOWN)?3:(fight.previous&FC_UP)?-3:0;
     if(y<40)y=40;if(y>336)y=336;
   }
+  if(psycho_scrolling()) {
+    int cx=mirror_current_layer1_xpos,cy=mirror_current_layer1_ypos;
+    if(x<cx+24)x=cx+24;if(x>cx+208)x=cx+208;
+    if(y<cy+48)y=cy+48;if(y>cy+176)y=cy+176;
+    /* A slow autoscroller can outlast the move's ordinary travel timeout. */
+    if(fight.move_tick>1190)fight.move_tick=1190;
+  }
   player_xpos=(uint16)x;player_ypos=(uint16)y;
   player_in_air_flag=11;player_blocked_flags=0;
   if(fight.move_tick%12==0)remember_landing(x);
@@ -281,7 +305,8 @@ bool ww_psycho_position(void) {
   for(int k=0;k<12;k++)if(spr_current_status[k]>=8 && spr_spriteid[k]==0x7b && !spr_table1602[k]) {
     int goal=spr_table00c2[k]+256*spr_table151c[k];
     if(x>=goal-32 && x<=goal+48) {
-      psycho_land();player_xpos=(uint16)(goal+1);
+      if(!psycho_land())return true;
+      player_xpos=(uint16)(goal+1);
       int bottom=spr_table1528[k]+256*(spr_table1534[k]&1);
       if(player_ypos>=bottom)player_ypos=(uint16)(bottom-32);
       return true;
