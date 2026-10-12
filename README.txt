@@ -5,4 +5,4 @@ Open http://localhost:8765, click Play, then Fullscreen.
 Keep the local server running while playing. Do not open index.html directly.
 Keyboard and gamepad controls are listed below the game.
 Original SMW progress and the high score persist per browser; Export Save backs up both.
-Build 20261012-132724
+Build 20261012-140056

@@ -1,7 +1,8 @@
-import createWorldWarrior from './game.mjs?v=20261012-132724';
-import {keyMap,gamepadButtons} from './input.mjs?v=20261012-132724';
-import {createPresenter} from './presenter.mjs?v=20261012-132724';
-import {installTouchControls} from './touch.mjs?v=20261012-132724';
+import createWorldWarrior from './game.mjs?v=20261012-140056';
+import {keyMap,gamepadButtons} from './input.mjs?v=20261012-140056';
+import {createPresenter} from './presenter.mjs?v=20261012-140056';
+import {installTouchControls} from './touch.mjs?v=20261012-140056';
+import {createGameAudio} from './audio.mjs?v=20261012-140056';
 
 const $=selector=>document.querySelector(selector);
 const status=$('#status'), play=$('#play'), cabinet=$('#cabinet');
@@ -9,10 +10,10 @@ const SAVE_KEY='world-warrior-smw-sram-v1';
 const STEP=1000*801/48000;
 const debug=new URLSearchParams(location.search).get('debug')==='1';
 for(const el of document.querySelectorAll('[data-debug]'))el.hidden=!debug;
-let game,presenter,audioContext,audioTime=0,started=false,running=false;
+let game,presenter,started=false,running=false;
 let held=new Set(),pending=0,last=0,accumulator=0,frames=0,muted=false;
 let savedHighScore=0;
-const sounds=new Set();
+const audio=createGameAudio({onInterruption:pausePlayback,onChange:updateSound});
 const touch=installTouchControls($('#touch-controls'),mask=>{pending|=mask;});
 
 function keyboardButtons() { let b=0;for(const code of held)b|=keyMap[code]||0;return b; }
@@ -21,8 +22,14 @@ function padButtons() {
   for(const pad of navigator.getGamepads?.()||[])b|=gamepadButtons(pad);
   return b;
 }
-function clearAudio() {
-  for(const source of sounds)source.stop();sounds.clear();audioTime=0;
+function updateSound() {
+  const state=audio.diagnostics(),button=$('#mute');
+  button.textContent=muted?'SOUND OFF':state.retry?'ENABLE SOUND':'SOUND ON';
+  button.setAttribute('aria-pressed',String(!muted && !state.retry));
+}
+function pausePlayback() {
+  running=false;held.clear();pending=0;last=0;accumulator=0;touch.clear();audio.pause();save();
+  play.hidden=false;play.textContent=started?'RESUME':'PLAY';
 }
 function save() {
   if(!game)return;
@@ -40,36 +47,18 @@ function restore() {
 }
 function renderAudio() {
   const pointer=game._ww_web_audio(); // Also advances the original SPC state when muted.
-  if(!audioContext || audioContext.state!=='running' || muted)return;
-  const buffer=audioContext.createBuffer(2,801,48000);
   const samples=game.HEAPF32.subarray(pointer/4,pointer/4+1602);
-  for(let ch=0;ch<2;ch++) {
-    const out=buffer.getChannelData(ch);for(let i=0;i<801;i++)out[i]=samples[i*2+ch];
-  }
-  const now=audioContext.currentTime;
-  if(audioTime<now || audioTime>now+0.18) {clearAudio();audioTime=now+0.035;}
-  const source=audioContext.createBufferSource();source.buffer=buffer;
-  source.connect(audioContext.destination);sounds.add(source);
-  source.onended=()=>sounds.delete(source);source.start(audioTime);audioTime+=801/48000;
+  audio.push(samples);
 }
 async function start() {
-  if(!game)return;
+  if(!game || document.hidden)return;
   $('#teaser-video')?.pause();
-  const Audio=window.AudioContext||window.webkitAudioContext;
-  if(!audioContext && Audio) {
-    audioContext=new Audio({latencyHint:'interactive'});
-    audioContext.addEventListener('statechange',()=>{
-      if(audioContext.state==='interrupted' && running) {
-        running=false;clearAudio();play.hidden=false;play.textContent='RESUME';
-      }
-    });
-  }
-  if(audioContext)await audioContext.resume();
+  audio.unlock(); // Starts sources/resume synchronously inside this user gesture.
   started=running=true;last=0;accumulator=0;
   play.hidden=true;$('#screen').focus();
 }
 function failure(error) {
-  running=false;clearAudio();status.textContent='Game stopped: '+error.message;
+  running=false;audio.pause();status.textContent='Game stopped: '+error.message;
   status.dataset.error='true';console.error(error);
 }
 function animate(now) {
@@ -82,7 +71,7 @@ function animate(now) {
       const input=keyboardButtons()|padButtons()|touch.buttons()|pending;pending=0;
       if(!game._ww_web_step(input)) {
         running=false;play.hidden=false;play.textContent='RELOAD GAME';
-        play.onclick=()=>location.reload();save();clearAudio();return;
+        play.onclick=()=>location.reload();save();audio.pause();return;
       }
       renderAudio();accumulator-=STEP;
       const highScore=game._ww_web_state(19);
@@ -108,19 +97,15 @@ window.addEventListener('keyup',event=>{
 });
 window.addEventListener('blur',()=>{held.clear();pending=0;});
 document.addEventListener('visibilitychange',()=>{
-  held.clear();pending=0;last=0;accumulator=0;clearAudio();save();
+  held.clear();pending=0;last=0;accumulator=0;audio.clear();save();
   touch.clear();
   if(document.hidden) {
-    running=false;audioContext?.suspend().catch(()=>{});
-    if(started){play.hidden=false;play.textContent='RESUME';}
+    pausePlayback();
   }
 });
-window.addEventListener('pagehide',save);
+window.addEventListener('pagehide',pausePlayback);
 play.onclick=()=>start().catch(failure);
-$('#teaser-video')?.addEventListener('play',()=>{
-  running=false;held.clear();pending=0;touch.clear();clearAudio();save();
-  play.hidden=false;play.textContent=started?'RESUME':'PLAY';
-});
+$('#teaser-video')?.addEventListener('play',pausePlayback);
 async function expand() {
   try {
     if(document.fullscreenElement)await document.exitFullscreen();
@@ -137,7 +122,10 @@ document.addEventListener('fullscreenchange',()=>{
   touch.clear();
 });
 $('#pause').onclick=()=>{pending|=8;$('#screen').focus();};
-$('#mute').onclick=()=>{muted=!muted;clearAudio();$('#mute').textContent=muted?'SOUND OFF':'SOUND ON';};
+$('#mute').onclick=()=>{
+  if(audio.diagnostics().retry && !muted){if(running)audio.unlock();else start().catch(failure);}
+  else {muted=!muted;audio.setEnabled(!muted);updateSound();}
+};
 $('#export').onclick=()=>{
   save();const pointer=game._ww_web_sram();
   const data=game.HEAPU8.slice(pointer,pointer+game._ww_web_sram_size());
@@ -149,10 +137,10 @@ $('#export').onclick=()=>{
 try {
   presenter=await createPresenter($('#screen'),kind=>{
     document.documentElement.dataset.renderer=kind;
-    status.textContent=kind+(game?' · WASM · 20261012-132724':' · Loading original game assets…');
+    status.textContent=kind+(game?' · WASM · 20261012-140056':' · Loading original game assets…');
   });
   game=await createWorldWarrior({
-    locateFile:path=>path+'?v=20261012-132724',
+    locateFile:path=>path+'?v=20261012-140056',
     printErr:message=>console.warn(message),
   });
   game._ww_web_set_debug(debug?1:0);
@@ -161,13 +149,14 @@ try {
   const pointer=game._ww_web_pixels();presenter.draw(game.HEAPU8.subarray(pointer,pointer+256*224*4));
   play.disabled=false;play.textContent='PLAY';
   $('#export').disabled=false;
-  status.textContent=presenter.kind+' · WASM · 20261012-132724';
+  status.textContent=presenter.kind+' · WASM · 20261012-140056';
   requestAnimationFrame(animate);
 } catch(error) {failure(error);}
 
 // Read-only diagnostics for browser checks; save/combat state stays private.
 export function diagnostics() {
-  return {running,frames,touch:touch.buttons(),phone:touch.enabled,audio:audioContext?.state,
+  return {running,frames,touch:touch.buttons(),phone:touch.enabled,audio:audio.diagnostics().state,
+    sound:audio.diagnostics(),
     renderer:presenter?.kind,mode:game?game._ww_web_state(0):-1,
     selecting:game?game._ww_web_state(16):0,debug:game?!!game._ww_web_state(23):false,
     intro:game?game._ww_web_state(5):0,x:game?game._ww_web_state(3):0,

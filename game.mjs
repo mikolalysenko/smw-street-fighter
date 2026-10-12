@@ -41,7 +41,7 @@ if (ENVIRONMENT_IS_NODE) {
 
 // --pre-jses are emitted after the Module integration code, so that they can
 // refer to Module (if they choose; they can also define Module)
-// include: /var/folders/k8/ht4rgp0d7jj_fxhhwjg3tmr00000gn/T/tmp4a3v_5do.js
+// include: /var/folders/k8/ht4rgp0d7jj_fxhhwjg3tmr00000gn/T/tmpvizk6alj.js
 if (!Module["expectedDataFileDownloads"]) Module["expectedDataFileDownloads"] = 0;
 
 Module["expectedDataFileDownloads"]++;
@@ -60,7 +60,7 @@ Module["expectedDataFileDownloads"]++;
       // web worker
       PACKAGE_PATH = encodeURIComponent(location.pathname.substring(0, location.pathname.lastIndexOf("/")) + "/");
     }
-    var PACKAGE_NAME = "/Users/mikolalysenko/smw-street-fighter/dist/web/game.data";
+    var PACKAGE_NAME = "/Users/mikolalysenko/smw-street-fighter/build/release-source-v0.6.1/dist/web/game.data";
     var REMOTE_PACKAGE_BASE = "game.data";
     var REMOTE_PACKAGE_NAME = Module["locateFile"] ? Module["locateFile"](REMOTE_PACKAGE_BASE, "") : REMOTE_PACKAGE_BASE;
     var REMOTE_PACKAGE_SIZE = metadata["remote_package_size"];
@@ -135,9 +135,9 @@ Module["expectedDataFileDownloads"]++;
           // canOwn this data in the filesystem, it is a slice into the heap that will never change
           Module["FS_createDataFile"](name, null, data, true, true, true);
         }
-        Module["removeRunDependency"]("datafile_/Users/mikolalysenko/smw-street-fighter/dist/web/game.data");
+        Module["removeRunDependency"]("datafile_/Users/mikolalysenko/smw-street-fighter/build/release-source-v0.6.1/dist/web/game.data");
       }
-      Module["addRunDependency"]("datafile_/Users/mikolalysenko/smw-street-fighter/dist/web/game.data");
+      Module["addRunDependency"]("datafile_/Users/mikolalysenko/smw-street-fighter/build/release-source-v0.6.1/dist/web/game.data");
       if (!Module["preloadResults"]) Module["preloadResults"] = {};
       Module["preloadResults"][PACKAGE_NAME] = {
         fromCache: false
@@ -333,7 +333,7 @@ Module["expectedDataFileDownloads"]++;
   });
 }))();
 
-// end include: /var/folders/k8/ht4rgp0d7jj_fxhhwjg3tmr00000gn/T/tmp4a3v_5do.js
+// end include: /var/folders/k8/ht4rgp0d7jj_fxhhwjg3tmr00000gn/T/tmpvizk6alj.js
 var programArgs = [];
 
 var thisProgram = "./this.program";
@@ -7888,7 +7888,7 @@ Module["FS_createLazyFile"] = FS_createLazyFile;
 // End JS library exports
 // end include: postlibrary.js
 var ASM_CONSTS = {
-  403105: () => {
+  403457: () => {
     if (typeof (AudioContext) !== "undefined") {
       return true;
     } else if (typeof (webkitAudioContext) !== "undefined") {
@@ -7896,7 +7896,7 @@ var ASM_CONSTS = {
     }
     return false;
   },
-  403252: () => {
+  403604: () => {
     if ((typeof (navigator.mediaDevices) !== "undefined") && (typeof (navigator.mediaDevices.getUserMedia) !== "undefined")) {
       return true;
     } else if (typeof (navigator.webkitGetUserMedia) !== "undefined") {
@@ -7904,7 +7904,7 @@ var ASM_CONSTS = {
     }
     return false;
   },
-  403486: $0 => {
+  403838: $0 => {
     if (typeof (Module["SDL2"]) === "undefined") {
       Module["SDL2"] = {};
     }
@@ -7928,11 +7928,11 @@ var ASM_CONSTS = {
     }
     return SDL2.audioContext === undefined ? -1 : 0;
   },
-  404038: () => {
+  404390: () => {
     var SDL2 = Module["SDL2"];
     return SDL2.audioContext.sampleRate;
   },
-  404106: ($0, $1, $2, $3) => {
+  404458: ($0, $1, $2, $3) => {
     var SDL2 = Module["SDL2"];
     var have_microphone = function(stream) {
       if (SDL2.capture.silenceTimer !== undefined) {
@@ -7974,7 +7974,7 @@ var ASM_CONSTS = {
       }, have_microphone, no_microphone);
     }
   },
-  405799: ($0, $1, $2, $3) => {
+  406151: ($0, $1, $2, $3) => {
     var SDL2 = Module["SDL2"];
     SDL2.audio.scriptProcessorNode = SDL2.audioContext["createScriptProcessor"]($1, 0, $0);
     SDL2.audio.scriptProcessorNode["onaudioprocess"] = function(e) {
@@ -8006,7 +8006,7 @@ var ASM_CONSTS = {
       SDL2.audio.silenceTimer = setInterval(silence_callback, ($1 / SDL2.audioContext.sampleRate) * 1e3);
     }
   },
-  406974: ($0, $1) => {
+  407326: ($0, $1) => {
     var SDL2 = Module["SDL2"];
     var numChannels = SDL2.capture.currentCaptureBuffer.numberOfChannels;
     for (var c = 0; c < numChannels; ++c) {
@@ -8025,7 +8025,7 @@ var ASM_CONSTS = {
       }
     }
   },
-  407579: ($0, $1) => {
+  407931: ($0, $1) => {
     var SDL2 = Module["SDL2"];
     var buf = $0 >>> 2;
     var numChannels = SDL2.audio.currentOutputBuffer["numberOfChannels"];
@@ -8039,7 +8039,7 @@ var ASM_CONSTS = {
       }
     }
   },
-  408068: $0 => {
+  408420: $0 => {
     var SDL2 = Module["SDL2"];
     if ($0) {
       if (SDL2.capture.silenceTimer !== undefined) {
@@ -8073,7 +8073,7 @@ var ASM_CONSTS = {
       SDL2.audioContext = undefined;
     }
   },
-  409074: ($0, $1, $2) => {
+  409426: ($0, $1, $2) => {
     var w = $0;
     var h = $1;
     var pixels = $2;
@@ -8144,7 +8144,7 @@ var ASM_CONSTS = {
     }
     SDL2.ctx.putImageData(SDL2.image, 0, 0);
   },
-  410540: ($0, $1, $2, $3, $4) => {
+  410892: ($0, $1, $2, $3, $4) => {
     var w = $0;
     var h = $1;
     var hot_x = $2;
@@ -8181,18 +8181,18 @@ var ASM_CONSTS = {
     stringToUTF8(url, urlBuf, url.length + 1);
     return urlBuf;
   },
-  411528: $0 => {
+  411880: $0 => {
     if (Module["canvas"]) {
       Module["canvas"].style["cursor"] = UTF8ToString($0);
     }
   },
-  411611: () => {
+  411963: () => {
     if (Module["canvas"]) {
       Module["canvas"].style["cursor"] = "none";
     }
   },
-  411680: () => window.innerWidth,
-  411710: () => window.innerHeight
+  412032: () => window.innerWidth,
+  412062: () => window.innerHeight
 };
 
 // Imports from the Wasm binary.
