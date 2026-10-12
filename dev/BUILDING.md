@@ -4,7 +4,8 @@
 
 Requirements: C/C++ compilers, Make, SDL2 development files, Git, Python 3 with
 venv support, CMake, ffmpeg and bsdtar (libarchive-tools on Linux). On macOS: `brew install sdl2 cmake ffmpeg` and Xcode command
-line tools. Linux/Bazzite instructions are in [BAZZITE.md](BAZZITE.md).
+line tools. On Debian/Ubuntu install `build-essential libsdl2-dev python3-venv cmake ffmpeg libarchive-tools`.
+For playing on Bazzite, use the [TV setup guide](../docs/BAZZITE.md).
 
 Clone this repository with its submodules, or initialize them in an existing
 checkout before building:
@@ -33,9 +34,22 @@ make smw
 
 Game data, downloads and generated builds remain in ignored `local/`, `build/`
 and `dist/` on `main`. The prepared `gh-pages` branch contains the browser runtime
-and its packed game data. `make package` creates a bundle for the current platform. The Mac
-bundle uses the installed SDL library; the Linux bundle should run in its build
-Distrobox until a portable release is prepared.
+and its packed game data. `make package` creates a complete bundle for the current
+platform, including runtime assets and shared libraries. Linux packaging requires
+`patchelf`; Windows uses MSYS2 with the MINGW64 GCC/SDL2 toolchain. Mac packages
+bundle SDL2 and SDL3 and are ad-hoc signed. The CI workflow builds Linux x86-64,
+Windows x86-64, and separate Apple Silicon and Intel Mac packages on native runners.
+
+```sh
+make smw
+python3 dev/package_native.py --version 0.6.0
+python3 dev/smoke_package.py dist/releases/super-mario-world-ii-macos-arm64
+```
+
+Use the matching platform/architecture folder for the smoke check. It relocates
+the package, removes build-time library paths, boots twice and verifies save RAM.
+It does not use or modify personal saves. Desktop saves use SDL's per-user data
+directory; `WW_SAVE_DIR` is an isolated test override.
 
 ## Tests and publishing
 
@@ -60,5 +74,5 @@ and the WASM interface in `adapters/web/`. `web/` supplies the browser shell;
 upstream submodules.
 
 New code and documentation are MIT licensed. Original game content retains its
-separate rights and credits; see [asset provenance](ASSETS.md) and [LICENSE](LICENSE).
+separate rights and credits; see [asset provenance](ASSETS.md) and [LICENSE](../LICENSE).
 

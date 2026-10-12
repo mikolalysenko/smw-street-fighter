@@ -15,7 +15,7 @@ make test-roster # All twelve fighters: 17 ground/air actions, Bison's stage exi
 make test-collision # Pipe walls, both camera edges, rolls and slides
 make test-pipes     # Original bonus-room return entrances
 make test-specials  # Sustained attacks, horizontal headbutt, fireballs and beam
-make test-features  # Adjacent blocks, low guard and all twelve ending screens
+make test-features  # Normal/super blocks, all pipe clips, low guard and twelve endings
 make test-scroll # Bison in the original scrolling smasher room, through its door
 make test-animations # Packed art: both facings, strike timing, landing and freeze
 make audit-animations # Sprite contact sheets and loops in build/animation-audit
@@ -39,3 +39,8 @@ These run the actual WASM build in WebKit and Chromium with phone, tablet and
 desktop profiles, including touch-only game startup/combat, multi-touch,
 rotation-friendly layouts, expansion, audio resume and the debug query flag.
 They emulate phone browsers; physical iPhone testing remains separate.
+
+The native packaging workflow also boots each relocated desktop package with a
+clean user save directory and without developer library search paths. Windows
+runs this check from PowerShell, outside MSYS2. Both engines share one audio
+device; `test-audio` checks the common signed-16-bit mix and voice gains.

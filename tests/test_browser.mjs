@@ -73,6 +73,24 @@ async function inspect(name,browser,options,phone) {
   await page.locator('#play').click();
   await page.waitForTimeout(1600);
   const state=await diagnostics();assert(state.running && state.frames>65 && state.audio==='running',JSON.stringify(state));
+  if(name==='desktop') {
+    const metadata=await page.locator('meta[property="og:image"]').getAttribute('content');
+    assert(metadata.endsWith('/media/og-image.jpg'));
+    const video=page.locator('#teaser-video');
+    await video.scrollIntoViewIfNeeded();
+    await video.evaluate(v=>v.play());
+    await page.waitForTimeout(500);
+    assert.equal((await diagnostics()).running,false,'Watching the teaser suspends game simulation/audio');
+    assert(await video.evaluate(v=>v.currentTime>0 && v.videoWidth===1920),'Published teaser decodes and plays');
+    for(const image of await page.locator('.gallery img').all()) {
+      await image.scrollIntoViewIfNeeded();
+      await image.evaluate(img=>img.decode());
+      assert(await image.evaluate(img=>img.naturalWidth===768));
+    }
+    await page.locator('#play').click();
+    assert(await video.evaluate(v=>v.paused),'Resuming the game pauses the teaser');
+    assert.equal((await diagnostics()).running,true);
+  }
   if(phone) {
     const canvas=await page.locator('#screen').boundingBox(),pad=await page.locator('[data-dpad]').boundingBox();
     assert(canvas.width>180 && canvas.height>150 && pad.width>=140);

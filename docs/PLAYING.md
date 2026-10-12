@@ -54,7 +54,9 @@ levels, and hit combos show their current points or extra-life award.
 ## Controls
 
 Punches and kicks bonk enemies, flip shells and activate item/turn blocks next to you.
-Cement and used blocks stay solid. Aerial Down + Punch/Kick bumps blocks below you. Crouching attacks hit low blocks; Dhalsim's extended limbs reach
+Cement and used blocks stay solid against normal attacks. Shinku Hadouken shatters
+turn, used and cement blocks in its path, while item blocks release their contents.
+Aerial Down + Punch/Kick bumps blocks below you. Crouching attacks hit low blocks; Dhalsim's extended limbs reach
 farther. Pipes, doors and level terrain remain usable. Down + Guard holds a low
 block; a fresh guard can parry, while sustained guard takes reduced damage.
 Bison's level-three Psycho Crusher damages enemies touching its visible beam.

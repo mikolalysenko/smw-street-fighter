@@ -33,6 +33,9 @@ def main():
     subprocess.run(cmd,cwd=ROOT,check=True)
     for p in (ROOT/'web').iterdir():
         if p.is_file():shutil.copy2(p,out/p.name)
+    for name in json.loads((ROOT/'dev/site_files.json').read_text()):
+        (out/name).parent.mkdir(parents=True,exist_ok=True)
+        shutil.copy2(ROOT/name,out/name)
     build=datetime.now(timezone.utc).strftime('%Y%m%d-%H%M%S')
     # Version every module and the asset package together; a reload must
     # never combine an old WASM module with a new sprite/audio bundle.

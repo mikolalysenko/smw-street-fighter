@@ -205,7 +205,12 @@ def main():
                                     ('dev/ASSETS.md', 'ASSETS.md')]:
         copy(ROOT / source, notices / name_in_package)
     copy(ROOT / 'docs/PLAYING.md', stage / 'PLAYER-GUIDE.md')
-    copy(ROOT / 'README.md', stage / 'README.md')
+    # Keep the release guide focused on playing; repository-relative links
+    # point back to their online pages rather than missing developer files.
+    readme = (ROOT / 'README.md').read_text()
+    readme = re.sub(r'\]\((?!https?://|#)([^)]+)\)',
+                    lambda m: '](https://github.com/mikolalysenko/smw-street-fighter/blob/main/' + m[1] + ')', readme)
+    (stage / 'README.md').write_text(readme)
     (stage / 'START-HERE.txt').write_text(
         TITLE + '\nVersion ' + args.version + '\n\n'
         + {'macos': 'Drag the app to Applications, then open it. Keep this folder for its guide and credits.\n'

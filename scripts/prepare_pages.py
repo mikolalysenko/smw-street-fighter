@@ -11,7 +11,7 @@ SITE_FILES = (
     'index.html', 'style.css', 'app.mjs', 'input.mjs', 'presenter.mjs', 'touch.mjs',
     'game.mjs', 'game.wasm', 'game.data', 'build.json', '.nojekyll',
     'README.txt', 'LICENSE.txt', 'SMW-LICENSE.txt', 'ASSETS.md',
-)
+) + tuple(json.loads((ROOT / 'dev/site_files.json').read_text()))
 
 
 def git(*args, cwd=ROOT):
@@ -52,6 +52,7 @@ def main():
             # local assets and saves in the user's checkout are never touched.
             git('rm', '-rf', '--ignore-unmatch', '.', cwd=worktree)
             for name in SITE_FILES:
+                (worktree / name).parent.mkdir(parents=True, exist_ok=True)
                 shutil.copy2(site / name, worktree / name)
             git('add', '--all', cwd=worktree)
             changed = subprocess.run(

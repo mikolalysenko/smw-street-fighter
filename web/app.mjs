@@ -54,6 +54,7 @@ function renderAudio() {
 }
 async function start() {
   if(!game)return;
+  $('#teaser-video')?.pause();
   const Audio=window.AudioContext||window.webkitAudioContext;
   if(!audioContext && Audio) {
     audioContext=new Audio({latencyHint:'interactive'});
@@ -95,14 +96,15 @@ function animate(now) {
 }
 window.addEventListener('keydown',event=>{
   if(event.ctrlKey || event.metaKey || event.altKey || !keyMap[event.code])return;
-  if(event.target instanceof HTMLButtonElement && event.code==='Enter')return;
+  if(event.target.closest?.('a,button,input,textarea,select,video'))return;
   event.preventDefault();
   if(!running && game) {start().catch(failure);}
   if(!held.has(event.code))pending|=keyMap[event.code];
   held.add(event.code);
 });
 window.addEventListener('keyup',event=>{
-  held.delete(event.code);if(keyMap[event.code])event.preventDefault();
+  held.delete(event.code);
+  if(keyMap[event.code] && !event.target.closest?.('a,button,input,textarea,select,video'))event.preventDefault();
 });
 window.addEventListener('blur',()=>{held.clear();pending=0;});
 document.addEventListener('visibilitychange',()=>{
@@ -115,6 +117,10 @@ document.addEventListener('visibilitychange',()=>{
 });
 window.addEventListener('pagehide',save);
 play.onclick=()=>start().catch(failure);
+$('#teaser-video')?.addEventListener('play',()=>{
+  running=false;held.clear();pending=0;touch.clear();clearAudio();save();
+  play.hidden=false;play.textContent=started?'RESUME':'PLAY';
+});
 async function expand() {
   try {
     if(document.fullscreenElement)await document.exitFullscreen();

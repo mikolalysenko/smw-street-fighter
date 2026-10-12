@@ -82,7 +82,8 @@ Gamepad labels use Xbox / Steam button positions.
 
 Punches and kicks bonk enemies or flip shells, and bump blocks like a jump hit.
 An aerial **Down + Punch / Kick** strikes blocks below you. Specials and supers
-keep their destructive power. Keys, exits and essential platforms remain usable.
+keep their destructive power; Shinku Hadouken also shatters blocks in its path.
+Keys, exits and essential platforms remain usable.
 
 Hold **Down**, then **Jump** for a charged high jump. Walk into a key or shell
 to carry it; **Guard + Punch** releases it. Add **Down** to drop it or **Up** to

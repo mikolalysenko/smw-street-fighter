@@ -333,9 +333,10 @@ int main(void) {
   DamagePlayer_Hurt();assert(ww_fight_state()->hp==88);
   for(int i=0;i<8;i++)frame(0);
   ww_velocity();assert((int8)player_xspeed<0 && (int8)player_yspeed<0);
-  /* Entering a pipe must freeze combat without suppressing SMW's transition. */
-  player_current_state=5;int tick=(int)ww_fight_state()->tick;
-  assert(frame(1u<<11));assert((int)ww_fight_state()->tick==tick);
+  /* Pipe movement animates, but held attacks cannot restart combat. */
+  player_current_state=5;int meter=ww_fight_state()->meter,hp=ww_fight_state()->hp;
+  assert(frame(1u<<11));assert(ww_fight_state()->move==FC_IDLE);
+  assert(ww_fight_state()->meter==meter && ww_fight_state()->hp==hp);
   player_current_state=0;
   DamagePlayer_Kill();assert(player_current_state==9 && ww_fight_state()->hp==0);
   assert(io_music_ch1==0); /* Original Mario death jingle is replaced. */

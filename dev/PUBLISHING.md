@@ -1,4 +1,4 @@
-# Publish the WASM demo on GitHub Pages
+# Publish a release and the browser demo
 
 `main` contains the source and README. `gh-pages` contains the compiled static
 demo, including its packed game assets, credits, and `.nojekyll`. The browser
@@ -16,6 +16,46 @@ Demo: https://mikolalysenko.github.io/smw-street-fighter/
 
 The demo deploys from **gh-pages → /(root)**. Downloadable browser builds are
 attached to GitHub releases.
+
+## Desktop release
+
+The [Native builds workflow](../.github/workflows/build.yml) produces complete
+packages on Linux x86-64, Windows x86-64, macOS ARM64 and macOS Intel runners.
+Each archive includes data, SDL libraries, configuration, a player guide and
+license notices. Each platform boots its relocated package twice and verifies
+save creation/reload before uploading an artifact. Macs use ad-hoc signatures,
+not Apple notarization; Windows builds are not publisher-signed.
+
+CI retrieves `runtime-data.zip` from the published `demo-2026-10-12` release. That
+archive contains the same packed game data as the browser demo, plus a SHA-256
+manifest. It contains no ROM images or saves. To prepare a changed asset bundle:
+
+```sh
+python3 dev/package_native.py --data-only
+```
+
+Publish that bundle on a release accessible to the workflow's read-only token,
+then update the workflow's source tag. GitHub's read-only workflow token cannot
+retrieve assets from a draft release. Bump `--version` in the workflow and local
+packager together. Finish gameplay/media/docs changes and commit before building
+the final release; `build.json` in every archive identifies its source revision.
+
+```sh
+git push origin main
+gh run list --workflow build.yml
+gh run download RUN_ID --dir build/release-artifacts
+make pages-branch
+```
+
+Collect the four native archives and `dist/super-mario-world-ii-web.zip`, generate
+`SHA256SUMS`, and attach them to a draft release with notes and OS requirements.
+Verify the artifacts came from the intended commit and that every platform job
+passed. Publish the release as Latest only once all download links are ready.
+Keep raw capture masters in `build/media/`; the optimized teaser and screenshots
+under `media/` are included in source and Pages. See the [media guide](media/README.md).
+
+Desktop saves live outside the install directory. Never copy a developer's
+`saves/` folder into a package. The packager checks for saves and raw ROM suffixes.
 
 ## First push to a new repository
 

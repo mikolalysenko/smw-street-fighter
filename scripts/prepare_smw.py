@@ -48,7 +48,7 @@ def prepare():
         ('int main(int argc, char** argv) {',
          'int main(int argc, char** argv) {\n'
          '  char *ww_base = SDL_GetBasePath();\n'
-         '  if (ww_base) { chdir(ww_base); SDL_free(ww_base); }'),
+         '  if (ww_base) { int changed=chdir(ww_base); (void)changed; SDL_free(ww_base); }'),
         ('#include <stdio.h>', '#include "ww_smw.h"\n#include "audio.h"\n#include "assets.h"\n#include <stdio.h>\nstatic int ww_smoke_frames;'),
         ('  argc--, argv++;',
          '  // Strip our option before the original --config/ROM parser.\n'
