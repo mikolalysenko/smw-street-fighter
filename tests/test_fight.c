@@ -221,14 +221,14 @@ static void test_air_attacks_and_animation(void) {
 }
 static void test_grab_and_high_jump(void) {
   FcBody b=player;FcFight f;fc_init(&f,FC_ZANGIEF);
-  FcTarget target={{110,45,96,96},1,true,false,0,0};
+  FcTarget target={{110,45,96,96},500,true,false,0,0};
   for(int t=0;t<4;t++)fc_tick(&f,t?0:FC_UP|FC_SPECIAL,b,&target,1);
-  assert(f.grabbed==0 && target.hp==1 && !target.hit);
+  assert(f.grabbed==0 && target.hp==500 && !target.hit);
   assert(f.override_y || f.move_tick>=11);
   b.grounded=false;
-  for(int t=0;t<65;t++){b.box.y=t<30?99-t:69+(t-30);fc_tick(&f,0,b,&target,1);assert(target.hp==1 && !target.hit);}
+  for(int t=0;t<65;t++){b.box.y=t<30?99-t:69+(t-30);fc_tick(&f,0,b,&target,1);assert(target.hp==500 && !target.hit);}
   b.grounded=true;fc_tick(&f,0,b,&target,1);
-  assert(!target.hp && target.hit && f.grab_slam && f.grabbed==-1);
+  assert(!target.hp && (target.hit&FC_HIT_SLAM) && f.grab_slam && f.grabbed==-1);
   fc_init(&f,FC_ZANGIEF);
   for(int t=0;t<70;t++)fc_tick(&f,t?0:FC_UP|FC_SPECIAL,b,NULL,0);
   assert(f.move==FC_IDLE && f.grabbed==-1);

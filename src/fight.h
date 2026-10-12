@@ -27,7 +27,7 @@ typedef struct {
   int hp, max_hp, ko_timer;
   bool active;
 } FcOpponent;
-enum { FC_HIT_SPECIAL=1, FC_HIT_NORMAL=2 };
+enum { FC_HIT_SPECIAL=1, FC_HIT_NORMAL=2, FC_HIT_SLAM=4 };
 typedef struct {
   FcBox box;
   int hp;

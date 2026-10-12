@@ -171,7 +171,12 @@ that blasts across the stage. Small enemies still use forgiving hit detection.
 Specials can hit all normal sprite IDs and extended/cluster hazards, including
 Chucks, Thwomps, wooden castle plungers and the layer-three crusher. Enemies
 explode when hit by specials; normal punches and kicks use Mario-style hit reactions. Keys, exits, switches and essential platforms take a visual hit but
-retain their function. Terrain shows a single impact without erasing routes.
+retain their function for ordinary specials. Zangief's piledriver is the exception:
+anything he grabs is destroyed on landing, including keys, switches, pipes,
+blocks and bosses. A whiff stays a grab. Destroying an exit or required object
+can leave the level unwinnable; pause and return to the map to try again.
+Bison's Head Press (Up + Special) smashes blocks both above and below him,
+including spinning turn blocks; item blocks still release their contents.
 Boss rooms have opposing health bars, a KO announcement and their original
 defeat/exit sequences. In the finale, Akuma assassinates Bowser, throws him
 upside down offscreen, and pilots the original clown car. The fight has three
@@ -184,7 +189,8 @@ Peach a quiet mushroom throw.
 Punch or kick an incoming fireball to send it back. A timed guard returns it
 too; a successful return staggers Akuma and earns extra meter. Jump down onto
 the clown car's rim to bop it and bounce into an aerial follow-up. Zangief can
-still piledrive the whole car. Damage is capped at six per hit and twelve per
+still piledrive the whole car for an instant knockout on landing. Other attacks
+are capped at six damage per hit and twelve per
 wave, with health thresholds at two thirds and one third; Akuma visibly guards
 during recovery when the wave's damage limit is reached. Defeating Akuma starts
 the original rescue and ending.
@@ -213,7 +219,7 @@ currently exposed in the player UI.
 
 ## Troubleshooting
 
-- **No sound on iPhone:** tap Play or Resume after switching back from another app. Check the device volume.
+- **No sound on iPhone:** tap Play to enable sound, or **Enable Sound** if Safari blocked it. After switching apps or locking the phone, tap Resume. Check the media volume; the game uses playback audio even with the silent switch on.
 - **No touch buttons on a tablet:** touch controls are phone-only. Use a gamepad or keyboard on tablets.
 - **Missing game data / DLL:** extract the entire release archive and keep its files together.
 - **macOS blocks opening:** review the app in System Settings → Privacy & Security. The community release is not notarized.

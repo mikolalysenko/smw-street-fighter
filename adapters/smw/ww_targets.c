@@ -34,10 +34,25 @@ static unsigned map_tile(int x,int y) {
   return o<0x10000?g_ram[o]+256*g_ram[o+0x10000]:0x25;
 }
 static bool pipe_tile(unsigned id) { return id>=0x133 && id<=0x13f; }
+static void destroy_grabbed_tiles(FcFight *f) {
+  uint16 old_x=blocks_xpos,old_y=blocks_ypos;
+  uint8 old_layer=misc_current_layer_being_processed,old_tile=blocks_map16_to_generate;
+  for(int i=0;i<pipe_grab.count;i++) {
+    int x=pipe_grab.tile[i].x,y=pipe_grab.tile[i].y;
+    for(int j=0;j<4;j++)if(bounce_spr_spriteid[j] &&
+        ((bounce_spr_xpos_lo[j]|(bounce_spr_xpos_hi[j]<<8))&~15)==x &&
+        ((bounce_spr_ypos_lo[j]|(bounce_spr_ypos_hi[j]<<8))&~15)==y)bounce_spr_spriteid[j]=0;
+    blocks_xpos=x;blocks_ypos=y;misc_current_layer_being_processed=0;
+    blocks_map16_to_generate=2;GenerateTile();
+    if(i%4==0)fc_explode(f,x+8,y+8,true);
+  }
+  blocks_xpos=old_x;blocks_ypos=old_y;
+  misc_current_layer_being_processed=old_layer;blocks_map16_to_generate=old_tile;
+  pipe_grab.count=0;grab.slot=-1;grab.captured=false;
+}
 static void pipe_tiles(bool hidden) {
-  /* Move the art, keeping the native collision and exit metadata intact.
-   * A temporary invisible pipe cannot drop its rider or erase a required
-   * route, and the exact original tiles return after the slam or cancel. */
+  /* Keep collision until the landing, then erase the grabbed tiles for
+   * real. Only a cancelled/whiffed grab restores its original artwork. */
   uint8 old_layer=misc_current_layer_being_processed;misc_current_layer_being_processed=0;
   for(int i=0;i<pipe_grab.count;i++) {
     int x=pipe_grab.tile[i].x,y=pipe_grab.tile[i].y;
@@ -52,14 +67,20 @@ static bool find_pipe(const FcFight *f) {
   if(grab.slot==WW_PIPE_TARGET)return true;
   pipe_grab.count=0;
   if(!fc_piledriver(f) || f->grab_slam || misc_nmito_use_flag&0x80)return false;
-  int x0=((int)f->body.box.x-32)&~15,y0=((int)f->body.box.y-32)&~15;
-  for(int y=y0;y<y0+96 && !pipe_grab.count;y+=16)for(int x=x0;x<x0+80;x+=16) {
-    int id=map_tile(x,y);if(!pipe_tile(id))continue;
-    pipe_grab.tile[0]=(PipeTile){x,y,id};pipe_grab.count=1;break;
+  int x0=((int)f->body.box.x-28)&~15,y0=((int)f->body.box.y-32)&~15;
+  /* Pipes take precedence. Otherwise grab any solid foreground block in
+   * hand range, including a wall or item block. Do not grab the floor
+   * automatically when the player whiffs in an otherwise empty space. */
+  int feet=(int)(f->body.box.y+f->body.box.h+f->sprite_y_offset);
+  for(int pass=0;pass<2 && !pipe_grab.count;pass++)
+    for(int y=y0;y<feet-1 && !pipe_grab.count;y+=16)for(int x=x0;x<f->body.box.x+f->body.box.w+28;x+=16) {
+      int id=map_tile(x,y);if(pass?id<0x100:!pipe_tile(id))continue;
+      pipe_grab.tile[0]=(PipeTile){x,y,id};pipe_grab.count=1;break;
   }
   if(!pipe_grab.count)return false;
   int left=pipe_grab.tile[0].x,right=left+16,top=pipe_grab.tile[0].y,bottom=top+16;
-  for(int i=0;i<pipe_grab.count && pipe_grab.count<48;i++)for(int d=0;d<4;d++) {
+  bool pipe=pipe_tile(pipe_grab.tile[0].id);
+  for(int i=0;pipe && i<pipe_grab.count && pipe_grab.count<48;i++)for(int d=0;d<4;d++) {
     int x=pipe_grab.tile[i].x+(d==0?16:d==1?-16:0),y=pipe_grab.tile[i].y+(d==2?16:d==3?-16:0);
     if(x<left-192 || x>=left+192 || y<top-192 || y>=top+192)continue;
     int id=map_tile(x,y);if(!pipe_tile(id))continue;
@@ -111,8 +132,8 @@ void ww_grapple_sync(FcFight *f) {
     grab.slot=WW_PIPE_TARGET;grab.tag=0;capture_pipe();pipe_tiles(true);pipe_painted_tick=f->tick;return;
   }
   if(grab.slot>=0 && (slot!=grab.slot || spr_spriteid[grab.slot]!=grab.tag)) {
-    /* Required objects and interrupted grabs go back to their original
-     * place. Ordinary defeated enemies have already been removed. */
+    /* Interrupted grabs go back intact. A completed slam has already
+     * erased its object or started the boss's original death sequence. */
     if(spr_current_status[grab.slot] && spr_spriteid[grab.slot]==grab.tag) {
       if(ww_final_controls(grab.slot))ww_final_grapple(false);
       SetSprXYPos((uint8)grab.slot,grab.x,grab.y);
@@ -124,6 +145,13 @@ void ww_grapple_sync(FcFight *f) {
   if(slot>=0 && slot<12 && grab.slot<0 && spr_current_status[slot]>=8) {
     grab.slot=slot;grab.tag=spr_spriteid[slot];grab.x=GetSprXPos(slot);grab.y=GetSprYPos(slot);
     grab.captured=false;grab.w=grab.h=0;
+    /* Transfer ownership from native carrying/riding before the launch;
+     * those routines must not pin Zangief to the object he is lifting. */
+    if(spr_spriteid[slot]==0x35)player_riding_yoshi_flag=0;
+    if(spr_current_status[slot]==11) {
+      spr_current_status[slot]=9;
+      player_carrying_something_flag1=player_carrying_something_flag2=0;
+    }
   }
   if(grab.slot>=0 && grab.captured) {
     if(!ww_final_controls(grab.slot))SetSprXYPos((uint8)grab.slot,player_xpos+8-grab.w/2,player_ypos-grab.h/2);
@@ -204,8 +232,8 @@ static bool is_boss(int k) {
   return id==0xa0 || id==0xa9 || id==0xc5 ||
     (id==0x29 && (spr_table00c2[k]<5 || !spr_table1570[k]));
 }
-/* These objects still take hits and explode. Their underlying interaction
- * survives: a key, ride, exit or switch must never disappear from a puzzle. */
+/* Ordinary specials preserve these interactions. Piledriver slams bypass
+ * the list deliberately, even when destroying a key/exit breaks a puzzle. */
 static bool essential(int id) {
   if((id>=0x55 && id<=0x63) || (id>=0x74 && id<=0x84))return true;
   switch(id) {
@@ -339,10 +367,10 @@ void ww_targets_collect(FcFight *f,FcTarget *targets) {
       if(!s->hp)s->dead=true;
     }
     if(s->cooldown)--s->cooldown;
-    bool mount=k<12 && (spr_current_status[k]==11 || (spr_spriteid[k]==0x35 && player_riding_yoshi_flag) ||
+    bool mounted=k<12 && (spr_current_status[k]==11 || (spr_spriteid[k]==0x35 && player_riding_yoshi_flag));
+    bool mount=(mounted && !fc_piledriver(f)) || (k<12 &&
       (ww_final_controls(k) && (ww_final_phase()<WW_FINAL_FIGHT || !ww_final_vulnerable())));
-    bool ungrabbable=fc_piledriver(f) && k!=WW_PIPE_TARGET && (k>=12 ||
-      (spr_spriteid[k]==0xa0 && f->move!=FC_SUPER_MOVE) || spr_spriteid[k]==0xa9 || spr_spriteid[k]==0x29);
+    bool ungrabbable=fc_piledriver(f) && k!=WW_PIPE_TARGET && k>=12;
     targets[k]=(FcTarget){box,s->hp,!mount && !ungrabbable && !s->dead && !s->cooldown,false,0,0};
   }
   invalidated=0;
@@ -380,7 +408,7 @@ static void defeat_boss(int k) {
 void ww_targets_apply(FcFight *f,FcTarget *targets) {
   for(int k=0;k<WW_TARGET_COUNT;k++)if(targets[k].hit) {
     TargetState *s=&state[k];FcTarget *t=&targets[k];
-    bool normal=t->hit==FC_HIT_NORMAL;
+    bool normal=t->hit==FC_HIT_NORMAL,slam=t->hit&FC_HIT_SLAM;
     if(normal && !s->boss) {
       /* Use SMW's block/cape bonk: Koopas become flipped, usable shells,
        * Goombas stun, and ordinary defeated enemies fall rather than vanish.
@@ -399,7 +427,7 @@ void ww_targets_apply(FcFight *f,FcTarget *targets) {
       s->hp=t->hp=1; /* A follow-up special can immediately finish the bonk. */
       continue;
     }
-    if(k<12 && ww_final_controls(k)) {
+    if(k<12 && ww_final_controls(k) && !slam) {
       int damage=ww_final_limit_damage(s->hp-t->hp,s->hp);
       t->hp=s->hp-damage;
       if(!damage)continue;
@@ -407,11 +435,20 @@ void ww_targets_apply(FcFight *f,FcTarget *targets) {
     s->hp=t->hp;
     if(!normal)fc_explode(f,t->box.x+t->box.w/2,t->box.y+t->box.h/2,s->boss || f->move==FC_SUPER_MOVE);
     if(s->hp>0) { if(k<12 && ww_final_controls(k))s->cooldown=8;continue; }
-    if(k==WW_PIPE_TARGET){s->hp=1;s->cooldown=30;continue;}
+    if(k==WW_PIPE_TARGET){
+      if(slam){destroy_grabbed_tiles(f);s->alive=false;}
+      else {s->hp=1;s->cooldown=30;}
+      continue;
+    }
     if(s->boss) { s->dead=true;defeat_boss(k); }
-    else if(k<12 && essential(spr_spriteid[k])) { s->hp=1;s->cooldown=30; }
+    else if(k<12 && essential(spr_spriteid[k]) && !slam) { s->hp=1;s->cooldown=30; }
     else {
       if(k<12) {
+        if(spr_spriteid[k]==0x35) {
+          player_riding_yoshi_flag=yoshi_carry_over_levels_flag=flag_yoshi_saved=0;
+          sprites_yoshi_slot_index=0;
+        }
+        if(spr_current_status[k]==11)player_carrying_something_flag1=player_carrying_something_flag2=0;
         if(spr_spriteid[k]==0x89) {
           SetSprXYPos((uint8)k,256,0);
           Spr089_Layer3Smasher_UpdatePos((uint8)k);
@@ -548,7 +585,13 @@ void ww_scenery_hits(FcFight *f) {
     FcBox nose={p->box.x+(p->vx>0?p->box.w:0),p->box.y+p->box.h/2,1,1};
     p->scenery_hit=blast_tiles(f,nose,p->super);
   }
-  if((f->move==FC_JAB && f->move_tick>=4 && f->move_tick<=7) ||
+  if(f->character==FC_BISON && f->move==FC_DIVE && f->move_tick>=3 && f->move_tick<=40) {
+    /* Head Press breaks on both ascent and descent. A short swept band
+     * reaches the next tile before SMW's head/foot collision stops him. */
+    FcBox b=f->body.box;
+    float feet=b.y+b.h+f->sprite_y_offset;
+    super_blocks(f,(FcBox){b.x-2,b.y-12,b.w+4,feet-b.y+24});
+  } else if((f->move==FC_JAB && f->move_tick>=4 && f->move_tick<=7) ||
       (f->move==FC_ROUNDHOUSE && f->move_tick>=7 && f->move_tick<=12))
     normal_blocks(f);
   else if(f->move>FC_ROUNDHOUSE && f->move!=FC_PROJECTILE && !fc_piledriver(f) && f->move_tick==4) {

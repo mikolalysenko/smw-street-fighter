@@ -458,7 +458,8 @@ void fc_tick(FcFight *f,uint32_t buttons,FcBody body,FcTarget *targets,int count
               int i=f->grabbed;
               if(i<count && targets[i].active) {
                 targets[i].box.y=body.box.y+body.box.h-targets[i].box.h;
-                hit(f,&targets[i],targets[i].hp>1?(super?18:6):999,super,false);
+                hit(f,&targets[i],targets[i].hp,super,false);
+                targets[i].hit|=FC_HIT_SLAM;
               }
               f->grab_slam=true;f->grabbed=-1;f->move_tick=t=36;
             } else if(f->grab_tick>180) {

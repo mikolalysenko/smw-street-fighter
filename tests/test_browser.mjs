@@ -73,6 +73,15 @@ async function inspect(name,browser,options,phone) {
   await page.locator('#play').click();
   await page.waitForTimeout(1600);
   const state=await diagnostics();assert(state.running && state.frames>65 && state.audio==='running',JSON.stringify(state));
+  assert(state.sound.buffers>20 && state.sound.peak>0.01 && !state.sound.retry,'Game sends non-silent audio after the first Play tap');
+  if(await page.evaluate(()=>!!navigator.audioSession))
+    assert.equal(state.sound.session,'playback','First Play requests playback audio, including iOS silent mode');
+  await page.locator('#mute').click();
+  const mutedBuffers=(await diagnostics()).sound.buffers;
+  await page.waitForTimeout(100);
+  assert.equal((await diagnostics()).sound.buffers,mutedBuffers,'Muting stops scheduling game audio');
+  await page.locator('#mute').click();await page.waitForTimeout(150);
+  assert((await diagnostics()).sound.buffers>mutedBuffers,'Sound On unlocks and resumes audio');
   if(name==='desktop') {
     const metadata=await page.locator('meta[property="og:image"]').getAttribute('content');
     assert(metadata.endsWith('/media/og-image.jpg'));
@@ -125,9 +134,11 @@ async function inspect(name,browser,options,phone) {
     // Safari suspends background audio: require a gesture to resume once.
     await page.evaluate(()=>{Object.defineProperty(document,'hidden',{value:true,configurable:true});document.dispatchEvent(new Event('visibilitychange'));});
     await page.waitForTimeout(100);assert.equal((await diagnostics()).running,false);
+    assert.equal((await diagnostics()).sound.session,'auto','Backgrounding releases the playback session');
     await page.evaluate(()=>{Object.defineProperty(document,'hidden',{value:false,configurable:true});document.dispatchEvent(new Event('visibilitychange'));});
     await page.locator('#play').click();await page.waitForTimeout(200);
     assert.equal((await diagnostics()).audio,'running');
+    assert.equal((await diagnostics()).sound.retry,false);
     await page.evaluate(()=>delete document.querySelector('#touch-controls').setPointerCapture);
     if(name==='iphone-portrait' || name==='android')await playWithTouch(page,diagnostics,name);
   }

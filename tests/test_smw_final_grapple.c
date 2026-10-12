@@ -1,4 +1,4 @@
-/* Grab the original Mode 7 clown car, land and resume the boss encounter. */
+/* Grab the original Mode 7 clown car and destroy Akuma only on landing. */
 #include "ww_smw.h"
 #include "ww_targets.h"
 #include "ww_finalboss.h"
@@ -26,7 +26,7 @@ uint32_t ww_test_input(void) {
   if(misc_game_mode!=0x14)return 0;
   timer_star_power=timer_player_hurt=32;
   if(!player_in_air_flag)ground_y=player_ypos;
-  if(ww_final_phase()!=WW_FINAL_FIGHT)return 0;
+  if(!started && ww_final_phase()!=WW_FINAL_FIGHT)return 0;
   if(!started && ww_final_tick()<200)return 0;
   if(!started) {
     fc_init(f,FC_ZANGIEF);f->meter=300;hp=ww_opponent()->hp;
@@ -40,11 +40,14 @@ uint32_t ww_test_input(void) {
     ++held;assert(ww_final_controls(f->grabbed));assert(ww_opponent()->hp==hp);
     assert(!f->grab_slam);
   }
-  if(f->grab_slam && !slam) {
-    slam=1;assert(held>15);assert(ww_opponent()->hp==hp-6);
-    assert(ww_final_attack()==WW_AKUMA_RECOVER);
+  /* Entering KO clears transient combat flags in the same frame. Observe
+   * the landing and boss health transition, not the cleared grab_slam. */
+  if(!slam && ww_opponent()->hp==0) {
+    slam=1;assert(held>15);assert(ww_opponent()->hp==0);
+    assert(!player_in_air_flag && player_ypos==ground_y);
+    assert(ww_final_phase()==WW_FINAL_KO);
   }
-  if(n>200){assert(held && slam && ww_opponent()->hp>0 && ww_final_attack_tick()>0);done=1;}
+  if(n>120){assert(held && slam && ww_opponent()->hp==0);done=1;}
   return 0;
 }
 void ww_test_render(uint8_t *p,size_t pitch,int w,int h) {
@@ -55,5 +58,5 @@ void ww_test_render(uint8_t *p,size_t pitch,int w,int h) {
 }
 int main(void) {
   setvbuf(stdout,NULL,_IONBF,0);char *args[]={"test-final-grapple","--config","test-play.ini",NULL};
-  int r=ww_upstream_main(3,args);assert(done);printf("Akuma: held %d frames, capped damage only on slam, encounter resumed.\n",held);return r;
+  int r=ww_upstream_main(3,args);assert(done);printf("Akuma: held %d frames without damage, destroyed on slam, original defeat sequence started.\n",held);return r;
 }

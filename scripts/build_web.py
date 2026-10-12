@@ -41,7 +41,7 @@ def main():
     # never combine an old WASM module with a new sprite/audio bundle.
     for name in ('app.mjs','index.html','touch.mjs'):
         p=out/name;s=p.read_text().replace('__BUILD__',build)
-        for module in ('game.mjs','app.mjs','input.mjs','presenter.mjs','touch.mjs'):
+        for module in ('game.mjs','app.mjs','input.mjs','presenter.mjs','touch.mjs','audio.mjs'):
             s=s.replace(module, module+'?v='+build)
         p.write_text(s)
     revision=subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip()

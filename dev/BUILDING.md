@@ -42,7 +42,7 @@ Windows x86-64, and separate Apple Silicon and Intel Mac packages on native runn
 
 ```sh
 make smw
-python3 dev/package_native.py --version 0.6.0
+python3 dev/package_native.py --version 0.6.1
 python3 dev/smoke_package.py dist/releases/super-mario-world-ii-macos-arm64
 ```
 
@@ -72,6 +72,19 @@ The shared combat and drawing code is in `src/`, engine hooks in `adapters/smw/`
 and the WASM interface in `adapters/web/`. `web/` supplies the browser shell;
 `scripts/` builds and imports the pinned assets. `references/` contains pinned
 upstream submodules.
+
+Browser audio lives in `web/audio.mjs`. The Play gesture requests a playback
+Audio Session, resumes the context and starts a silent primer synchronously.
+Older iOS uses a silent media element to request the same playback category.
+Muting, backgrounding and watching the teaser release the session. Failed or
+stalled resumes expose an Enable Sound retry instead of stopping the game.
+This follows [WebKit's explanation of ambient vs. playback audio](https://bugs.webkit.org/show_bug.cgi?id=252746)
+and the [Audio Session API](https://www.w3.org/TR/audio-session/).
+`make test-web` includes lifecycle regressions. Optional
+`node tests/test_browser.mjs` runs the built game in WebKit and Chromium using
+Playwright installed under `build/browser-tools`. It checks non-silent audio
+buffers, mute/resume and phone controls; a physical iPhone speaker and silent
+switch still need device testing.
 
 New code and documentation are MIT licensed. Original game content retains its
 separate rights and credits; see [asset provenance](ASSETS.md) and [LICENSE](../LICENSE).

@@ -16,6 +16,7 @@ jobs:
           submodules: true
       - run: sudo apt-get update && sudo apt-get install -y libsdl2-dev
       - run: make test sanitize test-smw
+      - run: node tests/test_web_audio.mjs
   packages:
     strategy:
       fail-fast: false
@@ -66,14 +67,14 @@ jobs:
         run: |
           if [ "$RUNNER_OS" = macOS ]; then export LDFLAGS='-Wl,-headerpad_max_install_names'; fi
           make smw test-animations test-audio
-          python3 dev/package_native.py --version 0.6.0
+          python3 dev/package_native.py --version 0.6.1
           python3 dev/smoke_package.py dist/releases/super-mario-world-ii-${{ matrix.name }}
       - name: Build and package Windows
         if: runner.os == 'Windows'
         shell: msys2 {0}
         run: |
           make smw SDLFLAGS="$(sdl2-config --libs) -lm"
-          python dev/package_native.py --version 0.6.0
+          python dev/package_native.py --version 0.6.1
       - name: Test Windows package without MSYS2 on PATH
         if: runner.os == 'Windows'
         shell: pwsh

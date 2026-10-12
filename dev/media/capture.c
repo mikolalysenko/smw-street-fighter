@@ -61,7 +61,7 @@ uint32_t ww_test_input(void) {
     if(ww_final_phase()==WW_FINAL_FIGHT && ww_final_tick()>40)finish();
     return 0;
   }
-  if(scene>=7 && (ww_final_phase()!=WW_FINAL_FIGHT || ww_final_tick()<190))return 0;
+  if(scene>=7 && !started && (ww_final_phase()!=WW_FINAL_FIGHT || ww_final_tick()<190))return 0;
   if(!started) {
     if(player_in_air_flag)return 0;
     int character=scene==4?FC_BISON:scene==5?FC_CHUNLI:scene==8?FC_ZANGIEF:FC_RYU;

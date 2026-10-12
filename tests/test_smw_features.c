@@ -90,6 +90,25 @@ static void super_blocks(void) {
   ww_scenery_hits(&f);assert(!bounce_spr_spriteid[0] && get_tile(128,128)==0x25);
   puts("Shinku: all three levels/both directions break blocks, preserve items/routes/terrain and stay within the beam.");
 }
+static void bison_stomp_blocks(void) {
+  const unsigned ids[]={0x11e,0x130,0x132,0x137,0x100,0x11f};
+  for(int face=-1;face<=1;face+=2)for(int tick=3;tick<=40;tick+=37)
+    for(unsigned type=0;type<sizeof(ids)/sizeof(ids[0]);type++) {
+      for(int y=80;y<208;y+=16)for(int x=96;x<192;x+=16)tile(x,y,0x25);
+      memset(bounce_spr_spriteid,0,4);memset(spr_current_status,0,12);
+      FcFight f;fc_init(&f,FC_BISON);f.move=FC_DIVE;f.move_tick=tick;f.facing=face;
+      f.body=(FcBody){{128,128,16,32},face,false,false,false};
+      tile(128,112,ids[type]);tile(128,160,ids[type]);tile(160,128,0x130);
+      blocks_xpos=300;blocks_ypos=321;misc_current_layer_being_processed=1;
+      ww_scenery_hits(&f);
+      assert(blocks_xpos==300 && blocks_ypos==321 && misc_current_layer_being_processed==1);
+      if(type<3)assert(get_tile(128,112)==0x25 && get_tile(128,160)==0x25);
+      else if(type==5)assert(bounce_spr_spriteid[2] && bounce_spr_spriteid[3]);
+      else assert(get_tile(128,112)==ids[type] && get_tile(128,160)==ids[type]);
+      assert(get_tile(160,128)==0x130); /* Only actual head/foot contact. */
+    }
+  puts("Bison Head Press: breaks blocks above/below throughout the move, dispenses items and preserves distant blocks/terrain.");
+}
 static void pipe_clipping(void) {
   uint32_t pixels[256*224];FcFight *f=(FcFight*)ww_fight_state();
   for(int character=0;character<12;character++)for(int action=0;action<8;action++)for(int camera=0;camera<=16;camera+=16) {
@@ -157,7 +176,7 @@ uint32_t ww_test_input(void) {
   }
   if(n==40) {
     assert(player_ducking_flag && !player_in_air_flag);
-    n=0;if(++character==FC_ROSTER_COUNT){blocks();super_blocks();pipe_clipping();endings();done=1;}
+    n=0;if(++character==FC_ROSTER_COUNT){blocks();super_blocks();bison_stomp_blocks();pipe_clipping();endings();done=1;}
     return 0;
   }
   ++n;return 32|1024;

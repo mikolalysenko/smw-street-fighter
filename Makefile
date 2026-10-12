@@ -101,6 +101,7 @@ web:
 serve-web:
 	$(PYTHON) -m http.server 8765 --bind 127.0.0.1 --directory dist/web
 test-web:
+	node tests/test_web_audio.mjs
 	node tests/test_web.mjs
 pages-branch: web
 	$(MAKE) test-web

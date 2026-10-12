@@ -1,4 +1,4 @@
-/* Native carry/spin/slam, including a 64-pixel Banzai Bill and an essential key. */
+/* Native carry/spin/slam: enemies, an essential key, pipes and solid blocks. */
 #include "ww_smw.h"
 #include "ww_targets.h"
 #include "smw_rtl.h"
@@ -8,7 +8,7 @@
 #include <assert.h>
 #include <stdio.h>
 static int tick,map_ticks,base,started,n,which,grabbed,air,slam,done,home_x,home_y;
-static const int ids[]={0x0f,0x91,0x9f,0x80,0x137};
+static const int ids[]={0x0f,0x91,0x9f,0x80,0x137,0x130,0x11f};
 static int pipe_x,pipe_y;
 static unsigned tile_offset(int x,int y) {
   return GetLevelLayoutPtr_Horizontal(x>>8)+(y&0xf0)+((x&255)>>4)+((y>>8)<<8);
@@ -33,8 +33,9 @@ uint32_t ww_test_input(void) {
       spr_xspeed[10]=spr_yspeed[10]=0;
     } else {
       pipe_x=(home_x+32)&~15;pipe_y=home_y&~15;
-      for(int y=0;y<32;y+=16)for(int x=0;x<32;x+=16) {
-        unsigned o=tile_offset(pipe_x+x,pipe_y+y),id=(y?0x135:0x137)+(x!=0);
+      int size=which==4?32:16;
+      for(int y=0;y<size;y+=16)for(int x=0;x<size;x+=16) {
+        unsigned o=tile_offset(pipe_x+x,pipe_y+y),id=which==4?(y?0x135:0x137)+(x!=0):ids[which];
         g_ram[o]=id;g_ram[o+0x10000]=id>>8;
       }
     }
@@ -42,21 +43,21 @@ uint32_t ww_test_input(void) {
     grabbed=air=slam=0;
   }
   assert(f->hp>0 && player_current_state!=9);
-  if(f->grabbed==(which==4?WW_PIPE_TARGET:10)) {
+  if(f->grabbed==(which>=4?WW_PIPE_TARGET:10)) {
     grabbed++;air|=player_in_air_flag!=0;
-    assert((which==4 || spr_current_status[10]>=8) && !f->grab_slam);
+    assert((which>=4 || spr_current_status[10]>=8) && !f->grab_slam);
   }
   if(f->grab_slam)slam=1;
   if(which<4 && !spr_current_status[10])assert(slam); /* Never destroyed on contact. */
-  if(which==4) {
+  if(which>=4) {
     unsigned o=tile_offset(pipe_x,pipe_y);
-    assert(g_ram[o]==0x37 && g_ram[o+0x10000]==1);
+    assert((g_ram[o]+256*g_ram[o+0x10000])==(slam?0x25:ids[which]));
   }
   if(n==150) {
     printf("Piledriver %02x: held=%d airborne=%d slam=%d status=%d\n",ids[which],grabbed,air,slam,spr_current_status[10]);
     assert(grabbed>15 && air && slam);
-    if(ids[which]==0x80)assert(spr_current_status[10]>=8);else if(which<4)assert(!spr_current_status[10]);
-    n=0;if(++which==5)done=1;return 0;
+    if(which<4)assert(!spr_current_status[10]);
+    n=0;if(++which==sizeof(ids)/sizeof(ids[0]))done=1;return 0;
   }
   ++n;return n==2?16|512:0;
 }

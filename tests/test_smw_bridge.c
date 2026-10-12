@@ -107,6 +107,16 @@ static void test_progression_objects(void) {
     ww_targets_collect(&f,t);assert(!t[0].active); /* Short visual-hit cooldown. */
     for(int j=0;j<30;j++)ww_targets_collect(&f,t);
     assert(t[0].active && t[0].hp==1);
+    fc_init(&f,FC_ZANGIEF);f.move=FC_THROW;
+    if(ids[i]==0x35)player_riding_yoshi_flag=flag_yoshi_saved=1;
+    if(ids[i]==0x80){spr_current_status[0]=11;player_carrying_something_flag1=1;}
+    ww_targets_collect(&f,t);assert(t[0].active);
+    f.grabbed=0;ww_grapple_sync(&f);
+    if(ids[i]==0x35)assert(!player_riding_yoshi_flag);
+    if(ids[i]==0x80)assert(spr_current_status[0]==9 && !player_carrying_something_flag1);
+    t[0].hit=FC_HIT_SPECIAL|FC_HIT_SLAM;t[0].hp=0;ww_targets_apply(&f,t);
+    assert(!spr_current_status[0]); /* Piledrivers intentionally remove safeguards. */
+    if(ids[i]==0x35)assert(!flag_yoshi_saved);
   }
 }
 static void test_swinging_balls(void) {
