@@ -9,7 +9,7 @@ SDL_LIBS = $(shell $(SDL_CONFIG) --libs)
 CORE = src/fight.c
 MEDIA = src/draw.c src/audio.c src/assets.c
 
-.PHONY: all dojo run tv test sanitize smoke capture smw test-smw test-play test-bosses test-movement test-presentation test-hud test-audio test-animations audit-animations test-roster test-scroll test-collision test-pipes test-specials test-entrances test-grapple test-carry test-wallrun assets original-assets package clean web serve-web test-web pages-branch
+.PHONY: all dojo run tv test sanitize smoke capture smw test-smw test-play test-bosses test-final-depth test-movement test-presentation test-hud test-audio test-animations audit-animations test-roster test-scroll test-collision test-pipes test-specials test-entrances test-grapple test-carry test-wallrun assets original-assets package clean web serve-web test-web pages-branch
 all: smw
 dojo: build/world-warrior-dojo
 build:
@@ -63,6 +63,9 @@ test-play: smw
 	$(PYTHON) scripts/test_smw_play.py
 test-bosses: smw
 	$(PYTHON) scripts/test_smw_play.py --bosses
+test-final-depth: smw
+	$(PYTHON) scripts/test_smw_play.py --final-depth
+	WW_TEST_BOSS=1c7 WW_TEST_PATTERNS=1 $(PYTHON) scripts/test_smw_play.py --bosses
 test-movement: smw
 	$(PYTHON) scripts/test_smw_play.py --movement
 test-presentation: smw

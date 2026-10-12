@@ -89,9 +89,9 @@ static unsigned super_tick(const FcFight *f,int pose,unsigned t) {
 FcAnimation fc_animation(const FcFight *f) {
   int pose=FC_POSE_IDLE;unsigned tick=f->animation_tick;
   if(f->hp<=0){pose=FC_POSE_KO;tick=(unsigned)f->ko_timer;}
-  else if(f->stun){pose=FC_POSE_HURT;tick=(unsigned)(22-f->stun);}
+  else if(f->stun){pose=f->guarding?FC_POSE_GUARD:FC_POSE_HURT;tick=(unsigned)(22-f->stun);}
   else if(f->victory){pose=FC_POSE_WIN;tick=f->move_tick;}
-  else if(f->guarding)pose=FC_POSE_GUARD;
+  else if(f->guarding || (f->parry_flash && f->move==FC_IDLE && f->body.grounded))pose=FC_POSE_GUARD;
   else if(f->move!=FC_IDLE) {
     static const int poses[]={FC_POSE_IDLE,FC_POSE_PUNCH,FC_POSE_KICK,FC_POSE_FIRE,
       FC_POSE_RISE,FC_POSE_SPIN,FC_POSE_RUSH,FC_POSE_FLURRY,FC_POSE_FIRE,
@@ -125,12 +125,14 @@ FcAnimation fc_animation(const FcFight *f) {
   }
   else if(f->previous&FC_DOWN)pose=FC_POSE_DUCK;
   else if(f->moving){pose=FC_POSE_WALK;tick=(unsigned)(f->walk_distance*fc_sprite_duration(f->character,pose)/48.0f);}
+  else if(f->landing_tick){pose=FC_POSE_DUCK;tick=(unsigned)(6-f->landing_tick);}
   return (FcAnimation){pose,tick};
 }
 void fc_fighter(FcCanvas c,const FcFight *f,int x,int feet,int scale,uint32_t tint) {
   FcAnimation animation=fc_animation(f);
   int pose=animation.pose;unsigned tick=animation.tick;
-  if(f->invuln && !f->stun && f->move==FC_IDLE && f->hp>0 && ((f->tick/4)%2))return;
+  if(f->invuln && !f->parry_flash && !f->stun && f->move==FC_IDLE && f->hp>0 && ((f->tick/4)%2))return;
+  if(f->parry_flash && (f->parry_flash/2)%2)tint=0xa7edff;
   if(fc_psycho_flight(f) && !f->flash) {
     /* The level-three joke from Psycho Crusher, FTW: a blue-white comet
      * whose wake stretches offscreen, with the original Alpha spin at its tip. */
@@ -162,6 +164,11 @@ void fc_fighter_rotated(FcCanvas c,const FcFight *f,int x,int feet,int degrees) 
   }
 }
 void fc_effects(FcCanvas c,const FcFight *f,float camx,float camy) {
+  if(f->jump_charge>=45 && f->body.grounded) {
+    int x=(int)(f->body.box.x+8-camx),y=(int)(f->body.box.y+f->body.box.h-camy);
+    int spread=8+(f->tick/4)%4;
+    fc_rect(c,x-spread,y-2,4,1,0xffe57a);fc_rect(c,x+spread-3,y-2,4,1,0xffe57a);
+  }
   if(f->flash) {
     fc_dim(c,70);
     int x=(int)(f->body.box.x+f->body.box.w/2-camx),y=(int)(f->body.box.y+f->body.box.h-camy);

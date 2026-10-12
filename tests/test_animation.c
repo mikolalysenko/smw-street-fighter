@@ -61,7 +61,9 @@ int main(void) {
       assert(before!=strike); /* The hand/foot extends when damage activates. */
       if(posture==2) {
         body.grounded=true;fc_tick(&f,0,body,NULL,0);
-        assert(f.move==FC_IDLE && fc_animation(&f).pose==FC_POSE_IDLE);
+        assert(f.move==FC_IDLE && fc_animation(&f).pose==FC_POSE_DUCK);
+        for(int i=0;i<7;i++)fc_tick(&f,0,body,NULL,0);
+        assert(fc_animation(&f).pose==FC_POSE_IDLE);
       }
     }
     body.grounded=true;
@@ -88,6 +90,13 @@ int main(void) {
       assert(fc_animation(&f).pose==FC_POSE_JUMP_FORWARD);
     }
     assert(fc_animation(&f).tick>=fc_sprite_duration(c,FC_POSE_JUMP_FORWARD)-1);
+    body.grounded=true;fc_tick(&f,0,body,NULL,0);
+    assert(f.landing_tick && fc_animation(&f).pose==FC_POSE_DUCK);
+    /* Landing is only a pose; a new attack interrupts it immediately. */
+    fc_tick(&f,FC_PUNCH,body,NULL,0);assert(fc_animation(&f).pose==FC_POSE_PUNCH);
+    fc_init(&f,c);fc_tick(&f,0,body,NULL,0);
+    body.grounded=false;body.box.y+=2;fc_tick(&f,FC_RIGHT,body,NULL,0);
+    assert(!f.jump_forward && f.fall_tick && fc_animation(&f).pose==FC_POSE_JUMP);
     body.box.y=98;body.grounded=true;
   }
   FcFight f;fc_init(&f,FC_RYU);body.grounded=false;

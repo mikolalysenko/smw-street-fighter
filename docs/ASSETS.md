@@ -104,11 +104,15 @@ source file's SHA-256. `scripts/alpha_assets.py` reads atlas rectangles and
 base64 audio as data; it does not execute downloaded JavaScript.
 
 Imported material includes the 36-frame super-charge effect and sound, Akuma's
-stance, fireball, warp and back-turned victory artwork/voices, and Bison's Psycho
+stance, fireball, warp, guard, hurt and victory artwork/voices, and Bison's Psycho
 Crusher spin and voice. The source atlases are enlarged 2×; nearest-neighbor
 sampling restores the native pixels. The clown-car pilot uses upper-body crops.
 Bowser's falling body and car still come from the original SMW Mode 7 graphics;
 his hat is cropped from the pinned original SF2 Bison animation.
+Akuma's regular shots use the original purple projectile; the charged final
+phase uses the red projectile. Nearest-neighbor rotation aligns the artwork
+with its travel direction, including reflected shots. His phase transition,
+guard and stagger use cropped original Alpha poses.
 
 Ryu’s Shinku charge and Hadouken release voices are imported from the pinned
 Alpha `script/audio/ryu.ogg.js` asset; the level-three beam is a procedural

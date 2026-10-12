@@ -59,6 +59,7 @@ void fc_ko(FcFight *f) {
   if(f->ko_timer) return;
   f->hp=0; f->move=FC_IDLE; f->guarding=false; f->buffered=FC_IDLE;
   f->ko_timer=1; f->hitstop=12; f->stun=0;
+  f->parry_flash=f->landing_tick=0;
   f->override_x=f->override_y=true;
   f->velocity_x=-f->facing*2.5f; f->velocity_y=-5.5f;
   f->events|=FC_SND_KO;
@@ -67,6 +68,14 @@ void fc_ko(FcFight *f) {
 bool fc_hurt(FcFight *f,int damage,int from_direction) {
   if(f->hp<=0 || f->invuln || f->flash || f->hitstop || fc_psycho_flight(f) || damage<=0) return false;
   bool blocked=f->guarding && (from_direction==f->facing);
+  if(blocked && f->guard_age>0 && f->guard_age<=6 && !f->guard_rearm) {
+    /* A deliberate fresh guard is a counter, not chip damage. Releasing
+     * and repressing during the same impact cannot farm meter. */
+    fc_meter(f,25);f->parry_flash=14;f->guard_rearm=24;++f->parries;
+    f->hitstop=5;f->invuln=18;f->events|=FC_SND_BLOCK;
+    sparks(f,f->body.box.x+8+f->facing*10,f->body.box.y+8,0x8ef5ff,12);
+    return true;
+  }
   if(blocked) damage=imax(1,damage/8);
   f->hp=imax(0,f->hp-damage);
   f->combo=f->combo_timer=f->combo_award=0;
@@ -286,7 +295,13 @@ void fc_tick(FcFight *f,uint32_t buttons,FcBody body,FcTarget *targets,int count
     else if(!intent || !body.grounded || travel>=16 || ++f->walk_pause>2)f->walk_distance=0;
     else if(f->walk_distance>0)f->moving=true;
     f->vertical_motion=f->body_valid?dy:0;
+    dec(&f->landing_tick);
     if(body.grounded) {
+      if(f->body_valid && !f->body.grounded && f->air_tick>=4 && dy>=0 &&
+          !body.swimming && !body.climbing) {
+        f->landing_tick=6;
+        if(f->air_tick>16)sparks(f,body.box.x+8,body.box.y+body.box.h-1,0xd9d1b2,4);
+      }
       if(f->body_valid && !f->body.grounded && f->air_attack &&
           (f->move==FC_JAB || f->move==FC_ROUNDHOUSE)) {
         f->move=FC_IDLE;f->move_tick=0;f->air_attack=false;
@@ -295,7 +310,9 @@ void fc_tick(FcFight *f,uint32_t buttons,FcBody body,FcTarget *targets,int count
     } else {
       if(!f->body_valid || f->body.grounded) {
         f->air_tick=f->fall_tick=0;
-        f->jump_forward=dx>0.1f || (buttons&(FC_LEFT|FC_RIGHT));
+        /* Walking off a ledge is a fall, not the start of a somersault. */
+        f->jump_forward=(dy<0 || (buttons&FC_JUMP)) &&
+          (dx>0.1f || (buttons&(FC_LEFT|FC_RIGHT)));
       }
       if(dy<0 && f->fall_tick)f->air_tick=f->fall_tick=0;
       ++f->air_tick;
@@ -329,9 +346,13 @@ void fc_tick(FcFight *f,uint32_t buttons,FcBody body,FcTarget *targets,int count
     f->frozen=true; return;
   }
   f->override_x=f->override_y=false;
+  dec(&f->guard_rearm);dec(&f->parry_flash);
+  if(buttons&FC_GUARD)f->guard_age=imin(60,f->guard_age+1);
+  else f->guard_age=0;
   if(f->move==FC_IDLE && !f->stun && body.grounded) {
     if((edge&FC_JUMP) && f->jump_charge>=45) {
       f->jump_boost=36;f->jump_charge=0;
+      sparks(f,body.box.x+8,body.box.y+body.box.h-1,0xffe47a,8);
     } else if(buttons&FC_DOWN)f->jump_charge=imin(50,f->jump_charge+1);
     else dec(&f->jump_charge);
   } else f->jump_charge=0;

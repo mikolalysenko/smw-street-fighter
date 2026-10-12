@@ -118,6 +118,9 @@ static void test_mount_and_perfect(void) {
   assert(ww_fight_state()->hp==88 && ww_fight_state()->meter==208);
   timer_end_level=255;assert(!ww_perfect_clear()); /* A pickup never erases a hit. */
   enter();timer_end_level=255;assert(ww_perfect_clear());
+  enter();frame(1u<<10);assert(ww_take_damage(12,1));
+  assert(ww_fight_state()->hp==100 && ww_fight_state()->parries==1);
+  timer_end_level=255;assert(ww_perfect_clear()); /* A parry preserves PERFECT. */
 }
 static void test_scenery(void) {
   extern const uint8 *g_asset_ptrs[];

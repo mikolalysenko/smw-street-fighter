@@ -9,6 +9,7 @@ void ww_targets_collect(FcFight *fight, FcTarget *targets);
 void ww_targets_apply(FcFight *fight, FcTarget *targets);
 void ww_scenery_hits(FcFight *fight);
 const FcOpponent *ww_opponent(void);
+int ww_hit_finalboss(FcFight *fight,int damage);
 void ww_grapple_sync(FcFight *fight);
 bool ww_grapple_sprite(uint8_t slot);
 void ww_grapple_render(FcCanvas canvas,bool front);

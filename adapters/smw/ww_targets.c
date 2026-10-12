@@ -404,11 +404,22 @@ void ww_targets_apply(FcFight *f,FcTarget *targets) {
         spr_current_status[k]=0;
       } else if(k<22)ext_spr_spriteid[k-12]=0;
       else if(k<42)cluster_spr_spriteid[k-22]=0;
-      else ww_final_hit_shot(k-42);
+      else ww_final_hit_shot(k-42,(f->move==FC_JAB || f->move==FC_ROUNDHOUSE) &&
+        (f->melee_mask&(UINT64_C(1)<<k)));
       s->alive=false;
     }
   }
   update_opponent(f);
+}
+int ww_hit_finalboss(FcFight *f,int damage) {
+  if(!ww_final_vulnerable())return 0;
+  for(int k=0;k<12;k++)if(ww_final_controls(k) && state[k].alive && !state[k].dead && !state[k].cooldown) {
+    int hp=state[k].hp;FcTarget targets[WW_TARGET_COUNT]={0};
+    targets[k]=(FcTarget){normal_box(k),hp>damage?hp-damage:0,true,true,0,0};
+    ww_targets_apply(f,targets);
+    return hp-state[k].hp;
+  }
+  return 0;
 }
 /* Terrain gets the same explosion treatment without erasing doors, pipe
  * entrances, question-block contents or the ground needed to reach an exit.

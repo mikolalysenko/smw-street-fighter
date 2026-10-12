@@ -57,21 +57,23 @@ uint32_t ww_test_input(void) {
     int phase=ww_final_phase();if(phase>=0)phases|=1<<phase;
     for(int k=0;k<12;k++)if(spr_current_status[k]>=8 && spr_spriteid[k]==0x74)peach_mushrooms=1;
     for(int k=0;k<12;k++){FcTarget shot;if(ww_final_target(k,&shot))demon_shots=1;}
-    if(patterns && phase==WW_FINAL_FIGHT && ww_final_tick()<3100) {
+    if(patterns && phase==WW_FINAL_FIGHT && ww_final_tick()<5600) {
       timer_star_power=timer_player_hurt=32;player_xpos=64;player_ypos=160;player_yspeed=0;
       int a=ww_final_attack(),at=ww_final_attack_tick();attack_mask|=1<<a;
       int newest=last_serial;
       for(int j=0;j<12;j++){FcTarget t;int id=ww_final_target(j,&t);if(id>newest)newest=id;}
-      if((a==WW_AKUMA_RETREAT || a==WW_AKUMA_PAUSE || a==WW_AKUMA_RECOVER) && a==last_attack && at>1) {
+      if((a==WW_AKUMA_RETREAT || a==WW_AKUMA_PAUSE || a==WW_AKUMA_RECOVER || a==WW_AKUMA_PHASE_SHIFT) && a==last_attack && at>1) {
         assert(newest==last_serial);quiet_frames++;
       }
       if(a==WW_AKUMA_AIR && newest>last_serial)downward_shots++;
       last_serial=newest;last_attack=a;
-      int desired=ww_final_tick()<1000?72:ww_final_tick()<2000?48:24;
+      int desired=ww_final_tick()<1800?72:ww_final_tick()<3600?48:24;
       if(boss->hp>desired && ww_final_vulnerable()) {
+        int before=boss->hp;
         FcTarget t[WW_TARGET_COUNT];ww_targets_collect(f,t);
         for(int j=0;j<12;j++)if(ww_final_controls(j)) {t[j].hit=true;t[j].hp=desired;}
         ww_targets_apply(f,t);
+        assert(before-boss->hp<=6 && boss->hp>=desired);
       }
       return 0;
     }
@@ -114,8 +116,8 @@ uint32_t ww_test_input(void) {
   return 0;
 }
 void ww_test_render(uint8_t *pixels,size_t pitch,int w,int h) {
-  if(patterns && ww_final_phase()==WW_FINAL_FIGHT && (ww_final_attack_tick()==40 || ww_final_attack_tick()==55)) {
-    char name[80];snprintf(name,sizeof(name),"akuma-wave-%d-%d.bmp",ww_final_attack(),ww_final_attack_tick());
+  if(patterns && ww_final_phase()==WW_FINAL_FIGHT && (ww_final_attack_tick()==20 || ww_final_attack_tick()==40 || ww_final_attack_tick()==55)) {
+    char name[80];snprintf(name,sizeof(name),"akuma-stage-%d-wave-%d-%d.bmp",ww_final_stage(),ww_final_attack(),ww_final_attack_tick());
     SDL_Surface *s=SDL_CreateRGBSurfaceFrom(pixels,w,h,32,(int)pitch,0xff0000,0xff00,0xff,0xff000000);
     assert(s);assert(!SDL_SaveBMP(s,name));SDL_FreeSurface(s);
   }
@@ -142,6 +144,6 @@ int main(void) {
   printf("Boss %03x: uppercut hits %d, hadouken hits %d, super hits %d, KO %d, native ending %d\n",level,rise_hits,hadouken_hits,super_hits,ko_seen,end_seen);
   assert(entered && rise_hits && hadouken_hits && super_hits && ko_seen==1 && end_seen);
   if(level==0x1c7)assert((phases&31)==31 && peach_mushrooms && demon_shots);
-  if(patterns){printf("Akuma waves %x, quiet frames %d, air volleys %d\n",attack_mask,quiet_frames,downward_shots);assert(attack_mask==127 && quiet_frames>1000 && downward_shots>2);}
+  if(patterns){printf("Akuma waves %x, quiet frames %d, air volleys %d\n",attack_mask,quiet_frames,downward_shots);assert((attack_mask&2047)==2047 && quiet_frames>1800 && downward_shots>2);}
   return result;
 }

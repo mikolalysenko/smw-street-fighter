@@ -106,6 +106,12 @@ SMW's introduction and message boxes accept Jump. On the overworld,
 Start + Back together quits. Controller labels use SDL's Xbox button positions;
 Steam Input can map other controllers to this layout.
 
+Tap **Guard** just before a frontal hit for a parry: no damage and a quarter-bar
+of super meter. Holding Guard gives normal blocking with chip damage. A parry
+keeps a PERFECT run intact. Grounded landings use a brief crouch that attacks
+and movement can interrupt immediately; walking off a ledge uses a falling
+pose. A small gold glint at the feet signals that the charged high jump is ready.
+
 ## Fighters and moves
 
 | Fighter | Special | Secondary | Super |
@@ -191,11 +197,19 @@ explode. Keys, exits, switches and essential platforms take a visual hit but
 retain their function. Terrain shows a single impact without erasing routes.
 Boss rooms have opposing health bars, a KO announcement and their original
 defeat/exit sequences. In the finale, Akuma assassinates Bowser, throws him
-upside down offscreen, and pilots the original clown car. Downward air fireballs,
-horizontal volleys, uppercuts and low-health barrages alternate with retreat,
-wind-up and recovery periods. Damage is capped at six per hit and twelve per
-wave, with health thresholds at two thirds and one third. Peach throws mushrooms
-from her hands during recovery. Defeating Akuma starts
+upside down offscreen, and pilots the original clown car. The fight has three
+health phases: purple air fireballs and moving volleys, then roof-level car
+sweeps and telegraphed ground slams, then charged red barrages and warp feints.
+Uppercuts mix into the earlier phases. Each wave ends with a clear recovery
+opening; leftover hostile projectiles disperse, and health phase changes give
+Peach a quiet mushroom throw.
+
+Punch or kick an incoming fireball to send it back. A timed guard returns it
+too; a successful return staggers Akuma and earns extra meter. Jump down onto
+the clown car's rim to bop it and bounce into an aerial follow-up. Zangief can
+still piledrive the whole car. Damage is capped at six per hit and twelve per
+wave, with health thresholds at two thirds and one third; Akuma visibly guards
+during recovery when the wave's damage limit is reached. Defeating Akuma starts
 the original rescue and ending.
 
 ## Build from a fresh checkout
@@ -241,6 +255,7 @@ Distrobox until a portable release is prepared.
 make test sanitize test-smw              # Core tests and SMW hooks; no game data needed
 make test-animations test-audio          # Requires prepared original assets
 make test-play test-bosses test-movement # Replays against the original game
+make test-final-depth                   # Boss phases, counters and native ending
 make web test-web                       # Build and exercise the actual WASM module
 make pages-branch                       # Build, test, and commit a local gh-pages update
 ```

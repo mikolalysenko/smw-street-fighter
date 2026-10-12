@@ -111,12 +111,34 @@ static void test_reactions(void) {
   frames(&f,7,NULL,0);assert(f.stun==22);
   tick(&f,0,NULL,0);assert(f.stun==21 && f.override_y && f.velocity_y<0);
   frames(&f,70,NULL,0);assert(fc_hurt(&f,12,1) && f.hp==76);
-  fc_init(&f,0);tick(&f,FC_GUARD,NULL,0);assert(fc_hurt(&f,12,1) && f.hp==99);
+  fc_init(&f,0);for(int i=0;i<7;i++)tick(&f,FC_GUARD,NULL,0);
+  assert(fc_hurt(&f,12,1) && f.hp==99); /* Holding guard still takes chip. */
   fc_init(&f,0);tick(&f,FC_GUARD,NULL,0);assert(fc_hurt(&f,12,-1) && f.hp==88);
   fc_init(&f,0);f.hp=1;tick(&f,0,NULL,0);assert(fc_hurt(&f,12,1));
   assert(!f.hp && (f.events&FC_SND_KO));frames(&f,12,NULL,0);tick(&f,0,NULL,0);
   assert(f.override_y && f.velocity_y<0 && f.ko_timer==2);
   frames(&f,90,NULL,0);assert(f.move==FC_IDLE && f.hp==0);
+}
+static void test_timed_guard(void) {
+  for(int c=0;c<FC_ROSTER_COUNT;c++)for(int facing=-1;facing<=1;facing+=2) {
+    player.facing=facing;player.grounded=true;FcFight f;fc_init(&f,c);
+    int hp=f.hp;f.combo=3;f.combo_timer=60;
+    tick(&f,FC_GUARD,NULL,0);assert(fc_hurt(&f,16,facing));
+    assert(f.hp==hp && f.meter==25 && f.parries==1 && f.parry_flash && f.combo==3);
+    /* A repress during cooldown blocks normally instead of farming a parry. */
+    f.invuln=f.hitstop=0;tick(&f,0,NULL,0);tick(&f,FC_GUARD,NULL,0);
+    assert(fc_hurt(&f,16,facing) && f.hp==hp-2 && f.parries==1);
+    fc_init(&f,c);tick(&f,FC_GUARD,NULL,0);assert(fc_hurt(&f,16,-facing));
+    assert(f.hp==hp-16 && !f.parries);
+    fc_init(&f,c);player.grounded=false;tick(&f,FC_GUARD,NULL,0);
+    assert(fc_hurt(&f,16,facing) && !f.parries);
+  }
+  player.grounded=true;player.facing=1;
+  for(int delay=1;delay<=9;delay++) {
+    FcFight f;fc_init(&f,FC_RYU);
+    for(int i=0;i<delay;i++)tick(&f,FC_GUARD,NULL,0);
+    assert(fc_hurt(&f,16,1));assert(f.parries==(delay<=6));
+  }
 }
 static void test_charge_and_roster(void) {
   FcFight f;
@@ -369,6 +391,7 @@ int main(void) {
   test_charge_and_roster();test_cancel_and_buffer();test_air_attacks_and_animation();test_crouching_attacks();test_stress();test_roster();
   test_combo_rewards();test_stretch_and_slides();test_rapid_specials();test_muzzles_and_beam();
   test_one_air_move();test_grab_and_high_jump();
-  puts("Combat: 18 suites passed, including air limits, charged jumps and delayed piledriver impacts.");
+  test_timed_guard();
+  puts("Combat: 19 suites passed, including timed guard, air limits, charged jumps and delayed piledriver impacts.");
   return 0;
 }

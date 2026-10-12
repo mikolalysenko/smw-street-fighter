@@ -10,14 +10,16 @@
 #include "variables.h"
 #include "funcs.h"
 #include <math.h>
+#include <stdio.h>
 #include <string.h>
 
-typedef struct { float x,y,vx,vy; int life,serial; } DemonShot;
+typedef struct { float x,y,vx,vy; int life,serial; bool reflected,ground,red; } DemonShot;
 static DemonShot shots[12];
 static int phase,ticks,intro_ticks,slot,serial,fire_pose,peach_ticks;
 static int attack,attack_ticks,wave,tier,attack_facing;
 static float retreat_x;
-static int wave_damage;
+static int wave_damage,hurt_ticks,reflections,stomps,stomp_cooldown;
+static float target_x,charge_start;
 static bool active,captured,grappled;
 static float car_x,car_y,fall_x,fall_y;
 static uint32_t bowser[64*32];
@@ -26,7 +28,7 @@ extern Ppu *g_ppu;
 void ww_final_reset(void) {
   active=captured=grappled=false;phase=ticks=intro_ticks=serial=fire_pose=peach_ticks=0;slot=-1;
   attack=WW_AKUMA_RETREAT;attack_ticks=wave=tier=0;attack_facing=1;retreat_x=160;
-  wave_damage=0;
+  wave_damage=hurt_ticks=reflections=stomps=stomp_cooldown=0;target_x=charge_start=0;
   memset(shots,0,sizeof(shots));memset(bowser,0,sizeof(bowser));
 }
 bool ww_final_controls(unsigned k) { return active && slot==(int)k; }
@@ -35,14 +37,19 @@ int ww_final_phase(void) { return active?phase:-1; }
 int ww_final_tick(void) { return ticks; }
 int ww_final_attack(void) { return attack; }
 int ww_final_attack_tick(void) { return attack_ticks; }
-bool ww_final_vulnerable(void) { return phase==WW_FINAL_FIGHT && wave_damage<12; }
+int ww_final_stage(void) { return tier+1; }
+int ww_final_reflections(void) { return reflections; }
+int ww_final_stomps(void) { return stomps; }
+bool ww_final_vulnerable(void) { return active && phase==WW_FINAL_FIGHT && attack!=WW_AKUMA_PHASE_SHIFT && wave_damage<12; }
 int ww_final_limit_damage(int damage,int hp) {
+  if(!ww_final_vulnerable())return 0;
   int floor=hp>48?48:hp>24?24:0;
   if(damage>6)damage=6;
   if(damage>12-wave_damage)damage=12-wave_damage;
   if(damage>hp-floor)damage=hp-floor;
   if(damage<0)damage=0;
   wave_damage+=damage;
+  if(damage)hurt_ticks=14;
   if(hp-damage==floor && floor)wave_damage=12;
   return damage;
 }
@@ -70,17 +77,29 @@ void ww_final_tiles(unsigned k) {
   if(phase==WW_FINAL_INTRO)mirror_m7_ypos-=52;
 }
 
-static void fire(float angle,float speed) {
+static void launch(float x,float y,float vx,float vy,bool ground) {
+  int hostile=0;
+  for(int i=0;i<12;i++)if(shots[i].life && !shots[i].reflected)++hostile;
+  if(hostile>=6)return;
   for(int i=0;i<12;i++)if(!shots[i].life) {
-    shots[i]=(DemonShot){car_x+17+attack_facing*20,car_y+20,cosf(angle)*speed,sinf(angle)*speed,150,++serial};
+    shots[i]=(DemonShot){x,y,vx,vy,150,++serial,false,ground,ground || attack==WW_AKUMA_BURST};
     break;
   }
   fire_pose=20;
 }
+static void fire(float angle,float speed) {
+  launch(car_x+17+attack_facing*20,car_y+20,cosf(angle)*speed,sinf(angle)*speed,false);
+}
+static void clear_hostile(void) {
+  for(int i=0;i<12;i++)if(!shots[i].reflected)shots[i].life=0;
+}
 static void projectiles(void);
 static void set_attack(int state) {
   attack=state;attack_ticks=0;fire_pose=0;
-  if(state==WW_AKUMA_AIR || state==WW_AKUMA_HORIZONTAL || state==WW_AKUMA_UPPERCUT || state==WW_AKUMA_BURST)wave_damage=0;
+  if(state==WW_AKUMA_AIR || state==WW_AKUMA_HORIZONTAL || state==WW_AKUMA_UPPERCUT ||
+      state==WW_AKUMA_BURST || state==WW_AKUMA_SWEEP || state==WW_AKUMA_SLAM || state==WW_AKUMA_WARP)wave_damage=0;
+  if(state==WW_AKUMA_RECOVER || state==WW_AKUMA_STAGGER || state==WW_AKUMA_PHASE_SHIFT)clear_hostile();
+  if(state==WW_AKUMA_RECOVER || state==WW_AKUMA_PHASE_SHIFT)peach_ticks=0;
 }
 static void approach(float x,float y,float rate) {car_x+=(x-car_x)*rate;car_y+=(y-car_y)*rate;}
 void ww_final_grapple(bool held) {
@@ -129,75 +148,149 @@ static void peach_help(unsigned k) {
 static void attack_step(unsigned k) {
   const FcOpponent *boss=ww_opponent();
   int hp=boss->active?boss->hp:72;
-  tier=hp<=24?2:hp<=48?1:0;
+  int stage=hp<=24?2:hp<=48?1:0;
+  if(stage>tier) {
+    tier=stage;wave=0;set_attack(WW_AKUMA_PHASE_SHIFT);
+    memset(shots,0,sizeof(shots));fc_audio_play(FC_SND_AKUMA_WARP);
+  }
   ++attack_ticks;projectiles();if(fire_pose)--fire_pose;
+  if(hurt_ticks)--hurt_ticks;
+  if(stomp_cooldown)--stomp_cooldown;
+  if(phase!=WW_FINAL_FIGHT)return;
   if(attack==WW_AKUMA_RETREAT) {
     if(attack_ticks==1){retreat_x=player_xpos<128?172:24;attack_facing=retreat_x>96?-1:1;}
-    approach(retreat_x,72,0.075f);
+    approach(retreat_x,84,0.075f);
     if(attack_ticks>=50)set_attack(WW_AKUMA_PAUSE);
   } else if(attack==WW_AKUMA_PAUSE) {
-    approach(retreat_x,72,0.12f);
-    if(attack_ticks>=70-tier*10) {
-      int next_move=wave%3==0?WW_AKUMA_AIR:wave%3==1?WW_AKUMA_HORIZONTAL:WW_AKUMA_UPPERCUT;
-      if(tier==2 && wave%4==3)next_move=WW_AKUMA_BURST;
-      ++wave;set_attack(next_move);
+    approach(retreat_x,84,0.12f);
+    if(attack_ticks>=45) {
+      /* Each health band teaches a different answer: return air fireballs,
+       * jump the car/ground waves, then read warps and the charged fan. */
+      static const int plan[3][4]={
+        {WW_AKUMA_AIR,WW_AKUMA_HORIZONTAL,WW_AKUMA_UPPERCUT,WW_AKUMA_AIR},
+        {WW_AKUMA_SLAM,WW_AKUMA_SWEEP,WW_AKUMA_UPPERCUT,WW_AKUMA_HORIZONTAL},
+        {WW_AKUMA_BURST,WW_AKUMA_WARP,WW_AKUMA_SLAM,WW_AKUMA_SWEEP},
+      };
+      int next_move=plan[tier][wave%4];++wave;set_attack(next_move);
     }
   } else if(attack==WW_AKUMA_AIR || attack==WW_AKUMA_BURST) {
-    approach(retreat_x,attack==WW_AKUMA_BURST?62:70,0.1f);
-    int count=attack==WW_AKUMA_BURST?4:2+tier;
-    if(attack_ticks>=22 && (attack_ticks-22)%20==0 && (attack_ticks-22)/20<count) {
-      /* Zanku Hadoken: fixed downward diagonals, never homing shots.
-       * Short volleys leave space to move and jump between them. */
-      float angle=attack_facing>0?0.78f:2.36f;
-      fire(angle,2.0f+tier*0.3f);
-      if(attack==WW_AKUMA_BURST)fire(angle+attack_facing*0.26f,2.4f);
+    approach(attack==WW_AKUMA_BURST?104:retreat_x,84,0.1f);
+    int begin=attack==WW_AKUMA_BURST?44:30,count=attack==WW_AKUMA_BURST?3:2;
+    if(attack_ticks>=begin && (attack_ticks-begin)%30==0 && (attack_ticks-begin)/30<count) {
+      if(attack==WW_AKUMA_BURST) {
+        fire(0.85f,2.8f);fire(2.29f,2.8f);
+      } else fire(attack_facing>0?0.78f:2.36f,2.1f);
       fc_audio_play(FC_SND_AKUMA_SUPER);
     }
-    if(attack_ticks>=22+count*20+20){set_attack(WW_AKUMA_RECOVER);peach_ticks=0;}
+    if(attack_ticks>=begin+count*30+28)set_attack(WW_AKUMA_RECOVER);
   } else if(attack==WW_AKUMA_HORIZONTAL) {
-    float travel=attack_ticks<24?0:(attack_ticks-24)*(1.25f+tier*0.3f);
+    float travel=attack_ticks<30?0:(attack_ticks-30)*1.4f;
     if(travel>140)travel=140;
-    approach(retreat_x+attack_facing*travel,92,0.15f);
-    if(attack_ticks==28 || attack_ticks==58 || (tier>0 && attack_ticks==88)) {
-      fire(attack_facing>0?0.10f:3.04f,2.3f+tier*0.35f);fc_audio_play(FC_SND_AKUMA_SUPER);
+    approach(retreat_x+attack_facing*travel,110,0.15f);
+    if(attack_ticks==36 || attack_ticks==72) {
+      fire(attack_facing>0?0.30f:2.84f,2.5f);fc_audio_play(FC_SND_AKUMA_SUPER);
     }
-    if(attack_ticks>=120){set_attack(WW_AKUMA_RECOVER);peach_ticks=0;}
+    if(attack_ticks>=125)set_attack(WW_AKUMA_RECOVER);
   } else if(attack==WW_AKUMA_UPPERCUT) {
-    if(attack_ticks==1)retreat_x=player_xpos<32?32:player_xpos>192?192:player_xpos;
-    if(attack_ticks<=30)approach(retreat_x,100,0.12f);
-    else if(attack_ticks<=49)car_y-=3.6f+tier*0.35f;
-    else approach(retreat_x,96,0.07f);
-    if(attack_ticks==31)fc_audio_play(FC_SND_AKUMA_SUPER);
-    if(tier>0 && attack_ticks==52) {
-      fire(0.9f,2.2f);fire(2.24f,2.2f);
+    if(attack_ticks==1)target_x=player_xpos<32?32:player_xpos>188?188:player_xpos;
+    if(attack_ticks<=36)approach(target_x,108,0.12f);
+    else if(attack_ticks<=48)car_y-=2.0f;
+    else approach(target_x,104,0.07f);
+    if(attack_ticks==37)fc_audio_play(FC_SND_AKUMA_SUPER);
+    if(attack_ticks>=90)set_attack(WW_AKUMA_RECOVER);
+  } else if(attack==WW_AKUMA_SWEEP) {
+    if(attack_ticks==1)charge_start=car_x;
+    if(attack_ticks<=38)approach(charge_start,102,0.12f);
+    else if(attack_ticks<=80)car_x+=attack_facing*4.0f;
+    if(attack_ticks==39)fc_audio_play(FC_SND_AKUMA_SUPER);
+    if(attack_ticks>=95)set_attack(WW_AKUMA_RECOVER);
+  } else if(attack==WW_AKUMA_SLAM) {
+    if(attack_ticks==1)target_x=player_xpos<36?36:player_xpos>172?172:player_xpos;
+    if(attack_ticks<=40)approach(target_x,84,0.14f);
+    else if(attack_ticks<=50)car_y+=1.8f;
+    else approach(target_x,102,0.2f);
+    if(attack_ticks==50) {
+      launch(car_x+16,184,-2.6f,0,true);launch(car_x+16,184,2.6f,0,true);
+      fc_audio_play(FC_SND_HIT);
     }
-    if(attack_ticks>=100){set_attack(WW_AKUMA_RECOVER);peach_ticks=0;}
-  } else {
-    approach(car_x,88,0.08f);
-    /* A real opening after every wave. No attacks spawn during recovery,
-     * retreat or pause, even in the low-health phase. */
+    if(attack_ticks>=118)set_attack(WW_AKUMA_RECOVER);
+  } else if(attack==WW_AKUMA_WARP) {
+    if(attack_ticks==1)target_x=player_xpos<128?172:24;
+    if(attack_ticks==32) {car_x=target_x;car_y=84;attack_facing=car_x>96?-1:1;fc_audio_play(FC_SND_AKUMA_WARP);}
+    if(attack_ticks==60 || attack_ticks==86) {
+      fire(attack_facing>0?1.02f:2.12f,2.8f);fc_audio_play(FC_SND_AKUMA_SUPER);
+    }
+    if(attack_ticks>=120)set_attack(WW_AKUMA_RECOVER);
+  } else if(attack==WW_AKUMA_PHASE_SHIFT) {
+    approach(104,94,0.08f);
+    if(attack_ticks>=20 && peach_ticks<75)peach_help(k);
+    if(attack_ticks>=120)set_attack(WW_AKUMA_RETREAT);
+  } else if(attack==WW_AKUMA_STAGGER) {
+    approach(car_x,96,0.1f);
+    if(attack_ticks>=66)set_attack(WW_AKUMA_RECOVER);
+  } else if(attack==WW_AKUMA_RECOVER) {
+    approach(car_x,96,0.08f);
     if(wave%2==1 && peach_ticks<75)peach_help(k);
-    if(attack_ticks>=105-tier*10)set_attack(WW_AKUMA_RETREAT);
+    if(attack_ticks>=110)set_attack(WW_AKUMA_RETREAT);
   }
   if(car_x<16)car_x=16;if(car_x>188)car_x=188;
+  if(car_y<84)car_y=84;if(car_y>108)car_y=108;
+}
+static void reflect_shot(DemonShot *p) {
+  float dx=car_x+17-p->x,dy=car_y+32-p->y,d=sqrtf(dx*dx+dy*dy);
+  if(d<1)d=1;
+  p->vx=dx*4.5f/d;p->vy=dy*4.5f/d;p->life=100;p->reflected=true;p->ground=false;
+  ++reflections;fc_audio_play(FC_SND_BLOCK);
 }
 static void projectiles(void) {
-  const FcFight *f=ww_fight_state();
+  FcFight *f=(FcFight*)ww_fight_state();
   for(int i=0;i<12;i++)if(shots[i].life) {
     DemonShot *p=&shots[i];p->x+=p->vx;p->y+=p->vy;--p->life;
     if(p->x<-40 || p->x>300 || p->y>232 || p->y<-48)p->life=0;
+    if(p->reflected) {
+      if(p->life && fc_overlap((FcBox){p->x-9,p->y-9,18,18},(FcBox){car_x-8,car_y,64,76})) {
+        p->life=0;
+        if(ww_hit_finalboss(f,6)) {
+          fc_meter(f,15);fc_audio_play(FC_SND_HIT);
+          if(phase==WW_FINAL_FIGHT)set_attack(WW_AKUMA_STAGGER);
+        }
+      }
+      continue;
+    }
     if(p->life && fc_overlap((FcBox){p->x-7,p->y-7,14,14},f->body.box)) {
-      if(ww_take_damage(16,p->vx>0?-1:1))p->life=0;
+      int parries=f->parries;
+      if(ww_take_damage(p->ground?12:16,p->vx>0?-1:1)) {
+        if(f->parries>parries)reflect_shot(p);
+        else p->life=0;
+      }
     }
   }
 }
+static void car_contact(void) {
+  if(attack==WW_AKUMA_PHASE_SHIFT || stomp_cooldown)return;
+  FcFight *f=(FcFight*)ww_fight_state();
+  FcBox hull={car_x-6,car_y+26,62,48},player=f->body.box;
+  /* The hood is a springboard: a descending player bops the clown car,
+   * gets a bounce, and can follow with one fresh aerial special. */
+  float feet=player.y+player.h;
+  if(player_in_air_flag && (int8)player_yspeed>0 && feet>=hull.y-6 && feet<=hull.y+13 &&
+      player.x+player.w>hull.x && player.x<hull.x+hull.w) {
+    player_ypos=(uint16)(hull.y-32);player_yspeed=(uint8)-80;player_in_air_flag=1;
+    f->air_move_used=false;stomp_cooldown=24;++stomps;
+    int damage=ww_hit_finalboss(f,2);fc_meter(f,10);io_sound_ch1=2;
+    if(damage && phase==WW_FINAL_FIGHT)set_attack(WW_AKUMA_STAGGER);
+  } else if(fc_overlap(player,hull))ww_take_damage(14,car_x+24>player.x+8?1:-1);
+}
 int ww_final_target(unsigned i,FcTarget *t) {
-  if(i>=12 || !active || phase!=WW_FINAL_FIGHT || !shots[i].life)return 0;
+  if(i>=12 || !active || phase!=WW_FINAL_FIGHT || !shots[i].life || shots[i].reflected)return 0;
   DemonShot *p=&shots[i];
   *t=(FcTarget){{p->x-9,p->y-9,18,18},1,true,false,0,0};
   return p->serial;
 }
-void ww_final_hit_shot(unsigned i) { if(i<12)shots[i].life=0; }
+void ww_final_hit_shot(unsigned i,bool reflect) {
+  if(i>=12 || !shots[i].life || shots[i].reflected)return;
+  if(reflect)reflect_shot(&shots[i]);else shots[i].life=0;
+}
 void ww_final_defeated(void) { if(active){next(WW_FINAL_END);memset(shots,0,sizeof(shots));} }
 
 bool ww_final_step(unsigned k) {
@@ -230,14 +323,15 @@ bool ww_final_step(unsigned k) {
     }
   } else if(phase==WW_FINAL_FIGHT) {
     attack_step(k);
-    Spr0A0_ActivateBowserBattle_03B078((uint8)k);
+    if(phase==WW_FINAL_FIGHT)car_contact();
   }
+  if(phase==WW_FINAL_END)return true;
   SetSprXYPos((uint8)k,(uint16)(int)car_x,(uint16)(int)car_y);
   spr_xspeed[k]=spr_yspeed[k]=0;
   misc_m7_angle=0x2020;misc_m7_rotation=0;
   misc_mode7_tilemap_index=30;
   spra0_bowser_propeller_anim_frame_counter=(counter_local_frames>>1)&3;
-  spra0_bowser_clown_car_face_anim_frame=phase==WW_FINAL_FIGHT && fire_pose?3:0;
+  spra0_bowser_clown_car_face_anim_frame=phase==WW_FINAL_FIGHT && (fire_pose || hurt_ticks || attack==WW_AKUMA_STAGGER)?3:0;
   UpdateMode7SpriteAnimations((uint8)k);ww_final_tiles(k);
   return true;
 }
@@ -271,10 +365,61 @@ static void draw_bowser_hat(FcCanvas c) {
   fc_sprite(c,0,FC_POSE_BISON_HAT,0,x,y,1,(int)(scale*100),100,0);
 }
 
+static void draw_shot(FcCanvas c,const DemonShot *p) {
+  uint32_t pixels[48*48]={0};FcCanvas tile={pixels,48,48,48};
+  fc_sprite(tile,0,p->red?FC_POSE_AKUMA_SHOT:FC_POSE_AKUMA_PURPLE_SHOT,ticks,
+    24,24,-1,1,p->ground?3:2,p->reflected && (ticks/2)%2?0xa8eeff:0);
+  float angle=atan2f(p->vy,p->vx),cs=cosf(angle),sn=sinf(angle);
+  for(int y=-24;y<24;y++)for(int x=-24;x<24;x++) {
+    int sx=(int)lroundf(x*cs+y*sn)+24,sy=(int)lroundf(-x*sn+y*cs)+24;
+    int px=(int)p->x-mirror_current_layer1_xpos+x,py=(int)p->y-mirror_current_layer1_ypos+y;
+    if(sx<0 || sx>=48 || sy<0 || sy>=48 || px<0 || px>=c.w || py<0 || py>=c.h)continue;
+    uint32_t color=pixels[sy*48+sx];if(color)c.pixels[py*c.pitch+px]=color;
+  }
+}
 void ww_final_render(FcCanvas c) {
   if(!active || slot<0 || misc_game_mode!=0x14)return;
   int x=(int16)(GetSprXPos(slot)-mirror_current_layer1_xpos);
   int y=(int16)(GetSprYPos(slot)-mirror_current_layer1_ypos);
+  if(phase==WW_FINAL_FIGHT) {
+    /* The three arcade round emblems track health phases. Keep the fight
+     * readable without another opaque panel or move-name callouts. */
+    for(int i=0;i<3;i++)fc_sprite(c,0,FC_POSE_ROUND_MARK,0,232+i*7,29,1,1,3,
+      i<tier?0x777b82:i==tier?0:0x493757);
+    if(attack==WW_AKUMA_SLAM && attack_ticks<=40) {
+      int cx=(int)target_x+16-mirror_current_layer1_xpos;
+      uint32_t color=(attack_ticks/4)%2?0xffe280:0xe67342;
+      fc_rect(c,cx-28,190,56,2,color);
+      for(int d=0;d<5;d++) {
+        fc_rect(c,cx-d,178+d,1,1,color);fc_rect(c,cx+d,178+d,1,1,color);
+      }
+    }
+    if(attack==WW_AKUMA_UPPERCUT && attack_ticks<=36) {
+      int cx=(int)target_x+17-mirror_current_layer1_xpos;
+      fc_rect(c,cx-18,190,36,2,0xffd778);
+      for(int d=0;d<5;d++) {
+        fc_rect(c,cx-d,172+d,1,1,0xffd778);fc_rect(c,cx+d,172+d,1,1,0xffd778);
+      }
+    }
+    if(attack==WW_AKUMA_SWEEP && attack_ticks<=38) {
+      int cx=x+17+attack_facing*42;
+      for(int d=0;d<6;d++)fc_rect(c,cx+attack_facing*d,156-d,1,1+d*2,0xffe180);
+    }
+    if(attack==WW_AKUMA_WARP && attack_ticks<32) {
+      int tx=(int)target_x+17-mirror_current_layer1_xpos;
+      fc_sprite(c,0,FC_POSE_AKUMA_WARP,0,tx,y+30,-attack_facing,1,2,
+        (attack_ticks/4)%2?0x624e90:0x342e50);
+    }
+    if(attack==WW_AKUMA_BURST && attack_ticks<40)
+      fc_sprite(c,0,FC_POSE_SUPER_CHARGE,(unsigned)attack_ticks,x+17,y+12,attack_facing,1,2,0);
+    if(attack==WW_AKUMA_PHASE_SHIFT && attack_ticks<90) {
+      char text[16];snprintf(text,sizeof(text),"ROUND %d",tier+1);
+      for(int i=0;text[i];i++)if(text[i]!=' ') {
+        int ch=text[i]>='A' && text[i]<='Z'?text[i]-'A':text[i]-'0'+26;
+        fc_sprite(c,0,FC_POSE_FONT,(unsigned)ch,98+i*9,66,1,2,3,0);
+      }
+    }
+  }
   if(phase<=WW_FINAL_ARRIVAL)draw_bowser_hat(c);
   if(phase==WW_FINAL_ARRIVAL) {
     int ax=290+(x+16-290)*ticks/65;
@@ -306,12 +451,21 @@ void ww_final_render(FcCanvas c) {
       if(phase==WW_FINAL_FIGHT && fire_pose && (attack==WW_AKUMA_AIR || attack==WW_AKUMA_BURST)) {
         pose=FC_POSE_AKUMA_AIR_FIRE;frame=20-fire_pose;
       }
-      if(phase==WW_FINAL_FIGHT && attack==WW_AKUMA_UPPERCUT && attack_ticks>24 && attack_ticks<65) {
-        pose=FC_POSE_AKUMA_RISE;frame=(attack_ticks-25)*24/40;
+      if(phase==WW_FINAL_FIGHT && attack==WW_AKUMA_UPPERCUT && attack_ticks>30 && attack_ticks<64) {
+        pose=FC_POSE_AKUMA_RISE;frame=(attack_ticks-31)*24/33;
       }
+      if(phase==WW_FINAL_FIGHT && attack==WW_AKUMA_PHASE_SHIFT){pose=FC_POSE_AKUMA_TAUNT;frame=attack_ticks<24?attack_ticks:23;}
+      else if(phase==WW_FINAL_FIGHT && (hurt_ticks || attack==WW_AKUMA_STAGGER)){pose=FC_POSE_AKUMA_HURT;frame=4;}
+      else if(phase==WW_FINAL_FIGHT && !ww_final_vulnerable() &&
+          (attack==WW_AKUMA_RECOVER || attack==WW_AKUMA_RETREAT || attack==WW_AKUMA_PAUSE))
+        {pose=FC_POSE_AKUMA_GUARD;frame=6;}
       fc_sprite(c,0,pose,frame,x+17,y+30,facing,1,2,0);
+      if(phase==WW_FINAL_FIGHT && attack==WW_AKUMA_STAGGER)
+        for(int i=0;i<3;i++) {
+          float a=ticks*0.13f+i*2.094f;
+          fc_sprite(c,0,FC_POSE_ROUND_MARK,0,x+14+(int)(cosf(a)*16),y-9+(int)(sinf(a)*4),1,1,4,0);
+        }
     }
-    for(int i=0;i<12;i++)if(shots[i].life)
-      fc_sprite(c,0,FC_POSE_AKUMA_SHOT,ticks,(int)shots[i].x,(int)shots[i].y,shots[i].vx>0?-1:1,1,2,0);
+    for(int i=0;i<12;i++)if(shots[i].life)draw_shot(c,&shots[i]);
   }
 }

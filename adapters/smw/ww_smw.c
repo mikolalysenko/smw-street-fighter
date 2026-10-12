@@ -413,9 +413,10 @@ bool ww_damage(void) {
 bool ww_take_damage(int amount,int direction) {
   if(!ww_enabled() || player_current_state || timer_end_level || timer_star_power || timer_player_hurt)return false;
   fight.body=body();fight.events=0;
+  int previous_hp=fight.hp;
   bool hurt=fc_hurt(&fight,amount,direction);
   if(hurt) {
-    level_hurt=true;
+    if(fight.hp<previous_hp)level_hurt=true;
     timer_player_hurt=(uint8)fight.invuln;
     if(!fight.hp)DamagePlayer_Kill();
   }
@@ -531,6 +532,13 @@ void ww_render(uint8_t *pixels,size_t pitch,int width,int height) {
   if(fighter_drawn) {
     FcFight drawing=fight;
     drawing.body.grounded=!player_in_air_flag;
+    if(drawing.body.grounded && !fight.body.grounded && fight.air_tick>=4) {
+      /* Physics can land after the combat tick. Show the landing this
+       * frame instead of flashing an idle/air-strike pose for one frame. */
+      drawing.landing_tick=6;
+      if(drawing.air_attack && (drawing.move==FC_JAB || drawing.move==FC_ROUNDHOUSE))
+        drawing.move=FC_IDLE;
+    }
     if(timer_end_level) {
       drawing.move=FC_IDLE;drawing.stun=drawing.invuln=0;
       drawing.moving=player_xspeed!=0;drawing.walk_distance=clear_ticks*2;

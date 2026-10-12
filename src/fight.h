@@ -82,6 +82,7 @@ typedef struct {
   bool crouching_attack, buffered_crouch,air_attack,jump_forward;
   bool air_move_used;
   int jump_charge,jump_boost;
+  int landing_tick,guard_age,guard_rearm,parry_flash,parries;
   int grabbed,grab_tick;
   bool grab_airborne,grab_slam;
   FcBox grabbed_box;
