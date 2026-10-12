@@ -9,6 +9,7 @@ import subprocess
 from urllib.request import urlopen
 from concurrent.futures import ThreadPoolExecutor
 from PIL import Image, ImageSequence
+from alpha_assets import append_alpha
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -39,10 +40,14 @@ def main():
     sheets = {}
     records = []
     mapping = json.loads((ROOT / 'config/sf2-sprites.json').read_text())
+    def sheet_path(name):
+        if name.startswith('ui/'):return source/'Game/assets/images'/name
+        return source/'Game/assets/images/sprites/characters'/name
     for character, entry in enumerate(mapping['characters']):
         animations=list(enumerate(entry['poses']))
         animations += [(20,entry['victory']),(21,entry['air_punch']),(22,entry['air_kick']),
                        (23,entry['crouch_punch']),(24,entry['crouch_kick']),(25,entry['continue_portrait'])]
+        animations += [(pose,entry[name]) for pose,name in ((37,'throw'),(38,'teleport'),(39,'dive')) if name in entry]
         for pose, animation in animations:
             name = animation['sheet']
             if name.endswith('.gif'):
@@ -58,11 +63,11 @@ def main():
                     records.append(struct.pack('<7H',character,pose,ticks,w,h,w//2,h)+pixels)
                 continue
             if name not in sheets:
-                sheets[name] = Image.open(source / 'Game/assets/images/sprites/characters' / name).convert('RGBA')
+                sheets[name] = Image.open(sheet_path(name)).convert('RGBA')
             for frame in animation['frames']:
                 frame_name=frame.get('sheet',name)
                 if frame_name not in sheets:
-                    sheets[frame_name]=Image.open(source/'Game/assets/images/sprites/characters'/frame_name).convert('RGBA')
+                    sheets[frame_name]=Image.open(sheet_path(frame_name)).convert('RGBA')
                 x, y, w, h = frame['rect']
                 im = sheets[frame_name].crop((x,y,x+w,y+h))
                 # Feet locate the body origin despite extended punches/kicks.
@@ -77,6 +82,10 @@ def main():
     portraits=Image.open(source / 'Game/assets/images/ui/portraits.png').convert('RGBA')
     for character,rect in enumerate(((0,0,105,141),(124,0,232,141),(247,183,350,315),(0,173,105,315))):
         im=portraits.crop(rect);w,h=im.size
+        pixels=b''.join(struct.pack('<I',(0xff000000|(r<<16)|(g<<8)|b) if a>=128 else 0) for r,g,b,a in im.getdata())
+        records.append(struct.pack('<7H',character,15,60,w,h,w//2,h)+pixels)
+    for character,entry in enumerate(mapping['characters'][4:],4):
+        im=portraits.crop(entry['portrait']['rect']);w,h=im.size
         pixels=b''.join(struct.pack('<I',(0xff000000|(r<<16)|(g<<8)|b) if a>=128 else 0) for r,g,b,a in im.getdata())
         records.append(struct.pack('<7H',character,15,60,w,h,w//2,h)+pixels)
     im=Image.open(source / 'Game/assets/images/ui/character_selection.png').convert('RGBA').crop((0,0,192,112))
@@ -116,6 +125,7 @@ def main():
     ui(26,'vs_mode-game_over.png',(71,116,125,170))
     ui(27,'logo2.png',(269,53,337,132),component=True)
     ui(28,'logo2.png',(20,1484,261,1496))
+    append_alpha(records,out)
     (out / 'sprites.dat').write_bytes(b'WWA1'+struct.pack('<H',len(records))+b''.join(records))
     # These are original ripped effects, including the FM menu sound.
     sounds = {
@@ -127,6 +137,12 @@ def main():
         'sonic':'voices/guile_sonicBoom', 'bird':'voices/chunLi_kick',
         'chun_hurt':'voices/chunLi_yap', 'chun_ko':'voices/chunLi_scream',
         'confirm':'effects/select_menu_option', 'you':'voices/announcer_you', 'lose':'voices/announcer_lose',
+        'perfect':'voices/announcer_perfect',
+        'blanka':'voices/blanka_roar', 'electric':'effects/blanka_thunder',
+        'zangief':'voices/zangief_grunt', 'yoga_fire':'voices/dhalsim_fire',
+        'yoga_flame':'voices/dhalsim_flame', 'vega':'voices/vega_yodel',
+        'tiger':'voices/sagat_tiger', 'tiger_uppercut':'voices/sagat_uppercut',
+        'psycho':'effects/bison_special',
     }
     for dest, src in sounds.items():
         shutil.copy2(source / 'Game/assets/sfx' / (src+'.wav'), out / 'audio' / (dest+'.wav'))
@@ -148,7 +164,7 @@ def main():
         music=source/'Game/assets/music'/f'{name}.ogg'
         subprocess.run(['ffmpeg','-y','-hide_banner','-loglevel','error','-i',str(music),
                         '-ac','1','-ar','48000',str(out/'audio'/f'{name}.wav')],check=True)
-    print(f'Packed {len(records)} original sprite frames, {len(sounds)+1} effects and SF2 menu music into {out}')
+    print(f'Packed {len(records)} original sprite frames, {len(sounds)+5} effects/voices and SF2 menu music into {out}')
 
 
 if __name__ == '__main__':

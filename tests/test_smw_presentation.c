@@ -53,6 +53,19 @@ uint32_t ww_test_input(void) {
       player_xpos=GetSprXPos(10);player_ypos=GetSprYPos(10)-40;
       player_in_air_flag=11;player_yspeed=16;player_xspeed=0;
     }
+    if(level_ticks>=176 && level_ticks<=180) {
+      assert(!timer_yoshi_tongue_init && !timer_yoshi_tongue_is_out);
+      return level_ticks%2?128:0;
+    }
+    if(level_ticks==181)return 512;
+    if(level_ticks==188) {
+      int shots=0;for(int i=0;i<FC_MAX_SHOTS;i++)shots+=ww_fight_state()->shots[i].ttl>0;
+      assert(player_riding_yoshi_flag && shots);return 2;
+    }
+    if(level_ticks==189) {
+      assert(player_riding_yoshi_flag && (timer_yoshi_tongue_init || timer_yoshi_tongue_is_out));
+      puts("Mounted Hadouken survives; autorun leaves tongue idle, Punch activates it.");
+    }
     if(level_ticks==190)misc_display_message=1;
     if(level_ticks==210) {
       assert(platform && yoshi && riding);SaveGame();

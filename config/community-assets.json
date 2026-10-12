@@ -433,6 +433,34 @@
     {
       "path": "Game/assets/images/ui/vs_mode-game_over.png",
       "sha256": "67effb1af8e365140f2e0678c0d80b5acb9e8e1f0455d88ebbbf93920c029bcc"
+    },
+    {
+      "path": "Game/assets/images/sprites/characters/dhalshim1.png",
+      "sha256": "827a5e5d1d9d1bc6658bcb9163d4c575d0cea2618330a93f6d73d9c77206032f"
+    },
+    {
+      "path": "Game/assets/images/sprites/characters/dhalshim2.png",
+      "sha256": "7ab7e55aab27c5dbf747637a821d490218d6c05ebf4f826d9c4e64f3c072880c"
+    },
+    {
+      "path": "Game/assets/images/sprites/characters/dhalshim4.png",
+      "sha256": "5ac7da3ba9fbac40e197f3b46e549eb42a7f1893e3b9a12da0b377a321fa3d9a"
+    },
+    {
+      "path": "Game/assets/images/sprites/characters/dictator-dhalshim.png",
+      "sha256": "aaea8dd7877ef4264c284ff7f19e8c041f7653a3f069e45851001464924ed885"
+    },
+    {
+      "path": "Game/assets/images/sprites/characters/zangief1.png",
+      "sha256": "1e6cf51e2b683ec4578965e22ef480b77d1dc25df38e58c072ac97f340bfcd6b"
+    },
+    {
+      "path": "Game/assets/images/sprites/characters/zangief2.png",
+      "sha256": "319ca2b2346208852b97320c435dc39415c1929a6f0d28afc46089b473e23501"
+    },
+    {
+      "path": "Game/assets/images/sprites/characters/zangief3.png",
+      "sha256": "30ef97d2e19a17b875a61d0d60cb73642d3821cc3e8647de3c315f15ccfcff40"
     }
   ]
 }

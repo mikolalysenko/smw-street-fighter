@@ -29,11 +29,11 @@ effects/voices. `config/community-assets.json` pins the source revision and
 SHA-256 of each downloaded file. `config/sf2-sprites.json` records each selected
 frame rectangle and the prototype's animation duration.
 
-`scripts/import_community_sf2.py` packs 373 frame records (including repeated
+`scripts/import_community_sf2.py` packs 1031 frame records (including repeated
 frames, crouching attacks, portraits, original fonts, KO lettering, countdown
-lamps, victory poses, map and original title II/subtitle), 20 effects and the selection/continue music.
+lamps, victory poses, map, original title II/subtitle and Alpha effects), 34 effects/voices and the selection/continue music.
 It does not generate replacement
-art. Ryu, Honda, Chun-Li and Guile render at half arcade size to fit Mario's
+art. All twelve SF2 fighters render at half arcade size to fit Mario's
 levels. Cropping, nearest-neighbor scaling, foot anchors and animation timings
 are adaptations. These sheets are SF2-family community rips, not a verified
 frame-for-frame `sf2ua` extraction; variants and palette differences are possible.
@@ -62,7 +62,26 @@ is muted during both menus, then continues through the original
 sound engine. Native and browser builds use the same imported audio.
 
 Supers and their gauge are new Alpha-inspired mechanics using SF2 animation
-frames and voices. No original Alpha super animation/audio extraction is claimed.
+frames and voices, with the original Alpha activation effect and audio described below.
+
+## Street Fighter Alpha
+
+Source: [gamedev8/js-sfa](https://github.com/gamedev8/js-sfa), revision
+`66cf60d2198ef613a84229d4e9d0f07c2347d215`. `config/alpha-assets.json` pins each
+source file's SHA-256. `scripts/alpha_assets.py` reads atlas rectangles and
+base64 audio as data; it does not execute downloaded JavaScript.
+
+Imported material includes the 36-frame super-charge effect and sound, Akuma's
+stance, fireball, warp and back-turned victory artwork/voices, and Bison's Psycho
+Crusher spin and voice. The source atlases are enlarged 2×; nearest-neighbor
+sampling restores the native pixels. The clown-car pilot uses upper-body crops.
+Bowser's falling body and car still come from the original SMW Mode 7 graphics;
+his hat is cropped from the pinned original SF2 Bison animation.
+
+Bison's level-three wake and continuous flight take inspiration from
+[N64Mario's Psycho Crusher, FTW!](https://www.youtube.com/watch?v=oIXilgKNYaY).
+No video frames or MUGEN code are included. The new beam geometry, timing,
+combat rules and Akuma encounter are platformer adaptations.
 
 The crossover title reads SMW's original BG3 lettering and palettes directly
 from the running engine and repositions it with nearest-neighbor scaling. The
@@ -75,6 +94,7 @@ The start prompt and high score use the original SF2 font sheet.
 - `local/smw-rebuilt.sfc`: rebuilt original data, ignored.
 - `local/smw_assets.dat`: extracted SMW runtime data, ignored.
 - `local/community-sf2/`: downloaded source rips, ignored.
+- `local/community-sfa/`: pinned Alpha sprite/audio data, ignored.
 - `local/sf2/`: packed fighter sprites and WAVs, ignored.
 - `build/smw/`, `dist/`: local runtime copies, ignored.
 

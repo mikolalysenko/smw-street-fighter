@@ -23,5 +23,10 @@ int main(void) {
   fc_audio_music(FC_MUSIC_CONTINUE);assert(fc_audio_music_active());assert(!fc_audio_selection_active());
   assert(energy(240)>1);fc_audio_music(FC_MUSIC_NONE);assert(energy(10)==0);
   fc_audio_play(FC_SND_KO);assert(energy(180)>1);
+  fc_audio_play(FC_SND_PERFECT);assert(energy(180)>1);
+  FcFight f={0};f.move=FC_SUPER_MOVE;fc_audio_context(&f);
+  fc_audio_play(FC_SND_SUPER);assert(energy(180)>1);
+  f.character=FC_BISON;fc_audio_context(&f);
+  fc_audio_play(FC_SND_SPECIAL);assert(energy(180)>1);
   fc_audio_shutdown();SDL_Quit();puts("Audio: KO voice, fighter death, selection loop, continue music and stop passed.");
 }

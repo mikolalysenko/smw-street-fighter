@@ -3,6 +3,7 @@
  * They do not claim to boot a complete level or validate the PPU output. */
 #include "ww_smw.h"
 #include "ww_targets.h"
+#include "ww_score.h"
 #include "audio.h"
 #include "smw_rtl.h"
 #include "variables.h"
@@ -70,6 +71,88 @@ static void test_progression_objects(void) {
     for(int j=0;j<30;j++)ww_targets_collect(&f,t);
     assert(t[0].active && t[0].hp==1);
   }
+}
+static void test_mount_and_perfect(void) {
+  enter();enemy(0,0x35);enemy(1,0x0f);SetSprXYPos(1,160,114);player_riding_yoshi_flag=1;
+  FcFight f;fc_init(&f,0);FcTarget t[WW_TARGET_COUNT];
+  for(int i=0;i<50;i++) {
+    ww_targets_collect(&f,t);assert(!t[0].active);
+    fc_tick(&f,i?0:FC_SPECIAL,(FcBody){{100,100,16,32},1,true},t,WW_TARGET_COUNT);
+    ww_targets_apply(&f,t);
+  }
+  assert(spr_current_status[0]==8 && !spr_current_status[1]);
+  for(int i=0;i<20;i++){uint32_t input=i%2?0:128;ww_before_frame(&input);assert(!ww_yoshi_tongue_pressed());}
+  frame(2);assert(ww_yoshi_tongue_pressed());frame(2);assert(!ww_yoshi_tongue_pressed());
+  enter();timer_end_level=255;assert(ww_perfect_clear());
+  enter();assert(ww_take_damage(12,1));ww_mushroom();assert(ww_fight_state()->hp==100);
+  timer_end_level=255;assert(!ww_perfect_clear()); /* Healing never erases a hit. */
+  enter();timer_end_level=255;assert(ww_perfect_clear());
+}
+static void test_scenery(void) {
+  extern const uint8 *g_asset_ptrs[];
+  static const LmFeatures vanilla={0};g_asset_ptrs[177]=(const uint8*)&vanilla;
+  for(int solid=0;solid<2;solid++) {
+    enter();misc_screens_in_lvl=1;FcFight f;fc_init(&f,0);
+    unsigned p=GetLevelLayoutPtr_Horizontal(0)+0x60+8;
+    g_ram[p]=solid?0x30:0x41;g_ram[p+0x10000]=solid?1:0;
+    f.shots[0]=(FcShot){{108,92,20,20},4,20,1,1,false,0,false};
+    ww_scenery_hits(&f);
+    assert(f.shots[0].ttl==20 && f.shots[0].scenery_hit==!!solid);
+    assert(!!f.blasts[0].ttl==!!solid);
+  }
+}
+static void test_combo_score(void) {
+  enter();FcFight f;fc_init(&f,FC_BISON);f.move=FC_SUPER_MOVE;f.super_level=3;
+  player_current_life_count=4;
+  FcTarget t[12];for(int k=0;k<12;k++)t[k]=(FcTarget){{118,110,16,20},1,true,false,0,0};
+  fc_tick(&f,0,(FcBody){{100,100,16,32},1,true},t,12);ww_combat_score(&f);
+  assert(ww_score()==16400 && misc_1up_handler==12);
+  /* Rendering every popup past its original award time must not pay twice. */
+  for(int i=0;i<50;i++)ProcessScoreSprites();
+  assert(ww_score()==16400 && misc_1up_handler==12);
+  player_current_life_count=97;misc_1up_handler=0;ww_combat_score(&f);
+  assert(misc_1up_handler==1); /* Never wrap the native life byte. */
+  player_mario_score_lo=0x3d;player_mario_score_mid=0x42;player_mario_score_hi=0x0f;
+  ww_combat_score(&f);assert(ww_score()==9999990);
+}
+static void test_psycho_exits(void) {
+  for(int vertical=0;vertical<2;vertical++)for(int cancel=0;cancel<2;cancel++) {
+    enter();misc_screens_in_lvl=2;misc_level_layout_flags=vertical;
+    for(int x=0;x<512;x+=16) {
+      unsigned p=(vertical?GetLevelLayoutPtr_Vertical(1)+((x>>8)<<8):GetLevelLayoutPtr_Horizontal(x>>8)+256)+0x90+((x&255)>>4);
+      g_ram[p]=0;g_ram[p+0x10000]=1; /* Ground at Y=400. */
+    }
+    FcFight *f=(FcFight*)ww_fight_state();fc_init(f,FC_BISON);
+    f->move=FC_SUPER_MOVE;f->super_level=3;f->move_tick=10;
+    player_xpos=100;player_ypos=320;
+    for(int i=0;i<100 && f->move;i++) {
+      if(cancel && i==4)f->previous=FC_GUARD;
+      assert(ww_psycho_position());
+    }
+    assert(f->move==FC_IDLE && player_ypos==368 && player_xpos<512);
+    assert(!ww_psycho_collision() && f->invuln==90);
+  }
+  enter();enemy(0,0x29);spr_table00c2[0]=0;frame(0);
+  FcFight *f=(FcFight*)ww_fight_state();fc_init(f,FC_BISON);f->meter=300;
+  frame(2048);assert(f->flash && !f->move_tick);
+  for(int i=0;i<25;i++)frame(0);
+  assert(!ww_opponent()->hp && spr_table151c[0]==4);
+}
+static void test_practice_menu(void) {
+  enter();player_mario_score_lo=12;player_current_life_count=4;
+  frame(8);frame(0);frame(32);frame(0);frame(32);frame(0);frame(8);
+  assert(ww_practicing() && misc_game_mode==0x0f && ww_fight_state()->meter==300);
+  assert(misc_subscreen_exit_entrance_number_lo[0]==0xc7 && ow_players_map[0]==1);
+  misc_game_mode=0x14;frame(0);assert(!ow_players_map[0]);
+  player_mario_score_lo=90;
+  DamagePlayer_Kill();for(int i=0;i<32;i++)frame(0);frame(8);
+  misc_game_mode=0x0e;frame(0);
+  assert(ww_practicing() && misc_game_mode==0x0f); /* Retry arena, not the old node. */
+  misc_game_mode=0x14;player_current_state=0;frame(0);
+  assert(ww_fight_state()->hp==100 && ww_fight_state()->meter==300);
+  DamagePlayer_Kill();for(int i=0;i<32;i++)frame(0);frame(4);
+  misc_game_mode=0x0e;frame(0);
+  assert(!ww_practicing() && ww_score()==120 && player_current_life_count==4);
 }
 static void test_castle_plungers(void) {
   for(int id=0xac;id<=0xad;id++)for(int height=8;height<=72;height+=32) {
@@ -153,6 +236,7 @@ int main(void) {
   ww_before_frame(&input);assert(ww_fight_state()->facing==-1);
   assert((input&1) && !ww_fight_state()->override_x);
   test_all_targets();test_progression_objects();test_castle_plungers();test_bosses();
+  test_mount_and_perfect();test_scenery();test_combo_score();test_psycho_exits();test_practice_menu();
   fc_audio_shutdown();SDL_Quit();puts("SMW bridge: broad targeting, progression objects, boss deaths, slot reuse, hurt, movement, transitions, KO and pause passed.");
   return 0;
 }

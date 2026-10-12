@@ -59,7 +59,7 @@ enter --name world-warrior-dev -- /absolute/path/to/smw-street-fighter/scripts/p
 Quote the script path if it contains spaces. Keep execution in the Distrobox so
 it finds the SDL library used for compilation. Use Steam's Gamepad layout and
 Steam Input for controllers that require it. Button assignments are in the
-[README](../README.md). Start opens Resume, Character Select and Quit Game.
+[README](../README.md). Start opens Resume, Character Select, Akuma Battle and Quit Game.
 On the overworld, Start + Back quits.
 
 The original 256×224 SMW framebuffer is scaled with nearest-neighbor filtering

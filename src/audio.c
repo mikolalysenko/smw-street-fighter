@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-enum { RATE=48000, SOUND_COUNT=22, VOICE_COUNT=12 };
+enum { RATE=48000, SOUND_COUNT=36, VOICE_COUNT=12 };
 typedef struct { float *data; int length; } Sample;
 typedef struct { int sound,position; bool active; } Voice;
 static SDL_AudioDeviceID device;
@@ -88,7 +88,8 @@ static bool load_sample(const char *dir,const char *name,Sample *dest) {
 void fc_audio_init(const char *directory) {
   if(loaded)return;
   static const char *names[]={"swing","hit","hurt","ko","special","super","block","select",
-    "hadouken","shoryuken","tatsumaki","honda","sonic","bird","chun_hurt","chun_ko","confirm","you","lose","boss_ko","player_select","continue"};
+    "hadouken","shoryuken","tatsumaki","honda","sonic","bird","chun_hurt","chun_ko","confirm","you","lose","boss_ko","player_select","continue","perfect","alpha_charge","akuma_super","akuma_warp",
+    "blanka","electric","zangief","yoga_fire","yoga_flame","vega","tiger","tiger_uppercut","psycho","psycho_super"};
   for(int i=0;i<SOUND_COUNT;i++) {
     if(!directory && i<8)samples[i]=synth(i);
     load_sample(directory,names[i],&samples[i]);
@@ -116,13 +117,25 @@ void fc_audio_music(int track) {
 void fc_audio_play(uint32_t events) {
   if(!loaded || !events)return;
   if(device)SDL_LockAudioDevice(device);
-  for(int i=0;i<9;i++)if(events&(1u<<i)) {
-    int sound=i==8?19:i;
+  for(int i=0;i<12;i++)if(events&(1u<<i)) {
+    int sound=i==11?25:i==10?24:i==9?22:i==8?19:i;
     if(character==FC_CHUNLI && i==2)sound=14;
     if(character==FC_CHUNLI && i==3)sound=15;
-    if(i==4 || i==5) {
+    if((i==2 || i==3) && character==FC_BLANKA)sound=26;
+    if((i==2 || i==3) && character==FC_ZANGIEF)sound=28;
+    if((i==2 || i==3) && character==FC_VEGA)sound=31;
+    if(i==5)sound=23;
+    if(i==4) {
       sound=character==FC_HONDA?11:character==FC_GUILE?12:character==FC_CHUNLI?13:
         move==FC_RISING?9:move==FC_SPIN?10:8;
+      if(character==FC_KEN && move==FC_SUPER_MOVE)sound=9;
+      if(character==FC_BLANKA)sound=move==FC_ELECTRIC?27:26;
+      if(character==FC_ZANGIEF)sound=28;
+      if(character==FC_DHALSIM)sound=move==FC_PROJECTILE?29:30;
+      if(character==FC_BALROG)sound=0;
+      if(character==FC_VEGA)sound=31;
+      if(character==FC_SAGAT)sound=move==FC_PROJECTILE?32:33;
+      if(character==FC_BISON)sound=move==FC_SUPER_MOVE?35:34;
     }
     if(!samples[sound].data && i<8)sound=i;
     if(!samples[sound].data)continue;

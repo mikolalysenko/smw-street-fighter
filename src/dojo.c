@@ -41,7 +41,7 @@ static void tick(Dojo *g,uint32_t buttons) {
   uint32_t edge=buttons&~g->previous;g->previous=buttons;++g->tick;
   if(g->screen==0) {
     if(edge&(FC_LEFT|FC_RIGHT|FC_UP|FC_DOWN)) {
-      g->selected=(g->selected+((edge&(FC_RIGHT|FC_DOWN))?1:3))%FC_ROSTER_COUNT;
+      g->selected=(g->selected+((edge&(FC_RIGHT|FC_DOWN))?1:FC_ROSTER_COUNT-1))%FC_ROSTER_COUNT;
       fc_audio_play(FC_SND_SELECT);
     }
     if(edge&(FC_JUMP|FC_START|FC_PUNCH)) { begin(g);g->fight.previous=buttons;fc_audio_play(FC_SND_SELECT); }
@@ -186,7 +186,7 @@ static void render(Dojo *g,FcCanvas c) {
     fc_center(c,109,"DINOSAUR LAND IS NEXT",0xb4e8e8,1);
     fc_center(c,135,"START TO PLAY AGAIN",0xf0e8ce,1);
   }
-  if(g->screen==2)fc_pause(c,g->pause_choice);
+  if(g->screen==2)fc_pause(c,g->pause_choice,false);
 }
 static SDL_GameController *controller;
 static const SDL_GameControllerButton physical_buttons[]={

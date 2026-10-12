@@ -43,6 +43,42 @@ static void test_super_meter(void) {
   fc_init(&f,0);f.meter=99;tick(&f,FC_SUPER,NULL,0);assert(f.move==FC_IDLE && f.meter==99);
   fc_meter(&f,1000);assert(f.meter==300);fc_meter(&f,-1000);assert(f.meter==0);
 }
+static void test_hurricane_kick(void) {
+  FcFight f;
+  for(int facing=-1;facing<=1;facing+=2)for(int air=0;air<2;air++) {
+    player.facing=facing;player.grounded=!air;
+    fc_init(&f,FC_RYU);tick(&f,FC_DOWN|FC_SPECIAL,NULL,0);
+    assert(f.move==FC_SPIN && !strcmp(fc_move_name(&f),"TATSUMAKI"));
+    fc_init(&f,FC_RYU);tick(&f,FC_DOWN,NULL,0);
+    uint32_t back=facing>0?FC_LEFT:FC_RIGHT;
+    player.facing=-facing; /* The platformer turns while walking back. */
+    tick(&f,FC_DOWN|back,NULL,0);tick(&f,back|FC_KICK,NULL,0);
+    assert(f.move==FC_SPIN && f.facing==facing);
+  }
+  player.facing=1;player.grounded=true;
+}
+static void test_roster(void) {
+  static const FcMove primary[]={FC_PROJECTILE,FC_RUSH,FC_FLURRY,FC_PROJECTILE,FC_PROJECTILE,FC_RUSH,
+    FC_SPIN,FC_PROJECTILE,FC_RUSH,FC_RUSH,FC_PROJECTILE,FC_RUSH};
+  static const FcMove alternate[]={FC_RISING,FC_FLURRY,FC_SPIN,FC_RISING,FC_RISING,FC_RISING,
+    FC_THROW,FC_FLAME,FC_RISING,FC_DIVE,FC_RISING,FC_DIVE};
+  for(int c=0;c<FC_ROSTER_COUNT;c++) {
+    FcFight f;fc_init(&f,c);tick(&f,FC_SPECIAL,NULL,0);assert(f.move==primary[c]);
+    fc_init(&f,c);tick(&f,FC_UP|FC_SPECIAL,NULL,0);assert(f.move==alternate[c]);
+    for(int meter=100;meter<=300;meter+=100) {
+      FcTarget t={{116,100,40,40},50,true,false,0,0};fc_init(&f,c);f.meter=meter;
+      tick(&f,FC_SUPER,&t,1);frames(&f,150,&t,1);
+      assert(t.hp<50 && f.meter==0);
+    }
+  }
+  FcFight f;fc_init(&f,FC_BISON);f.meter=300;
+  FcTarget targets[]={{{10,20,16,16},99,true,false,0,0},{{220,190,16,16},99,true,false,0,0}};
+  tick(&f,FC_SUPER,targets,2);frames(&f,30,targets,2);
+  assert(fc_psycho_flight(&f) && !targets[0].hp && !targets[1].hp && !f.hitstop);
+  assert(!fc_hurt(&f,999,1));frames(&f,500,NULL,0);assert(fc_psycho_flight(&f));
+  fc_init(&f,FC_DHALSIM);tick(&f,FC_DOWN|FC_SPECIAL,NULL,0);assert(f.move==FC_TELEPORT);
+  fc_init(&f,FC_BLANKA);tick(&f,FC_DOWN|FC_SPECIAL,NULL,0);assert(f.move==FC_ELECTRIC);
+}
 static void test_hits(void) {
   FcFight f;fc_init(&f,FC_RYU);
   FcTarget t={{118,110,16,20},10,true,false,0,0};
@@ -112,7 +148,7 @@ static void test_stress(void) {
     if(i%200==0){fc_init(&f,(i/200)%FC_ROSTER_COUNT);f.meter=300;}
     tick(&f,(rng>>16)&0xfff,targets,FC_MAX_TARGETS);
     if(i%37==0)fc_hurt(&f,12,(i&1)?-1:1);
-    assert(f.meter>=0 && f.meter<=300 && f.hp>=0 && f.hp<=125);
+    assert(f.meter>=0 && f.meter<=300 && f.hp>=0 && f.hp<=fc_roster[f.character].vitality);
   }
 }
 static void test_air_attacks_and_animation(void) {
@@ -151,9 +187,30 @@ static void test_crouching_attacks(void) {
     frames(&f,40,targets,2);assert(f.move==FC_IDLE && !f.crouching_attack);
   }
 }
+static void test_combo_rewards(void) {
+  FcFight f;fc_init(&f,FC_BISON);f.meter=300;
+  tick(&f,FC_SUPER,NULL,0);frames(&f,19,NULL,0);
+  const int expected[]={200,400,800,1000,2000,4000,8000,-1,-2,-3,-3};
+  for(unsigned i=0;i<sizeof(expected)/sizeof(expected[0]);i++) {
+    FcTarget t={{118,110,16,20},1,true,false,0,0};
+    tick(&f,0,&t,1);assert(t.hit && f.combo==(int)i+1);
+    assert(f.reward_count==1 && f.rewards[0].award==expected[i]);
+    assert(f.score_gain==(expected[i]>0?expected[i]:0));
+    assert(f.lives_gain==(expected[i]<0?-expected[i]:0));
+  }
+  frames(&f,150,NULL,0);assert(f.combo==11); /* Continuous flight keeps the chain. */
+  f.move=FC_IDLE;f.invuln=0;assert(fc_hurt(&f,1,1));assert(!f.combo);
+  fc_init(&f,FC_BISON);f.move=FC_SUPER_MOVE;f.super_level=3;
+  FcTarget targets[12];for(int i=0;i<12;i++)targets[i]=(FcTarget){{118,110,16,20},1,true,false,0,0};
+  tick(&f,0,targets,12);
+  assert(f.reward_count==12 && f.score_gain==16400 && f.lives_gain==12);
+  tick(&f,0,NULL,0);assert(!f.reward_count && !f.score_gain && !f.lives_gain);
+  f.move=FC_IDLE;frames(&f,91,NULL,0);assert(!f.combo);
+}
 int main(void) {
-  test_motions();test_super_meter();test_hits();test_projectiles();test_reactions();
-  test_charge_and_roster();test_cancel_and_buffer();test_air_attacks_and_animation();test_crouching_attacks();test_stress();
-  puts("Combat: 10 suites passed, including all fighters' air/crouching attacks and movement-driven animation.");
+  test_motions();test_super_meter();test_hurricane_kick();test_hits();test_projectiles();test_reactions();
+  test_charge_and_roster();test_cancel_and_buffer();test_air_attacks_and_animation();test_crouching_attacks();test_stress();test_roster();
+  test_combo_rewards();
+  puts("Combat: 13 suites passed, including twelve fighters, all super levels, hurricane inputs, Psycho flight and combo rewards.");
   return 0;
 }

@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-enum { MAX_FRAMES=1024 };
+enum { MAX_FRAMES=4096 };
 typedef struct { int character,pose,ticks,w,h,ax,ay; uint32_t *pixels; } Frame;
 static Frame frames[MAX_FRAMES];
 static unsigned count;

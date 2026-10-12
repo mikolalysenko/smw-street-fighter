@@ -79,7 +79,8 @@ does not mutate either reference checkout. The wrapper still runs the original
 our overlay renders a fighter. Health damage hooks replace shrinking/death from
 ordinary enemy contact; pits, time and crushing still use SMW's death transition.
 
-`ww_targets.c` adapts all 12 normal, 10 extended and 20 cluster sprite slots.
+`ww_targets.c` adapts all 12 normal, 10 extended and 20 cluster sprite slots,
+plus twelve projectiles from the Akuma encounter.
 Normal actors have one HP and an explosion replaces their species-specific
 death code. Essential keys, exits, rides and switches keep functioning after
 a visual hit. Full sprite initialization invalidates old per-slot hit masks.
@@ -130,8 +131,9 @@ intro/message boxes, and keeping the fighter visible during super startup.
    survive combat hits to preserve progression.
 3. Add foreground occlusion and further animation refinements. Projectiles
    deliberately pass through scenery with one visual impact.
-4. Expand the roster and add more super animations.
-   The imported Alpha-inspired attacks currently use SF2 pose clips.
+4. Refine platformer adaptations of throws and aerial moves. The twelve-fighter
+   roster is implemented; grabs use a close-range strike and spinning jump
+   rather than attaching arbitrary SMW actors to a fighter's hands.
 5. Test on the actual Bazzite machine with its TV and controller, including
    Steam Input, sound output, latency, refresh rate and reconnect behavior.
 6. Add combat-state persistence before re-enabling snapshots/replay; make a

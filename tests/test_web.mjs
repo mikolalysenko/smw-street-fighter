@@ -67,3 +67,24 @@ for(let i=0;i<900;i++) {
   assert.equal(reopened._ww_web_state(19),highScore,'High score survives a fresh WASM instance and demo scoring');
 }
 console.log('WASM: title, early selection/music, real level, movement, crouching/air attacks, super, audio and persistent high score passed.');
+// Use only player controls to reach every new fighter and the practice shortcut.
+const step=b=>assert.equal(g._ww_web_step(b),1);
+const tap=b=>{step(b);step(0);};
+for(let i=0;i<100;i++)step(0);
+for(let fighter=1;fighter<12;fighter++) {
+  tap(8);tap(32);tap(8);assert(state(16),'Pause → Player Select');
+  tap(128);tap(8);assert.equal(state(20),fighter);
+  for(let i=0;i<5;i++)step(0);
+}
+tap(8);tap(32);tap(32);tap(8);
+assert.equal(state(21),1,'Pause → Akuma Battle');
+let sawBowser=false,sawAkuma=false;
+for(let i=0;i<2200;i++) {
+  step(0);
+  sawBowser ||= state(22)===0;
+  if(state(22)===4){sawAkuma=true;break;}
+}
+assert(sawBowser && sawAkuma,'Original Bowser entrance and Akuma takeover run in WASM');
+assert.equal(state(20),11);assert.equal(state(2),300);
+assert.equal(state(19),highScore,'Practice never writes a high score');
+console.log('WASM: twelve-player menu, full-meter Akuma practice and original takeover passed.');

@@ -33,5 +33,10 @@
     "name": "continue-guile.gif",
     "url": "https://sfgalleries.net/art/sf2/sf2ww/series2/guile.gif",
     "sha256": "b9f83e4821f7d8fae741bbe604dd8aa74d7750d89b7b2ac2f2f71dc0ffb104c6"
+  },
+  {
+    "name": "bison-sf2-s1.gif",
+    "url": "https://www.fightersgeneration.com/characters/bison-sf2-s1.gif",
+    "sha256": "b1132453b4d67e8b6323fcf343b818a3de9b776ab190bfa1e76e5abbaccc277b"
   }
 ]

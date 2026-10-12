@@ -32,7 +32,8 @@ def prepare():
         # source timestamps too, so new pose IDs cannot leave a stale reader.
         shutil.copyfile(ROOT / 'src' / file, dest / 'src' / file)
     for file in ('ww_smw.c', 'ww_smw.h', 'ww_targets.c', 'ww_targets.h',
-                 'ww_title.c', 'ww_title.h', 'ww_score.c', 'ww_score.h'):
+                 'ww_title.c', 'ww_title.h', 'ww_score.c', 'ww_score.h',
+                 'ww_finalboss.c', 'ww_finalboss.h'):
         shutil.copyfile(ROOT / 'adapters/smw' / file, dest / 'src' / file)
     def patch(file, changes):
         path = dest / file
@@ -76,10 +77,13 @@ def prepare():
         ('void SmwRunOneFrameOfGame_Internal() {',
          'void SmwRunOneFrameOfGame_Internal() {\n  ww_begin_frame();'),
         ('void DamagePlayer_Hurt() {  // 00f5b7', 'void DamagePlayer_Hurt() {  // 00f5b7\n  if (ww_damage()) return;'),
+        ('void SaveGame() {  // 009bc9', 'void SaveGame() {  // 009bc9\n  if (ww_practicing()) return;'),
         ('void DamagePlayer_PitFall() {  // 00f60a\n  io_music_ch1 = 9;',
          'void DamagePlayer_PitFall() {  // 00f60a\n  ww_on_death();\n  io_music_ch1 = ww_enabled() ? 0 : 9;'),
         ('void UpdatePlayerSpritePosition() {  // 00dc2d',
-         'void UpdatePlayerSpritePosition() {  // 00dc2d\n  ww_velocity();'),
+         'void UpdatePlayerSpritePosition() {  // 00dc2d\n  ww_velocity();\n  if (ww_psycho_position()) return;'),
+        ('void HandlePlayerLevelCollision() {  // 00e92b',
+         'void HandlePlayerLevelCollision() {  // 00e92b\n  if (ww_psycho_collision()) { ResetPlayerLevelCollisionRAM(); return; }'),
         ('void PlayerDraw() {  // 00e2bd',
          'void PlayerDraw() { ww_player_draw(); }\n\nvoid WW_OriginalPlayerDraw() {  // 00e2bd'),
         ('  if (player_hide_player_tile_flags != 0xFF)\n    PlayerGFXRt_01EA70();',
@@ -109,6 +113,24 @@ def prepare():
         ('#include "consts.h"', '#include "ww_targets.h"\n#include "consts.h"'),
         ('void InitializeNormalSpriteRAMTables(uint8 k) {',
          'void InitializeNormalSpriteRAMTables(uint8 k) {\n  ww_target_spawned(k);'),
+    ])
+    patch('src/smw_01.c', [
+        ('#include "consts.h"', '#include "ww_smw.h"\n#include "consts.h"'),
+        ('spr_table00c2[k] == 1 && (io_controller_press1 & 0x40) != 0',
+         'spr_table00c2[k] == 1 && (ww_enabled() ? ww_yoshi_tongue_pressed() : (io_controller_press1 & 0x40) != 0)'),
+        ('void SprXXX_PowerUps_01C538(uint8 k, uint8 a) {  // 01c538',
+         'void SprXXX_PowerUps_01C538(uint8 k, uint8 a) {  // 01c538\n  if (a == 0x74) ww_mushroom();'),
+        ('uint8 SolidSpriteBlock(uint8 k) {  // 01b457',
+         'uint8 SolidSpriteBlock(uint8 k) {  // 01b457\n  if (ww_psycho_collision()) return 0;'),
+    ])
+    patch('src/smw_03.c', [
+        ('#include "consts.h"', '#include "ww_finalboss.h"\n#include "ww_smw.h"\n#include "consts.h"'),
+        ('void Spr0A0_ActivateBowserBattle_Sub(uint8 k) {  // 03a279',
+         'void Spr0A0_ActivateBowserBattle_Sub(uint8 k) {  // 03a279\n  if (ww_final_step(k)) return;'),
+        ('  UpdateMode7SpriteAnimations(k);\n  if (bowserbattle_var14b5)',
+         '  UpdateMode7SpriteAnimations(k);\n  ww_final_tiles(k);\n  if (bowserbattle_var14b5)'),
+        ('void Spr0A0_ActivateBowserBattle_DrawItemBox() {  // 03b44f',
+         'void Spr0A0_ActivateBowserBattle_DrawItemBox() {  // 03b44f\n  if (ww_hide_native_hud()) return;'),
     ])
     patch('src/smw_05.c', [
         ('#include "consts.h"', '#include "ww_smw.h"\n#include "consts.h"'),

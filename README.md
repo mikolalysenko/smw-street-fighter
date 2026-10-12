@@ -2,8 +2,8 @@
 
 A C/SDL2 and WebAssembly crossover: Super Mario World's original levels,
 scenery, enemies, music and platforming, with ripped Street Fighter II fighter
-sprites, voices and impacts. Select Ryu, E. Honda, Chun-Li or Guile and use
-specials and a three-level, Alpha-inspired super gauge.
+sprites, voices and impacts. All twelve classic SF2 fighters are selectable,
+including the four bosses, with character specials and a three-level super gauge.
 
 The actual SMW game is the default build. The earlier placeholder dojo is only
 a combat test fixture. The native and browser builds share the same game engine.
@@ -42,17 +42,27 @@ This also applies when resuming an existing save. Use the normal SMW overworld t
 enter a level. Each life starts
 with one super bar. Hits refill it; supers spend one to three complete bars.
 Health refills on level entry and meter carries between levels. Start opens
-Resume / Character Select / Quit Game during play. On death, the SF2 continue
+Resume / Character Select / Akuma Battle / Quit Game during play. On death, the SF2 continue
 screen shows the defeated fighter and a ten-second countdown. Start/Jump retries
 the level; Back or letting the countdown expire returns to the map. Continues
 are unlimited and retain the selected fighter.
 Character selection plays the original SF2 selection music. The title combines
 SMW's original lettering, scenery, demo and music with SF2's gold/red II and
 blue “The World Warrior” subtitle. Course clear shows the selected fighter.
+Clearing without taking damage displays PERFECT with the original announcer voice.
+
+**Jump to the final fight:** enter any level, press Enter/Start, choose
+**AKUMA BATTLE**, then confirm. You start with full health and three super bars.
+Bowser makes his entrance wearing Bison's hat before Akuma takes over the clown
+car. Continue retries this arena. Practice does not write game saves or records;
+returning to the map restores the score and lives from before practice.
 
 The title and gameplay HUD show your high score. SMW's normal points from
 enemies, pickups and the course-clear tally count; combat kills award the native
-enemy points too. New records save immediately, survive new games and continues,
+combo points too. Consecutive combat hits award **200, 400, 800, 1000, 2000,
+4000, 8000, 1UP, 2UP, then 3UP**. Further hits keep awarding 3UP, up to SMW's
+99-life limit. Damage or a 90-frame gap ends the chain; Bison's continuous level
+3 flight keeps it going. New records save immediately, survive new games and continues,
 and travel with Export Save in the same `smw.srm` as level progress. The title
 demo cannot set a record. Native builds keep it in `saves/smw.srm`.
 
@@ -64,7 +74,8 @@ demo cannot set a record. Native builds keep it in `saves/smw.srm`.
 | Kick | B | C |
 | Crouching punch / kick | Down + X / B | Down + X / C |
 | Special | Y | A |
-| Secondary special | Up or Down + Y | Up or Down + A |
+| Secondary special | Up + Y | Up + A |
+| Extra special / Hurricane Kick | Down + Y | Down + A |
 | Super | RB | S |
 | Guard | LB | D |
 | Pause / confirm | Start | Enter |
@@ -81,14 +92,34 @@ Steam Input can map other controllers to this layout.
 | E. Honda | Sumo Headbutt | Hundred Hand Slap | Super Oni Musou |
 | Chun-Li | Lightning Legs | Spinning Bird Kick | Senretsukyaku |
 | Guile | Sonic Boom | Flash Kick | Sonic Hurricane |
+| Ken | Hadouken | Shoryuken | Shoryureppa |
+| Blanka | Rolling Attack | Vertical Roll | Ground Shave Roll |
+| Zangief | Double Lariat | Screw Piledriver | Final Atomic Buster |
+| Dhalsim | Yoga Fire | Yoga Flame | Yoga Inferno |
+| Balrog | Dash Straight | Dash Uppercut | Crazy Buffalo |
+| Vega | Rolling Crystal Flash | Flying Barcelona | Rolling Izuna Drop |
+| Sagat | Tiger Shot | Tiger Uppercut | Tiger Genocide |
+| M. Bison | Psycho Crusher | Head Press | Psycho Crusher |
 
-Ryu also accepts quarter-circle forward + punch, the dragon-punch motion,
-and double quarter-circle forward + punch. Honda and Guile accept a 30-frame
-horizontal charge then the opposite direction + punch; Guile accepts down
-charge, up + kick. Honda's repeated punches and Chun-Li's repeated kicks trigger
-rapid attacks. Landed normals can cancel into specials; landed attacks can
+Ryu and Ken can Hurricane Kick with **Down + Special**, or quarter-circle back
++ Kick, on the ground or in the air. Down + Special gives Blanka Electricity
+and Dhalsim Teleport. Ryu, Ken and Sagat also accept quarter-circle forward +
+Punch and the dragon-punch motion. Double quarter-circle forward + Punch
+activates a super. Honda, Guile, Blanka, Balrog, Vega and Bison accept back charge
+then forward + Punch; Guile, Blanka, Vega and Bison accept down charge then
+up + Kick. Zangief accepts a three-quarter circle + Punch; Dhalsim accepts
+half-circle forward + Punch. Honda/Blanka's repeated punches and Chun-Li's
+repeated kicks trigger rapid attacks. Landed normals can cancel into specials; landed attacks can
 cancel into supers. These are forgiving platformer adaptations, not arcade
 frame data. Sonic Hurricane is a later-series move adapted to this prototype.
+
+Bison's **three-bar Psycho Crusher** is intentionally ridiculous: invulnerable
+flight, 999-damage hits, a huge original Alpha spin and blue-white wake, and a
+combo that lasts until he lands. It flies to the actual goal or end of the room.
+Up/Down steer in horizontal rooms; Left/Right steer in vertical rooms. **Guard
+lands early**. Doors, pipes, exits and essential platforms keep working; a room
+without a goal still needs its normal exit. The camera and sprite loader continue
+running, so the native goal, score tally and overworld event finish normally.
 
 Enemy contact causes health loss, hitstop, hit stun, knockback and SF2 hurt
 sounds. Death uses ripped fighter screams. Punches, kicks, specials and supers
@@ -97,13 +128,18 @@ Holding Down gives each fighter original crouching punch/kick poses and low
 hitboxes. Moving platforms preserve fighter visibility, and the original Yoshi
 renders both on foot and while ridden. Health and super gauges float over the
 level, without an opaque HUD strip.
+Mounted Hadoukens pass Yoshi. Punch activates his tongue; automatic running does
+not. Mushrooms restore 25 health without erasing damage from the PERFECT check.
 
 All normal sprite IDs and extended/cluster hazards accept attacks, including
 Chucks, Thwomps, wooden castle plungers and the layer-three crusher. Enemies
 explode. Keys, exits, switches and essential platforms take a visual hit but
 retain their function. Terrain shows a single impact without erasing routes.
 Boss rooms have opposing health bars, a KO announcement and their original
-defeat/exit sequences, including Bowser's ending.
+defeat/exit sequences. In the finale, Akuma assassinates Bowser, throws him
+upside down offscreen, and pilots the original clown car with faster sweeps,
+dives and aimed fireballs. Peach still throws mushrooms. Defeating Akuma starts
+the original rescue and ending.
 
 ## Build from a fresh checkout
 
@@ -189,7 +225,8 @@ make test-play   # Original game boot + level/combat replay; assets required
 make test-bosses # Ten actual boss rooms, attacks, KO and native endings
 make test-movement # Jump/air attacks, Continue and original goal tape
 make test-presentation # Moving platforms, Yoshi and new/resumed file selection
-make test-audio  # KO voice, death sample and selection/continue music
+make test-roster # All twelve fighters and Bison's full-stage goal/exit replay
+make test-audio  # Voices, original Alpha charge and selection/continue music
 make test-web    # Built WASM module through the original game flow
 ```
 

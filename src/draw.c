@@ -70,7 +70,8 @@ void fc_fighter(FcCanvas c,const FcFight *f,int x,int feet,int scale,uint32_t ti
   else if(f->guarding)pose=FC_POSE_GUARD;
   else if(f->move!=FC_IDLE) {
     static const int poses[]={FC_POSE_IDLE,FC_POSE_PUNCH,FC_POSE_KICK,FC_POSE_FIRE,
-      FC_POSE_RISE,FC_POSE_SPIN,FC_POSE_RUSH,FC_POSE_FLURRY,FC_POSE_FIRE};
+      FC_POSE_RISE,FC_POSE_SPIN,FC_POSE_RUSH,FC_POSE_FLURRY,FC_POSE_FIRE,
+      FC_POSE_THROW,FC_POSE_TELEPORT,FC_POSE_FLURRY,FC_POSE_FLURRY,FC_POSE_DIVE};
     pose=poses[f->move];tick=(unsigned)f->move_tick;
     if(!f->body.grounded && f->move==FC_JAB)pose=FC_POSE_AIR_PUNCH;
     if(!f->body.grounded && f->move==FC_ROUNDHOUSE)pose=FC_POSE_AIR_KICK;
@@ -78,23 +79,42 @@ void fc_fighter(FcCanvas c,const FcFight *f,int x,int feet,int scale,uint32_t ti
       if(f->move==FC_JAB)pose=FC_POSE_CROUCH_PUNCH;
       if(f->move==FC_ROUNDHOUSE)pose=FC_POSE_CROUCH_KICK;
     }
-    if(f->move==FC_SUPER_MOVE)pose=f->character==FC_HONDA?FC_POSE_RUSH:
-      f->character==FC_CHUNLI?FC_POSE_FLURRY:FC_POSE_FIRE;
+    if(f->move==FC_SUPER_MOVE) {
+      static const int super_pose[]={FC_POSE_FIRE,FC_POSE_RUSH,FC_POSE_FLURRY,FC_POSE_FIRE,
+        FC_POSE_RISE,FC_POSE_RUSH,FC_POSE_SPIN,FC_POSE_FLURRY,FC_POSE_RUSH,FC_POSE_RUSH,FC_POSE_RISE,FC_POSE_RUSH};
+      pose=super_pose[f->character];
+      if(f->character==FC_BISON && f->move_tick>8)tick=12;
+    }
   } else if(!f->body.grounded){pose=FC_POSE_JUMP;tick=f->air_tick;}
   else if(f->previous&FC_DOWN)pose=FC_POSE_DUCK;
   else if(f->moving){pose=FC_POSE_WALK;tick=(unsigned)(f->walk_distance*0.65f);}
   if(f->invuln && !f->stun && f->move==FC_IDLE && f->hp>0 && ((f->tick/4)%2))return;
+  if(fc_psycho_flight(f) && !f->flash) {
+    /* The level-three joke from Psycho Crusher, FTW: a blue-white comet
+     * whose wake stretches offscreen, with the original Alpha spin at its tip. */
+    int length=f->move_tick*12;if(length>c.w)length=c.w;
+    int cy=feet-26,pulse=(f->tick/4)%3;
+    for(int dy=-30;dy<=30;dy++) {
+      int a=dy<0?-dy:dy;if(a>28+pulse)continue;
+      uint32_t color=a>23?0x6757d9:a>18?0x439bff:a>15?0x8af6ff:0xf0ffff;
+      int nose=20-(a*a)/40;
+      int left=f->facing>0?x-length:x-nose;
+      fc_rect(c,left,cy+dy,length+nose,1,color);
+    }
+    fc_sprite(c,0,FC_POSE_PSYCHO,f->tick,x,cy,f->facing,scale,2,tint);
+    return;
+  }
+  if(f->character==FC_BISON && f->move==FC_RUSH && tick>8)tick=12;
+  if(f->move==FC_TELEPORT && f->move_tick>5 && f->move_tick<19)
+    tint=(f->tick/3)%2?0x9b6ed3:0x413063;
   fc_sprite(c,f->character,pose,tick,x,feet,f->facing,scale,2,tint);
 }
 void fc_effects(FcCanvas c,const FcFight *f,float camx,float camy) {
   if(f->flash) {
-    fc_dim(c,110);
-    for(int i=0;i<12;i++) {
-      int x=(i*43+(int)f->tick*4)%c.w;
-      fc_rect(c,x,38+i*9,18+i*2,1,0x3e598f);
-    }
-    fc_center(c,c.h/2-26,"SUPER ART",0x7cecff,2);
-    fc_center(c,c.h/2-7,fc_roster[f->character].super_name,0xffffff,1);
+    fc_dim(c,70);
+    int x=(int)(f->body.box.x+f->body.box.w/2-camx),y=(int)(f->body.box.y+f->body.box.h-camy);
+    fc_fighter(c,f,x,y,1,0);
+    fc_sprite(c,0,FC_POSE_SUPER_CHARGE,(18-f->flash)*2,x,y-24,f->facing,1,2,0);
   }
   for(int i=0;i<FC_MAX_SHOTS;i++)if(f->shots[i].ttl) {
     const FcShot *p=&f->shots[i];int x=(int)(p->box.x-camx),y=(int)(p->box.y-camy);
@@ -195,8 +215,10 @@ void fc_battle_hud(FcCanvas c,const FcFight *f,const FcOpponent *o) {
   if(f->meter==300)fc_text(c,158,gy+2,"MAX",0xffe366,1);
   if(f->combo>1) {
     snprintf(text,sizeof(text),"%d HIT",f->combo);arcade_text(c,9,40,text,false);
+    if(f->combo_award<0)snprintf(text,sizeof(text),"%dUP",-f->combo_award);
+    else snprintf(text,sizeof(text),"%d",f->combo_award);
+    arcade_text(c,9,50,text,false);
   }
-  if(f->move>=FC_PROJECTILE && !f->flash)fc_center(c,52,fc_move_name(f),0xfff48c,1);
   if(f->hp<=0 || (boss && o->ko_timer>0)) {
     fc_dim(c,170);
     fc_sprite(c,0,FC_POSE_KO_MARK,0,c.w/2-65,c.h/2-32,1,3,1,0);
@@ -213,26 +235,25 @@ void fc_selection(FcCanvas c,int choice,unsigned tick,bool compact) {
   (void)compact;menu_background(c);
   arcade_center(c,8,"PLAYER SELECT",true);
   fc_sprite(c,0,FC_POSE_MAP,0,(c.w-192)/2,29,1,1,1,0);
-  int start=(c.w-232)/2;
+  int start=(c.w-240)/2;
   for(int i=0;i<FC_ROSTER_COUNT;i++) {
-    int x=start+i*58;bool selected=i==choice;
-    fc_rect(c,x,145,54,53,selected?0x2979c8:0x131d59);
-    frame(c,x-1,144,56,55,selected?0xffff8a:0x617ccb);
-    fc_sprite(c,i,FC_POSE_PORTRAIT,0,x+27,184,1,1,4,0);
-    const char *name=i==FC_HONDA?"HONDA":i==FC_CHUNLI?"CHUNLI":fc_roster[i].name;
-    arcade_text(c,x+(54-(int)strlen(name)*8)/2,187,name,false);
-    if(selected && (tick/20)%2==0)fc_text(c,x+2,146,"1P",0xffee22,1);
+    int x=start+(i%6)*40,y=114+(i/6)*44;bool selected=i==choice;
+    fc_rect(c,x,y,38,41,selected?0x2979c8:0x131d59);
+    frame(c,x-1,y-1,40,43,selected?0xffff8a:0x617ccb);
+    fc_sprite(c,i,FC_POSE_PORTRAIT,0,x+19,y+39,1,1,4,0);
+    if(selected && (tick/20)%2==0)fc_text(c,x+2,y+2,"1P",0xffee22,1);
   }
-  fc_center(c,c.h-17,"DPAD SELECT  A / START CONFIRM",0xffffd5,1);
+  arcade_center(c,94,fc_roster[choice].name,false);
+  fc_center(c,c.h-12,"DPAD SELECT  A / START CONFIRM",0xffffd5,1);
 }
-void fc_pause(FcCanvas c,int choice) {
-  fc_dim(c,70);fc_rect(c,c.w/2-99,c.h/2-56,198,114,0x0c155c);
-  frame(c,c.w/2-99,c.h/2-56,198,114,0xffd52b);
-  arcade_center(c,c.h/2-43,"PAUSE",true);
-  const char *items[]={"RESUME","PLAYER SELECT","QUIT GAME"};
-  for(int i=0;i<3;i++) {
+void fc_pause(FcCanvas c,int choice,bool boss_shortcut) {
+  fc_dim(c,70);fc_rect(c,c.w/2-99,c.h/2-65,198,139,0x0c155c);
+  frame(c,c.w/2-99,c.h/2-65,198,139,0xffd52b);
+  arcade_center(c,c.h/2-52,"PAUSE",true);
+  const char *items[]={"RESUME","PLAYER SELECT","AKUMA BATTLE","QUIT GAME"};
+  for(int i=0;i<(boss_shortcut?4:3);i++) {
     if(choice==i)fc_rect(c,c.w/2-90,c.h/2-12+i*21,180,16,0x274ba1);
-    arcade_center(c,c.h/2-9+i*21,items[i],false);
+    arcade_center(c,c.h/2-9+i*21,items[!boss_shortcut && i==2?3:i],false);
     if(choice==i)fc_text(c,c.w/2-87,c.h/2-8+i*21,">",0xffff55,1);
   }
 }
@@ -256,10 +277,10 @@ void fc_continue(FcCanvas c,int character,int ticks) {
   arcade_center(c,181,"START TO CONTINUE",false);
   fc_center(c,204,"BACK TO WORLD MAP",0xaaaac4,1);
 }
-void fc_level_clear(FcCanvas c,int character) {
+void fc_level_clear(FcCanvas c,int character,bool perfect) {
   /* The native heading is suppressed at its tile upload, leaving the
    * original scenery and time bonus behind the fighter's victory art. */
   fc_sprite(c,character,FC_POSE_WIN,40,54,99,1,1,3,0);
-  arcade_center(c,54,fc_roster[character].name,true);
+  arcade_center(c,54,perfect?"PERFECT":fc_roster[character].name,true);
   arcade_center(c,78,"COURSE CLEAR",false);
 }

@@ -1,4 +1,5 @@
 #include "ww_targets.h"
+#include "ww_finalboss.h"
 #include "smw_rtl.h"
 #include "variables.h"
 #include "funcs.h"
@@ -43,10 +44,14 @@ static bool essential(int id) {
     default:return id>=0xc9; /* Unknown controllers stay functional too. */
   }
 }
-static int boss_max(int k) { return spr_spriteid[k]==0xa9?6:spr_spriteid[k]==0xa0?30:18; }
+static int boss_max(int k) {
+  if(spr_spriteid[k]==0xa0 && ww_final_controls(k) && ww_final_phase()>=WW_FINAL_FIGHT)return 72;
+  return spr_spriteid[k]==0xa9?6:spr_spriteid[k]==0xa0?30:18;
+}
 static const char *boss_name(int k) {
   switch(spr_spriteid[k]) {
-    case 0xa0:return "BOWSER";case 0xa9:return "REZNOR";case 0xc5:return "BIG BOO";
+    case 0xa0:return ww_final_controls(k) && ww_final_phase()>=WW_FINAL_FALL?"AKUMA":"BOWSER";
+    case 0xa9:return "REZNOR";case 0xc5:return "BIG BOO";
     default: {
       static const char *names[]={"MORTON","ROY","LUDWIG","IGGY","LARRY","WENDY","LEMMY"};
       return names[spr_table00c2[k]%7];
@@ -60,6 +65,7 @@ static int native_hp(int k,int maximum) {
   if(id==0xa9)return spr_table151c[k]?0:maximum;
   if(id==0xc5)return spr_table00c2[k]==6?0:maximum*(3-(spr_table1534[k]>3?3:spr_table1534[k]))/3;
   if(id==0xa0) {
+    if(ww_final_controls(k))return ww_final_phase()==WW_FINAL_END?0:maximum;
     int phase=spr_table151c[k];
     if(phase>=4 && phase<=6)return 0;
     if(phase>=7 && phase<=9 && spr_table187b[k]<=2)
@@ -122,10 +128,12 @@ void ww_targets_collect(FcFight *f,FcTarget *targets) {
       int j=k-12;tag=ext_spr_spriteid[j];alive=tag!=0;
       box=(FcBox){ext_spr_xpos_lo[j]+256*ext_spr_xpos_hi[j]-4,
         ext_spr_ypos_lo[j]+256*ext_spr_ypos_hi[j]-4,16,16};
-    } else {
+    } else if(k<42) {
       int j=k-22;tag=cluster_spr_spriteid[j];alive=tag!=0;
       box=(FcBox){cluster_spr_xpos_lo[j]+256*cluster_spr_xpos_hi[j]-4,
         cluster_spr_ypos_lo[j]+256*cluster_spr_ypos_hi[j]-4,24,24};
+    } else {
+      FcTarget shot={0};tag=ww_final_target(k-42,&shot);alive=tag!=0;box=shot.box;
     }
     box.x=(int16)(int)box.x;box.y=(int16)(int)box.y;
     if(!alive) {
@@ -142,7 +150,9 @@ void ww_targets_collect(FcFight *f,FcTarget *targets) {
       if(!s->hp)s->dead=true;
     }
     if(s->cooldown)--s->cooldown;
-    targets[k]=(FcTarget){box,s->hp,!s->dead && !s->cooldown,false,0,0};
+    bool mount=k<12 && ((spr_spriteid[k]==0x35 && player_riding_yoshi_flag) ||
+      (ww_final_controls(k) && ww_final_phase()<WW_FINAL_FIGHT));
+    targets[k]=(FcTarget){box,s->hp,!mount && !s->dead && !s->cooldown,false,0,0};
   }
   invalidated=0;
 }
@@ -154,6 +164,7 @@ static void defeat_boss(int k) {
     case 0xc5:
       spr_table1534[k]=3;spr_table00c2[k]=6;DespawnNonBossSprites();break;
     case 0xa0:
+      ww_final_defeated();
       /* Bowser's native death leads into the clown-car/Peach ending. */
       spr_table151c[k]=4;spr_xspeed[k]=spr_yspeed[k]=0;
       /* A super can reach him during an offscreen swoop. The native rise
@@ -179,7 +190,7 @@ void ww_targets_apply(FcFight *f,FcTarget *targets) {
   for(int k=0;k<WW_TARGET_COUNT;k++)if(targets[k].hit) {
     TargetState *s=&state[k];FcTarget *t=&targets[k];s->hp=t->hp;
     fc_explode(f,t->box.x+t->box.w/2,t->box.y+t->box.h/2,s->boss || f->move==FC_SUPER_MOVE);
-    if(s->hp>0)continue;
+    if(s->hp>0) { if(k<12 && ww_final_controls(k))s->cooldown=8;continue; }
     if(s->boss) { s->dead=true;defeat_boss(k); }
     else if(k<12 && essential(spr_spriteid[k])) { s->hp=1;s->cooldown=30; }
     else {
@@ -192,9 +203,10 @@ void ww_targets_apply(FcFight *f,FcTarget *targets) {
           for(int y=12;y<80;y+=24)fc_explode(f,t->box.x+t->box.w/2,t->box.y+y,false);
         /* Do not call per-species death code: many formerly invincible
          * actors have none. Our explosion replaces their drawing safely. */
-        spr_current_status[k]=0;GivePoints((uint8)k,1);
+        spr_current_status[k]=0;
       } else if(k<22)ext_spr_spriteid[k-12]=0;
-      else cluster_spr_spriteid[k-22]=0;
+      else if(k<42)cluster_spr_spriteid[k-22]=0;
+      else ww_final_hit_shot(k-42);
       s->alive=false;
     }
   }
@@ -217,7 +229,9 @@ static bool blast_tiles(FcFight *f,FcBox box,bool large) {
       }
       if(offset>=0x10000)continue;
       unsigned tile=g_ram[offset]+256*g_ram[0x10000+offset];
-      if(tile==0x25)continue;
+      /* SMW's first Map16 page is pass-through scenery (bushes, water,
+       * background details). Only solid foreground tiles get an impact. */
+      if(tile<0x100)continue;
       unsigned h=((unsigned)(x/16)*13u+(unsigned)(y/16)*7u)%64;
       if(tile_hits[h].until>f->tick && tile_hits[h].x==x && tile_hits[h].y==y)return true;
       tile_hits[h].x=x;tile_hits[h].y=y;tile_hits[h].until=f->tick+45;

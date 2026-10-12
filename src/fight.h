@@ -8,12 +8,14 @@
 enum { FC_LEFT=1, FC_RIGHT=2, FC_UP=4, FC_DOWN=8, FC_JUMP=16,
   FC_PUNCH=32, FC_KICK=64, FC_SPECIAL=128, FC_SUPER=256,
   FC_GUARD=512, FC_START=1024, FC_BACK=2048 };
-enum { FC_RYU, FC_HONDA, FC_CHUNLI, FC_GUILE, FC_ROSTER_COUNT };
+enum { FC_RYU, FC_HONDA, FC_CHUNLI, FC_GUILE, FC_KEN, FC_BLANKA,
+  FC_ZANGIEF, FC_DHALSIM, FC_BALROG, FC_VEGA, FC_SAGAT, FC_BISON, FC_ROSTER_COUNT };
 typedef enum { FC_IDLE, FC_JAB, FC_ROUNDHOUSE, FC_PROJECTILE,
-  FC_RISING, FC_SPIN, FC_RUSH, FC_FLURRY, FC_SUPER_MOVE } FcMove;
+  FC_RISING, FC_SPIN, FC_RUSH, FC_FLURRY, FC_SUPER_MOVE,
+  FC_THROW, FC_TELEPORT, FC_ELECTRIC, FC_FLAME, FC_DIVE } FcMove;
 enum { FC_SND_SWING=1, FC_SND_HIT=2, FC_SND_HURT=4, FC_SND_KO=8,
   FC_SND_SPECIAL=16, FC_SND_SUPER=32, FC_SND_BLOCK=64, FC_SND_SELECT=128,
-  FC_SND_BOSS_KO=256 };
+  FC_SND_BOSS_KO=256, FC_SND_PERFECT=512, FC_SND_AKUMA_SUPER=1024, FC_SND_AKUMA_WARP=2048 };
 #define FC_MAX_TARGETS 64
 #define FC_MAX_SHOTS 12
 #define FC_MAX_SPARKS 64
@@ -48,7 +50,10 @@ typedef struct {
 } FcShot;
 typedef struct { float x,y,vx,vy; int ttl; uint32_t color; } FcSpark;
 typedef struct { float x,y; int ttl; bool large; } FcBlast;
-typedef struct { uint32_t tick; uint8_t direction; } FcDirection;
+/* Keep the last six popups, but total every hit even if a super fills all
+ * native score-sprite slots in one frame. Negative awards mean extra lives. */
+typedef struct { float x,y; int award; } FcReward;
+typedef struct { uint32_t tick; uint8_t direction; int8_t facing; } FcDirection;
 typedef struct {
   int character, hp, meter, facing;
   FcMove move, buffered;
@@ -65,6 +70,8 @@ typedef struct {
   FcShot shots[FC_MAX_SHOTS];
   FcSpark sparks[FC_MAX_SPARKS];
   FcBlast blasts[FC_MAX_BLASTS];
+  FcReward rewards[6];
+  int reward_count,score_gain,lives_gain,combo_award;
   FcBody body;
   float walk_distance, vertical_motion;
   int air_tick;
@@ -83,5 +90,6 @@ void fc_explode(FcFight *f, float x, float y, bool large);
 bool fc_overlap(FcBox a, FcBox b);
 bool fc_motion(const FcFight *f, const uint8_t *sequence, int count, int window);
 bool fc_busy(const FcFight *f);
+bool fc_psycho_flight(const FcFight *f);
 const char *fc_move_name(const FcFight *f);
 #endif

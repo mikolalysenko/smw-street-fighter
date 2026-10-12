@@ -19,6 +19,7 @@
 #include "ww_smw.h"
 #include "ww_targets.h"
 #include "ww_score.h"
+#include "ww_finalboss.h"
 #include "audio.h"
 
 bool g_debug_flag,g_want_dump_memmap_flags;
@@ -104,6 +105,7 @@ EMSCRIPTEN_KEEPALIVE int ww_web_state(int field) {
     case 15:return player_current_state;case 16:return fc_audio_selection_active();
     case 17:return f->crouching_attack;
     case 18:return ww_score();case 19:return ww_high_score();
+    case 20:return f->character;case 21:return ww_practicing();case 22:return ww_final_phase();
     default:return 0;
   }
 }

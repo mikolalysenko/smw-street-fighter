@@ -11,6 +11,7 @@
 static int tick,map_ticks,level_frames,phase=-1,phase_tick,home_x,home_y,peak;
 static int moving,attack_seen,shot_seen,rise_seen,death_ticks,continued;
 static int capture_walk,capture_air,capture_continue,capture_clear;
+static int covered_death_frames;
 static const uint32_t attacks[]={0,2,1u<<8,1u<<9,(1u<<9)|(1u<<4),2,1u<<8,1u<<9,(1u<<9)|(1u<<4),1u<<11};
 static const int moves[]={FC_IDLE,FC_JAB,FC_ROUNDHOUSE,FC_PROJECTILE,FC_RISING,FC_JAB,FC_ROUNDHOUSE,FC_PROJECTILE,FC_RISING,FC_SUPER_MOVE};
 int ww_upstream_main(int,char**);
@@ -86,6 +87,12 @@ static void save(uint8_t *pixels,size_t pitch,int w,int h,const char *name) {
   assert(s);assert(!SDL_SaveBMP(s,name));SDL_FreeSurface(s);
 }
 void ww_test_render(uint8_t *pixels,size_t pitch,int w,int h) {
+  /* The old level must never reappear behind an accepted Continue while
+   * native death/reload bookkeeping finishes. The menu fills black to the edge. */
+  if(death_ticks>=31 && misc_game_mode==0x14 && player_current_state==9) {
+    assert(((uint32_t*)pixels)[(h-1)*(pitch/4)+w-1]==0xff000000);
+    ++covered_death_frames;
+  }
   if(phase==0 && phase_tick==73 && !capture_walk++)save(pixels,pitch,w,h,"walk.bmp");
   if(phase==7 && phase_tick==18 && !capture_air++)save(pixels,pitch,w,h,"air-hadouken.bmp");
   if(death_ticks==40 && !capture_continue++)save(pixels,pitch,w,h,"continue.bmp");
@@ -95,6 +102,6 @@ int main(void) {
   setvbuf(stdout,NULL,_IONBF,0);char *args[]={"test-movement","--config","test-play.ini",NULL};
   int result=ww_upstream_main(3,args);
   printf("Movement: phases %d, walk %d, continued %d, clear %d\n",phase,moving,continued,capture_clear);
-  assert(phase==10 && moving && continued>160 && capture_clear);
+  assert(phase==10 && moving && continued>160 && capture_clear && covered_death_frames);
   return result;
 }

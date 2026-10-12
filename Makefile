@@ -61,6 +61,8 @@ test-movement: smw
 	$(PYTHON) scripts/test_smw_play.py --movement
 test-presentation: smw
 	$(PYTHON) scripts/test_smw_play.py --presentation
+test-roster: smw
+	$(PYTHON) scripts/test_smw_play.py --roster
 test-audio: | build
 	$(CC) $(CPPFLAGS) $(CFLAGS) -DFC_AUDIO_MANUAL $(SDL_CFLAGS) src/audio.c tests/test_audio.c -o build/test-audio $(SDL_LIBS) -lm
 	SDL_AUDIODRIVER=dummy ./build/test-audio

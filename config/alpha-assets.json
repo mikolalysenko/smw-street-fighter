@@ -1,0 +1,50 @@
+{
+  "url": "https://github.com/gamedev8/js-sfa",
+  "commit": "66cf60d2198ef613a84229d4e9d0f07c2347d215",
+  "files": [
+    {
+      "path": "script/player-akuma-spritedata.js",
+      "sha256": "52442a67910fa29128f05b416223245bcd2f6ac267aa102d309de12e5f120c32"
+    },
+    {
+      "path": "script/player-akuma.js",
+      "sha256": "3536fd825b7dad3fe0f73ba8e6bd94d7a40d86e0f471862488b9f57ec9316fa4"
+    },
+    {
+      "path": "images/misc/akuma/sprites.png",
+      "sha256": "532eb05eba82caecec196cefdc28524f5ff588f33c21739e19242ef6851650da"
+    },
+    {
+      "path": "images/misc/akuma/trail-sprites.png",
+      "sha256": "4f42de6ecd1c0507ddc5a18ba46f88b14fa2f5d9e2eb55522a4ee50d48142daf"
+    },
+    {
+      "path": "images/misc/akuma/misc-sprites.png",
+      "sha256": "9776fa1df786b9bbd4e3e31bc31e745e1429948cdff6b9a16b125a78bdc50f15"
+    },
+    {
+      "path": "images/misc/akuma/projectiles.png",
+      "sha256": "3d02f42037f58736cda404920f52adda129ec7a3d620e50f575e579cd66860de"
+    },
+    {
+      "path": "script/audio/match.ogg.js",
+      "sha256": "d606631ec5a223548f1ca5f695f4aa22815ce8bf1ef19ab9a05f290e00e582b9"
+    },
+    {
+      "path": "script/audio/akuma.ogg.js",
+      "sha256": "78c154a32ea4c6fb244a03b7a780a174ac0b85e2625f2f11e38ce1fe722b4869"
+    },
+    {
+      "path": "script/player-mbison-spritedata.js",
+      "sha256": "2226a60b01c3776aab4ad37f870ffc9267326507fc3b5ec895e5cc4a0bc41b2f"
+    },
+    {
+      "path": "images/misc/mbison/sprites.png",
+      "sha256": "3c45580325865605649d49fb8c663b61b5046d0a00ab77610d6f6a48f9bbe5d0"
+    },
+    {
+      "path": "script/audio/mbison.ogg.js",
+      "sha256": "2a366f54b810a4cc440dfe79356fea790f00497fa96394a34e9297dc4ca46579"
+    }
+  ]
+}
