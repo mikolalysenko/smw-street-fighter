@@ -165,34 +165,78 @@ void fc_title(FcCanvas c,unsigned tick,unsigned high_score) {
   char text[32];snprintf(text,sizeof(text),"HI SCORE %07u",high_score);
   arcade_center(c,19,text,false);
 }
-void fc_score_hud(FcCanvas c,unsigned score,unsigned high_score,bool boss) {
-  char text[32];
-  if(boss) {
-    snprintf(text,sizeof(text),"%07u",score);arcade_center(c,31,text,false);
-  } else {
-    snprintf(text,sizeof(text),"1P %07u",score);arcade_text(c,c.w-90,3,text,false);
-    snprintf(text,sizeof(text),"HI %07u",high_score);arcade_text(c,c.w-90,17,text,false);
+static void hud_text(FcCanvas c,int x,int y,const char *s) {
+  for(;*s;s++,x+=8) {
+    int ch=toupper((unsigned char)*s),i=ch>='A'&&ch<='Z'?ch-'A':ch>='0'&&ch<='9'?ch-'0'+26:-1;
+    if(i>=0 && fc_assets_ready()) {
+      for(int dx=-1;dx<=1;dx++)for(int dy=-1;dy<=1;dy++)if(dx || dy)
+        fc_sprite(c,0,FC_POSE_HUD_FONT,(unsigned)i,x+dx,y+dy,1,1,1,0x010101);
+      fc_sprite(c,0,FC_POSE_HUD_FONT,(unsigned)i,x,y,1,1,1,0);
+    } else {char glyph[2]={(char)ch,0};fc_text(c,x,y,glyph,0xffeead,1);}
   }
 }
-static void life_bar(FcCanvas c,int x,int y,int w,int hp,int maximum,bool reverse) {
+static void hud_icon(FcCanvas c,int x,int y,FcCanvas icon) {
+  if(!icon.pixels)return;
+  for(int row=0;row<icon.h;row++)for(int col=0;col<icon.w;col++) {
+    uint32_t p=icon.pixels[row*icon.pitch+col];
+    if(p>>24)fc_rect(c,x+col,y+row,1,1,p);
+  }
+}
+static void life_bar(FcCanvas c,int x,int y,int w,int hp,int maximum,bool reverse,bool loss) {
   if(maximum<1)maximum=1;if(hp<0)hp=0;if(hp>maximum)hp=maximum;
-  fc_rect(c,x-2,y-2,w+4,13,0x080808);frame(c,x-1,y-1,w+2,11,0xffffee);
-  fc_rect(c,x,y,w,9,0xdf211b);
+  fc_rect(c,x-2,y-2,w+4,11,0x080808);frame(c,x-1,y-1,w+2,9,0xfffbe1);
+  for(int row=0;row<7;row++)for(int col=0;col<w;col++)
+    fc_rect(c,x+col,y+row,1,1,loss?(((row+col)&1)?0xec2828:0x40587e):0x15182b);
   int filled=w*hp/maximum,left=reverse?x+w-filled:x;
-  fc_rect(c,left,y,filled,9,0xffdb00);fc_rect(c,left,y,filled,2,0xffff85);
-  fc_rect(c,left,y+7,filled,2,0xdf9100);
+  fc_rect(c,left,y,filled,7,0xffed00);fc_rect(c,left,y,filled,1,0xffffa3);
+  fc_rect(c,left,y+6,filled,1,0xe6b400);
 }
-void fc_hud(FcCanvas c,const FcFight *f) { fc_battle_hud(c,f,NULL); }
-void fc_battle_hud(FcCanvas c,const FcFight *f,const FcOpponent *o) {
+void fc_hud(FcCanvas c,const FcFight *f) { fc_battle_hud(c,f,NULL,NULL); }
+void fc_battle_hud(FcCanvas c,const FcFight *f,const FcOpponent *o,const FcStageHud *s) {
   char text[64];const FcCharacter *r=&fc_roster[f->character];
-  int w=(c.w-48)/2;bool boss=o && o->active;
-  arcade_text(c,9,3,r->name,false);
-  life_bar(c,9,17,w,f->hp,r->vitality,false);
-  if(boss) {
-    arcade_text(c,c.w-9-(int)strlen(o->name)*8,3,o->name,false);
-    life_bar(c,c.w-9-w,17,w,o->hp,o->max_hp,true);
+  int mid=c.w/2,w=mid-23;bool boss=o && o->active;
+  if(s) {
+    snprintf(text,sizeof(text),"1P %07u",s->score);hud_text(c,7,3,text);
+    snprintf(text,sizeof(text),"HI %07u",s->high_score);hud_text(c,c.w-87,3,text);
   }
-  if(boss)fc_sprite(c,0,FC_POSE_KO_MARK,0,c.w/2-14,13,1,3,4,0);
+  life_bar(c,8,17,w,f->hp,r->vitality,true,true);
+  if(boss) {
+    life_bar(c,c.w-8-w,17,w,o->hp,o->max_hp,false,true);
+    hud_text(c,c.w-35-(int)strlen(o->name)*8,29,o->name);
+  } else if(s) {
+    /* The opponent's side becomes the native 100-coin extra-life gauge. */
+    life_bar(c,c.w-8-w,17,w,s->coins,100,false,false);
+    hud_text(c,c.w-99,29,"NEXT 1UP");
+  }
+  fc_sprite(c,0,FC_POSE_KO_MARK,0,mid-14,13,1,3,4,0);
+  frame(c,6,28,22,28,0x080808);frame(c,5,27,24,30,0xefedd5);
+  fc_sprite(c,f->character,FC_POSE_HUD_PORTRAIT,0,7,29,1,1,1,0);
+  hud_text(c,33,29,r->name);
+  if(s) {
+    snprintf(text,sizeof(text),"X%02d",s->lives);hud_text(c,33,42,text);
+    for(int i=0;i<5;i++) {
+      int x=62+i*8;
+      fc_sprite(c,0,FC_POSE_ROUND_MARK,0,x,42,1,1,3,0x080808);
+      fc_sprite(c,0,FC_POSE_ROUND_MARK,0,x,41,1,1,3,i<s->dragon_coins?0:0x777b82);
+    }
+    if(s->timed) {
+      snprintf(text,sizeof(text),"%03d",s->time);arcade_center(c,29,text,true);
+    } else {
+      /* Bowser/Akuma freezes SMW's clock. Draw infinity, not a fake timer. */
+      static const uint8_t infinity[]={0x66,0xff,0x99,0xff,0x66};
+      for(int y=0;y<5;y++)for(int x=0;x<8;x++)if(infinity[y]&(1<<(7-x)))
+        fc_rect(c,mid-9+x*2,30+y*2,4,4,0x080808);
+      for(int y=0;y<5;y++)for(int x=0;x<8;x++)if(infinity[y]&(1<<(7-x)))
+        fc_rect(c,mid-8+x*2,31+y*2,2,2,0xffe76a);
+    }
+    hud_text(c,mid-16,44,"TIME");
+    hud_icon(c,c.w-103,42,s->star_icon);
+    snprintf(text,sizeof(text),"%02d",s->bonus_stars);hud_text(c,c.w-93,42,text);
+    hud_icon(c,c.w-65,42,s->coin_icon);
+    snprintf(text,sizeof(text),"%02d",s->coins);hud_text(c,c.w-55,42,text);
+    frame(c,c.w-30,28,22,22,0x080808);frame(c,c.w-29,29,20,20,0xefedd5);
+    hud_icon(c,c.w-27,31,s->reserve_icon);
+  }
   /* A slim arcade gauge with slanted ends, one continuous fill and SUPER
    * lettering over the bezel. Small ticks mark the three Alpha-style levels. */
   int gy=c.h-14,fill=120*f->meter/300;
@@ -208,16 +252,15 @@ void fc_battle_hud(FcCanvas c,const FcFight *f,const FcOpponent *o) {
       for(int i=1;i<3;i++)fc_rect(c,left+3+i*40,gy+row,1,1,0x777c92);
     }
   }
-  fc_text(c,13,gy-4,"SUPER",0x000000,1);fc_text(c,15,gy-4,"SUPER",0x000000,1);
-  fc_text(c,14,gy-5,"SUPER",0xffffe1,1);
+  arcade_text(c,14,gy-6,"SUPER",false);
   snprintf(text,sizeof(text),"%d",f->meter/100);
   arcade_text(c,139,gy-3,text,true);
   if(f->meter==300)fc_text(c,158,gy+2,"MAX",0xffe366,1);
-  if(f->combo>1) {
-    snprintf(text,sizeof(text),"%d HIT",f->combo);arcade_text(c,9,40,text,false);
+  if(f->combo>1 && !(s && s->clearing)) {
+    snprintf(text,sizeof(text),"%d HIT COMBO",f->combo);hud_text(c,9,65,text);
     if(f->combo_award<0)snprintf(text,sizeof(text),"%dUP",-f->combo_award);
     else snprintf(text,sizeof(text),"%d",f->combo_award);
-    arcade_text(c,9,50,text,false);
+    hud_text(c,9,76,text);
   }
   if(f->hp<=0 || (boss && o->ko_timer>0)) {
     fc_dim(c,170);

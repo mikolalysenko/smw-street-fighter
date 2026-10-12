@@ -66,6 +66,15 @@ combo points too. Consecutive combat hits award **200, 400, 800, 1000, 2000,
 and travel with Export Save in the same `smw.srm` as level progress. The title
 demo cannot set a record. Native builds keep it in `saves/smw.srm`.
 
+The transparent SF2 HUD keeps Mario's counters: **1P** is the current score,
+**HI** is the saved record, and the three-digit clock beneath **K.O.** is SMW's
+actual timer. The fighter portrait has lives underneath the name; the five
+round markers track Dragon Coins. The right bar fills toward a 100-coin **1UP**,
+then becomes the opponent's health bar in a boss room. Coins, bonus stars and
+the original reserve-item icon remain visible during boss fights. Bowser/Akuma
+has an unlimited clock, displayed as infinity. The bottom gauge shows super
+levels, and hit combos show their current points or extra-life award.
+
 | Action | Xbox/Steam gamepad | Keyboard |
 | --- | --- | --- |
 | Move / menu | D-pad or left stick | Arrows |
@@ -78,6 +87,7 @@ demo cannot set a record. Native builds keep it in `saves/smw.srm`.
 | Extra special / Hurricane Kick | Down + Y | Down + A |
 | Super | RB | S |
 | Guard | LB | D |
+| Drop reserve item | LB + X | D + X |
 | Pause / confirm | Start | Enter |
 | Back / pause | Back | Escape |
 | Fullscreen | Launcher option | F11 |
@@ -225,6 +235,7 @@ make test-play   # Original game boot + level/combat replay; assets required
 make test-bosses # Ten actual boss rooms, attacks, KO and native endings
 make test-movement # Jump/air attacks, Continue and original goal tape
 make test-presentation # Moving platforms, Yoshi and new/resumed file selection
+make test-hud    # Native timer/pause, coins, lives, reserve, max counters and HUD captures
 make test-roster # All twelve fighters and Bison's full-stage goal/exit replay
 make test-audio  # Voices, original Alpha charge and selection/continue music
 make test-web    # Built WASM module through the original game flow

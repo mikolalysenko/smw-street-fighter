@@ -461,6 +461,10 @@
     {
       "path": "Game/assets/images/sprites/characters/zangief3.png",
       "sha256": "30ef97d2e19a17b875a61d0d60cb73642d3821cc3e8647de3c315f15ccfcff40"
+    },
+    {
+      "path": "Game/assets/images/ui/Font_sys.png",
+      "sha256": "db0c72726fed6edcf2b5ed953cfb3677cdda8ce6d8c57162f01f9be2cec10e89"
     }
   ]
 }

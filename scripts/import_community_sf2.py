@@ -80,14 +80,16 @@ def main():
                 pixels = b''.join(struct.pack('<I', (0xff000000|(r<<16)|(g<<8)|b) if a>=128 else 0) for r,g,b,a in im.getdata())
                 records.append(struct.pack('<7H',character,pose,frame['ticks'],w,h,ax,ay)+pixels)
     portraits=Image.open(source / 'Game/assets/images/ui/portraits.png').convert('RGBA')
-    for character,rect in enumerate(((0,0,105,141),(124,0,232,141),(247,183,350,315),(0,173,105,315))):
+    portrait_rects=[(0,0,105,141),(124,0,232,141),(247,183,350,315),(0,173,105,315)]
+    portrait_rects += [entry['portrait']['rect'] for entry in mapping['characters'][4:]]
+    for character,rect in enumerate(portrait_rects):
         im=portraits.crop(rect);w,h=im.size
         pixels=b''.join(struct.pack('<I',(0xff000000|(r<<16)|(g<<8)|b) if a>=128 else 0) for r,g,b,a in im.getdata())
         records.append(struct.pack('<7H',character,15,60,w,h,w//2,h)+pixels)
-    for character,entry in enumerate(mapping['characters'][4:],4):
-        im=portraits.crop(entry['portrait']['rect']);w,h=im.size
+        # Fixed HUD slot, using the original portrait with nearest sampling.
+        im=im.resize((20,26),Image.Resampling.NEAREST)
         pixels=b''.join(struct.pack('<I',(0xff000000|(r<<16)|(g<<8)|b) if a>=128 else 0) for r,g,b,a in im.getdata())
-        records.append(struct.pack('<7H',character,15,60,w,h,w//2,h)+pixels)
+        records.append(struct.pack('<7H',character,40,1,20,26,0,0)+pixels)
     im=Image.open(source / 'Game/assets/images/ui/character_selection.png').convert('RGBA').crop((0,0,192,112))
     pixels=b''.join(struct.pack('<I',(0xff000000|(r<<16)|(g<<8)|b) if a>=128 else 0) for r,g,b,a in im.getdata())
     records.append(struct.pack('<7H',0,16,60,192,112,0,0)+pixels)
@@ -121,10 +123,12 @@ def main():
         # W spans two atlas cells; X through 9 follow the extra cell.
         j=i+(i>=23)
         ui(18,'Font_Big.png',(j*17+(2 if i==22 else 0),0,j*17+(26 if i==22 else 17),15))
+        ui(42,'Font_sys.png',(i*8,0,(i+1)*8,8))
     ui(19,'fight_ui.png',(137,0,173,18))
     ui(26,'vs_mode-game_over.png',(71,116,125,170))
     ui(27,'logo2.png',(269,53,337,132),component=True)
     ui(28,'logo2.png',(20,1484,261,1496))
+    ui(41,'fight_ui.png',(63,38,80,58))
     append_alpha(records,out)
     (out / 'sprites.dat').write_bytes(b'WWA1'+struct.pack('<H',len(records))+b''.join(records))
     # These are original ripped effects, including the FM menu sound.

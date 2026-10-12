@@ -154,6 +154,16 @@ static void test_practice_menu(void) {
   misc_game_mode=0x0e;frame(0);
   assert(!ww_practicing() && ww_score()==120 && player_current_life_count==4);
 }
+static void test_reserve_capacity(void) {
+  enter();
+  for(int k=0;k<12;k++)enemy(k,k==10?0xa0:0x0f);
+  player_current_item_box=1;frame(1024|2);
+  assert(player_current_item_box==1 && spr_spriteid[10]==0xa0 && spr_spriteid[11]==0x0f);
+  /* Once a slot opens, the same input uses the native falling-item path. */
+  frame(0);spr_current_status[11]=0;frame(1024|2);
+  assert(!player_current_item_box && spr_spriteid[11]==0x74 && spr_current_status[11]==8);
+  assert(spr_spriteid[10]==0xa0 && spr_current_status[10]==8);
+}
 static void test_castle_plungers(void) {
   for(int id=0xac;id<=0xad;id++)for(int height=8;height<=72;height+=32) {
     memset(g_ram,0,0x20000);ww_targets_reset();enemy(0,id);SetSprXYPos(0,140,80);
@@ -237,6 +247,7 @@ int main(void) {
   assert((input&1) && !ww_fight_state()->override_x);
   test_all_targets();test_progression_objects();test_castle_plungers();test_bosses();
   test_mount_and_perfect();test_scenery();test_combo_score();test_psycho_exits();test_practice_menu();
+  test_reserve_capacity();
   fc_audio_shutdown();SDL_Quit();puts("SMW bridge: broad targeting, progression objects, boss deaths, slot reuse, hurt, movement, transitions, KO and pause passed.");
   return 0;
 }

@@ -2,6 +2,7 @@
 #include "ww_targets.h"
 #include "ww_title.h"
 #include "ww_score.h"
+#include "ww_hud.h"
 #include "ww_finalboss.h"
 #include "fight.h"
 #include "draw.h"
@@ -37,7 +38,7 @@ void ww_init(void) {
   level_hurt=perfect_announced=tongue_pressed=false;
   psycho_was_active=psycho_safe=false;
   boss_practice=false;
-  ww_targets_reset();ww_title_reset();ww_final_reset();
+  ww_targets_reset();ww_title_reset();ww_final_reset();ww_hud_reset();
   const char *sprites=getenv("WW_SPRITES");
   fc_assets_load(sprites?sprites:"sf2/sprites.dat");
   const char *audio=getenv("WW_AUDIO_DIR");
@@ -184,6 +185,12 @@ bool ww_before_frame(uint32_t *inputs) {
   }
   /* No cape/fire form; pickups and the underlying level logic still execute. */
   player_current_power_up=1;
+  if((b&FC_GUARD) && (edge&FC_PUNCH) && player_current_item_box) {
+    /* Select is now Back/Pause. Keep the visible reserve usable on a pad,
+     * without letting the native full-slot fallback overwrite a boss. */
+    for(int k=11;k>=0;k--)if(!spr_current_status[k]) { DropReservedItem();break; }
+    b&=~FC_PUNCH;edge&=~FC_PUNCH;
+  }
   FcTarget targets[WW_TARGET_COUNT];ww_targets_collect(&fight,targets);
   FcBody player=body();
   if(!fc_busy(&fight) && !!(b&FC_LEFT)!=!!(b&FC_RIGHT)) {
@@ -381,9 +388,8 @@ void ww_render(uint8_t *pixels,size_t pitch,int width,int height) {
     fc_fighter(c,&drawing,x,feet,1,0);
   }
   fc_effects(c,&fight,mirror_current_layer1_xpos,mirror_current_layer1_ypos);
-  fc_battle_hud(c,&fight,ww_opponent());
-  if(fight.hp>0 && !ww_opponent()->ko_timer)
-    fc_score_hud(c,ww_score(),ww_high_score(),ww_opponent()->active);
+  FcStageHud hud=ww_stage_hud();
+  fc_battle_hud(c,&fight,ww_opponent(),&hud);
   if(timer_end_level && !misc_currently_active_boss_end_cutscene)fc_level_clear(c,fight.character,ww_perfect_clear());
   if(menu==2)fc_pause(c,pause_choice,true);
 }

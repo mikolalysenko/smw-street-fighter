@@ -33,6 +33,7 @@ def prepare():
         shutil.copyfile(ROOT / 'src' / file, dest / 'src' / file)
     for file in ('ww_smw.c', 'ww_smw.h', 'ww_targets.c', 'ww_targets.h',
                  'ww_title.c', 'ww_title.h', 'ww_score.c', 'ww_score.h',
+                 'ww_hud.c', 'ww_hud.h',
                  'ww_finalboss.c', 'ww_finalboss.h'):
         shutil.copyfile(ROOT / 'adapters/smw' / file, dest / 'src' / file)
     def patch(file, changes):

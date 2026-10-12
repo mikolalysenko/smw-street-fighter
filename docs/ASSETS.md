@@ -29,14 +29,18 @@ effects/voices. `config/community-assets.json` pins the source revision and
 SHA-256 of each downloaded file. `config/sf2-sprites.json` records each selected
 frame rectangle and the prototype's animation duration.
 
-`scripts/import_community_sf2.py` packs 1031 frame records (including repeated
+`scripts/import_community_sf2.py` packs 1080 frame records (including repeated
 frames, crouching attacks, portraits, original fonts, KO lettering, countdown
-lamps, victory poses, map, original title II/subtitle and Alpha effects), 34 effects/voices and the selection/continue music.
+lamps, victory poses, map, original title II/subtitle, small HUD portraits,
+system font, round markers and Alpha effects), 34 effects/voices and the selection/continue music.
 It does not generate replacement
 art. All twelve SF2 fighters render at half arcade size to fit Mario's
 levels. Cropping, nearest-neighbor scaling, foot anchors and animation timings
 are adaptations. These sheets are SF2-family community rips, not a verified
 frame-for-frame `sf2ua` extraction; variants and palette differences are possible.
+The HUD's coins, bonus stars and four reserve items are decoded from SMW's
+original common graphics and palettes into private buffers. They remain correct
+when boss rooms replace the live VRAM with Mode 7 art.
 Chun-Li's missing idle and walk clips come from the original SF2 animations at
 [The Fighters Generation](https://www.fightersgeneration.com/characters/chunli-a2.html).
 Her standing punch comes from
