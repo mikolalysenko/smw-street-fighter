@@ -51,6 +51,11 @@ the package, removes build-time library paths, boots twice and verifies save RAM
 It does not use or modify personal saves. Desktop saves use SDL's per-user data
 directory; `WW_SAVE_DIR` is an isolated test override.
 
+`python3 dev/package_bazzite.py [linux.tar.gz]` repackages the Linux x86-64 build
+with Steam library art from `media/steam` (regenerate with
+`dev/media/steam_art.py`) and an `install.sh` that installs to `~/Games` and
+adds a non-Steam shortcut with that art.
+
 ## Tests and publishing
 
 ```sh
