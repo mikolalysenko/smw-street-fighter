@@ -11,7 +11,8 @@ static void fixture(int width,int truncate,int trailing) {
   for(unsigned i=0;i<7;i++)word(f,header[i]);
   const unsigned pixels[]={0xffff0000,0,0xff00ff00,0xff0000ff};
   for(int i=0;i<(truncate?3:4);i++){word(f,pixels[i]);word(f,pixels[i]>>16);}
-  if(trailing)fputc(1,f);fclose(f);
+  if(trailing)fputc(1,f);
+  fclose(f);
 }
 int main(void) {
   uint32_t p[8];for(int i=0;i<8;i++)p[i]=0x12345678;
