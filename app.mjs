@@ -1,7 +1,7 @@
-import createWorldWarrior from './game.mjs?v=20261012-080044';
-import {keyMap,gamepadButtons} from './input.mjs?v=20261012-080044';
-import {createPresenter} from './presenter.mjs?v=20261012-080044';
-import {installTouchControls} from './touch.mjs?v=20261012-080044';
+import createWorldWarrior from './game.mjs?v=20261012-132724';
+import {keyMap,gamepadButtons} from './input.mjs?v=20261012-132724';
+import {createPresenter} from './presenter.mjs?v=20261012-132724';
+import {installTouchControls} from './touch.mjs?v=20261012-132724';
 
 const $=selector=>document.querySelector(selector);
 const status=$('#status'), play=$('#play'), cabinet=$('#cabinet');
@@ -54,6 +54,7 @@ function renderAudio() {
 }
 async function start() {
   if(!game)return;
+  $('#teaser-video')?.pause();
   const Audio=window.AudioContext||window.webkitAudioContext;
   if(!audioContext && Audio) {
     audioContext=new Audio({latencyHint:'interactive'});
@@ -95,14 +96,15 @@ function animate(now) {
 }
 window.addEventListener('keydown',event=>{
   if(event.ctrlKey || event.metaKey || event.altKey || !keyMap[event.code])return;
-  if(event.target instanceof HTMLButtonElement && event.code==='Enter')return;
+  if(event.target.closest?.('a,button,input,textarea,select,video'))return;
   event.preventDefault();
   if(!running && game) {start().catch(failure);}
   if(!held.has(event.code))pending|=keyMap[event.code];
   held.add(event.code);
 });
 window.addEventListener('keyup',event=>{
-  held.delete(event.code);if(keyMap[event.code])event.preventDefault();
+  held.delete(event.code);
+  if(keyMap[event.code] && !event.target.closest?.('a,button,input,textarea,select,video'))event.preventDefault();
 });
 window.addEventListener('blur',()=>{held.clear();pending=0;});
 document.addEventListener('visibilitychange',()=>{
@@ -115,6 +117,10 @@ document.addEventListener('visibilitychange',()=>{
 });
 window.addEventListener('pagehide',save);
 play.onclick=()=>start().catch(failure);
+$('#teaser-video')?.addEventListener('play',()=>{
+  running=false;held.clear();pending=0;touch.clear();clearAudio();save();
+  play.hidden=false;play.textContent=started?'RESUME':'PLAY';
+});
 async function expand() {
   try {
     if(document.fullscreenElement)await document.exitFullscreen();
@@ -143,10 +149,10 @@ $('#export').onclick=()=>{
 try {
   presenter=await createPresenter($('#screen'),kind=>{
     document.documentElement.dataset.renderer=kind;
-    status.textContent=kind+(game?' · WASM · 20261012-080044':' · Loading original game assets…');
+    status.textContent=kind+(game?' · WASM · 20261012-132724':' · Loading original game assets…');
   });
   game=await createWorldWarrior({
-    locateFile:path=>path+'?v=20261012-080044',
+    locateFile:path=>path+'?v=20261012-132724',
     printErr:message=>console.warn(message),
   });
   game._ww_web_set_debug(debug?1:0);
@@ -155,7 +161,7 @@ try {
   const pointer=game._ww_web_pixels();presenter.draw(game.HEAPU8.subarray(pointer,pointer+256*224*4));
   play.disabled=false;play.textContent='PLAY';
   $('#export').disabled=false;
-  status.textContent=presenter.kind+' · WASM · 20261012-080044';
+  status.textContent=presenter.kind+' · WASM · 20261012-132724';
   requestAnimationFrame(animate);
 } catch(error) {failure(error);}
 
