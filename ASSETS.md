@@ -92,6 +92,8 @@ as Kikoken, 4,2 as the rapid-kick cry, and 1,3 as the swish. These are supplemen
 CvS-era samples, not World Warrior recordings. `config/chunli-audio.json` pins
 the archive and each extracted WAV; `scripts/chunli_audio.py` reads only the
 SND data, without executing the character scripts. Extraction needs bsdtar.
+The mixer attenuates Kikoken and its layered rapid-kick samples before clipping
+so their levels match the other fighters' voices.
 
 Supers and their gauge are new Alpha-inspired mechanics using SF2 animation
 frames and voices, with the original Alpha activation effect and audio described below.
@@ -130,6 +132,16 @@ SF2 II and “The World Warrior” art are transparent crops of the pinned
 The start prompt and high score use the original SF2 font sheet.
 
 ## Paths and notices
+
+Character endings are described in `config/endings.json`. Seven new illustrations
+were made with the built-in image generation tool and are tracked under
+`assets/endings/`: Honda, Blanka, Zangief, Dhalsim, Balrog, Sagat and Bison.
+The shared prompt and per-character scene briefs are preserved in that manifest.
+These are new fan illustrations, not original game ending rips. The remaining
+five endings use the pinned SF2 victory sprites over custom code-drawn scenery
+in `ww_ending.c`, as an interim choice. `scripts/ending_assets.py` packs the
+illustrations at 256×144 with nearest sampling and generates their caption table.
+Their fictional character designs remain associated with the respective owners.
 
 - `local/smw-rebuilt.sfc`: rebuilt original data, ignored.
 - `local/smw_assets.dat`: extracted SMW runtime data, ignored.

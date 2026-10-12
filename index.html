@@ -1,7 +1,9 @@
 <!doctype html>
 <html lang="en">
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#080b22">
 <title>Super Mario World II — The World Warrior</title>
 <link rel="stylesheet" href="style.css">
@@ -10,17 +12,25 @@
   <section id="cabinet" aria-label="Super Mario World II — The World Warrior">
     <canvas id="screen" width="256" height="224" tabindex="0" aria-label="Game screen. Press Enter to start. Arrow keys move, Z jumps, X punches, A performs a special, S performs a super."></canvas>
     <button id="play" class="play" disabled>LOADING…</button>
+    <div id="touch-controls" hidden aria-label="Touch game controls">
+      <div class="touch-menu"><button data-key="Escape" aria-label="Back">BACK</button><button data-key="Enter" aria-label="Start or pause">START</button><button id="touch-expand" aria-label="Expand or restore game">EXPAND</button></div>
+      <div class="touch-dpad" data-dpad aria-label="Movement pad; slide for diagonals">
+        <button data-key="ArrowUp" aria-label="Up">▲</button><button data-key="ArrowLeft" aria-label="Left">◀</button><span></span><button data-key="ArrowRight" aria-label="Right">▶</button><button data-key="ArrowDown" aria-label="Down">▼</button>
+      </div>
+      <div class="touch-actions"><button data-key="KeyD">GUARD</button><button data-key="KeyA">SPECIAL</button><button data-key="KeyS">SUPER</button><button data-key="KeyX">PUNCH</button><button data-key="KeyC">KICK</button><button data-key="KeyZ" class="touch-jump">JUMP</button></div>
+    </div>
   </section>
   <nav aria-label="Game controls"><span id="status" role="status">Loading…</span><div><button id="pause">PAUSE</button><button id="mute">SOUND ON</button><button id="fullscreen">FULLSCREEN</button></div></nav>
   <section class="controls" aria-label="How to play">
+    <p class="phone-help"><strong>TOUCH</strong><span>Hold the direction pad and an attack together. Slide diagonally for special motions. START opens menus; JUMP confirms. Turn your phone sideways for a larger play area.</span></p>
     <p><strong>KEYBOARD</strong><span><kbd>← ↑ ↓ →</kbd> Move <kbd>Z</kbd> Jump <kbd>X</kbd> Punch <kbd>C</kbd> Kick</span><span><kbd>↓ X / C</kbd> Crouching attacks <kbd>A</kbd> Special <kbd>↑ A</kbd> Alternate <kbd>S</kbd> Super <kbd>D</kbd> Guard <kbd>Enter</kbd> Start</span></p>
     <p><strong>CONTROLLER</strong><span>D-pad / stick · Move &nbsp; A · Jump &nbsp; X · Punch &nbsp; B · Kick</span><span>Y · Special &nbsp; RB · Super &nbsp; LB · Guard &nbsp; Start · Pause</span></p>
     <p><strong>EXPLORING</strong><span>Hold Down, then Jump · charged high jump. Walk into keys / shells to carry them; Guard + Punch releases, Down drops, Up throws.</span><span>Mobility specials: one per jump; land, swim or climb to reset. Zangief: Up + Special grabs; Super can grab Akuma and his car. Slam damage happens on landing.</span></p>
-    <p><strong>SPECIAL MOVES</strong><span>Ryu / Ken: Down + Special · Hurricane Kick. Ryu: three bars + Super · Shinku beam. Bison: three bars + Super · full-stage Psycho Crusher; Up / Down steer, Guard lands.</span><span>Mushroom · +1 bar. Fire Flower · +2 bars. Feather · +3 bars. Honda: tap Punch · hand slaps. Chun-Li: tap Kick · lightning legs; Special · Kikoken. Blanka: tap Down + Special · electricity.</span><span>Pause → Akuma Battle · jump to the final fight with full health and three bars.</span></p>
+    <p><strong>SPECIAL MOVES</strong><span>Ryu / Ken: Down + Special · Hurricane Kick. Ryu: three bars + Super · Shinku beam. Bison: three bars + Super · full-stage Psycho Crusher; Up / Down steer, Guard lands.</span><span>Mushroom · +1 bar. Fire Flower · +2 bars. Feather · +3 bars. Honda: tap Punch · hand slaps. Chun-Li: tap Kick · lightning legs; Special · Kikoken. Blanka: tap Down + Special · electricity.</span><span data-debug hidden>Pause → Akuma Battle · jump to the final fight with full health and three bars.</span></p>
     <p><strong>HUD</strong><span>1P · Mario score &nbsp; HI · Saved record &nbsp; TIME · Level timer &nbsp; Portrait × · Lives</span><span>Five medals · Dragon Coins &nbsp; Star · Bonus stars &nbsp; Right bar · Coins to 1UP / boss health</span></p>
-    <p><strong>COUNTERS</strong><span>Tap Guard just before a frontal hit · parry for no damage and extra meter. Holding Guard blocks with chip damage.</span><span>Akuma: punch, kick or parry fireballs back at him. Bounce on the clown car's rim for an aerial follow-up. Watch for slam markers, charge wind-ups and warp silhouettes; attack during recovery.</span></p>
+    <p><strong>COUNTERS</strong><span>Tap Guard just before a frontal hit · parry for no damage and extra meter. Holding Guard blocks with chip damage. Down + Guard crouch-blocks.</span><span>Akuma: punch, kick or parry fireballs back at him. Bounce on the clown car's rim for an aerial follow-up. Watch for slam markers, charge wind-ups and warp silhouettes; attack during recovery.</span></p>
   </section>
   <footer><span id="save-status">Progress and high score persist in this browser.</span><button id="export" disabled>EXPORT SAVE</button></footer>
 </main>
-<script type="module" src="app.mjs?v=20261012-062049"></script>
+<script type="module" src="app.mjs?v=20261012-080044"></script>
 </html>

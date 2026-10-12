@@ -41,7 +41,7 @@ if (ENVIRONMENT_IS_NODE) {
 
 // --pre-jses are emitted after the Module integration code, so that they can
 // refer to Module (if they choose; they can also define Module)
-// include: /var/folders/k8/ht4rgp0d7jj_fxhhwjg3tmr00000gn/T/tmpvj4qw8kt.js
+// include: /var/folders/k8/ht4rgp0d7jj_fxhhwjg3tmr00000gn/T/tmp4a3v_5do.js
 if (!Module["expectedDataFileDownloads"]) Module["expectedDataFileDownloads"] = 0;
 
 Module["expectedDataFileDownloads"]++;
@@ -323,17 +323,17 @@ Module["expectedDataFileDownloads"]++;
     }, {
       "filename": "/sf2/sprites.dat",
       "start": 10595082,
-      "end": 69765800
+      "end": 71245792
     }, {
       "filename": "/smw_assets.dat",
-      "start": 69765800,
-      "end": 70121668
+      "start": 71245792,
+      "end": 71601660
     } ],
-    "remote_package_size": 70121668
+    "remote_package_size": 71601660
   });
 }))();
 
-// end include: /var/folders/k8/ht4rgp0d7jj_fxhhwjg3tmr00000gn/T/tmpvj4qw8kt.js
+// end include: /var/folders/k8/ht4rgp0d7jj_fxhhwjg3tmr00000gn/T/tmp4a3v_5do.js
 var programArgs = [];
 
 var thisProgram = "./this.program";
@@ -7888,7 +7888,7 @@ Module["FS_createLazyFile"] = FS_createLazyFile;
 // End JS library exports
 // end include: postlibrary.js
 var ASM_CONSTS = {
-  401697: () => {
+  403089: () => {
     if (typeof (AudioContext) !== "undefined") {
       return true;
     } else if (typeof (webkitAudioContext) !== "undefined") {
@@ -7896,7 +7896,7 @@ var ASM_CONSTS = {
     }
     return false;
   },
-  401844: () => {
+  403236: () => {
     if ((typeof (navigator.mediaDevices) !== "undefined") && (typeof (navigator.mediaDevices.getUserMedia) !== "undefined")) {
       return true;
     } else if (typeof (navigator.webkitGetUserMedia) !== "undefined") {
@@ -7904,7 +7904,7 @@ var ASM_CONSTS = {
     }
     return false;
   },
-  402078: $0 => {
+  403470: $0 => {
     if (typeof (Module["SDL2"]) === "undefined") {
       Module["SDL2"] = {};
     }
@@ -7928,11 +7928,11 @@ var ASM_CONSTS = {
     }
     return SDL2.audioContext === undefined ? -1 : 0;
   },
-  402630: () => {
+  404022: () => {
     var SDL2 = Module["SDL2"];
     return SDL2.audioContext.sampleRate;
   },
-  402698: ($0, $1, $2, $3) => {
+  404090: ($0, $1, $2, $3) => {
     var SDL2 = Module["SDL2"];
     var have_microphone = function(stream) {
       if (SDL2.capture.silenceTimer !== undefined) {
@@ -7974,7 +7974,7 @@ var ASM_CONSTS = {
       }, have_microphone, no_microphone);
     }
   },
-  404391: ($0, $1, $2, $3) => {
+  405783: ($0, $1, $2, $3) => {
     var SDL2 = Module["SDL2"];
     SDL2.audio.scriptProcessorNode = SDL2.audioContext["createScriptProcessor"]($1, 0, $0);
     SDL2.audio.scriptProcessorNode["onaudioprocess"] = function(e) {
@@ -8006,7 +8006,7 @@ var ASM_CONSTS = {
       SDL2.audio.silenceTimer = setInterval(silence_callback, ($1 / SDL2.audioContext.sampleRate) * 1e3);
     }
   },
-  405566: ($0, $1) => {
+  406958: ($0, $1) => {
     var SDL2 = Module["SDL2"];
     var numChannels = SDL2.capture.currentCaptureBuffer.numberOfChannels;
     for (var c = 0; c < numChannels; ++c) {
@@ -8025,7 +8025,7 @@ var ASM_CONSTS = {
       }
     }
   },
-  406171: ($0, $1) => {
+  407563: ($0, $1) => {
     var SDL2 = Module["SDL2"];
     var buf = $0 >>> 2;
     var numChannels = SDL2.audio.currentOutputBuffer["numberOfChannels"];
@@ -8039,7 +8039,7 @@ var ASM_CONSTS = {
       }
     }
   },
-  406660: $0 => {
+  408052: $0 => {
     var SDL2 = Module["SDL2"];
     if ($0) {
       if (SDL2.capture.silenceTimer !== undefined) {
@@ -8073,7 +8073,7 @@ var ASM_CONSTS = {
       SDL2.audioContext = undefined;
     }
   },
-  407666: ($0, $1, $2) => {
+  409058: ($0, $1, $2) => {
     var w = $0;
     var h = $1;
     var pixels = $2;
@@ -8144,7 +8144,7 @@ var ASM_CONSTS = {
     }
     SDL2.ctx.putImageData(SDL2.image, 0, 0);
   },
-  409132: ($0, $1, $2, $3, $4) => {
+  410524: ($0, $1, $2, $3, $4) => {
     var w = $0;
     var h = $1;
     var hot_x = $2;
@@ -8181,26 +8181,27 @@ var ASM_CONSTS = {
     stringToUTF8(url, urlBuf, url.length + 1);
     return urlBuf;
   },
-  410120: $0 => {
+  411512: $0 => {
     if (Module["canvas"]) {
       Module["canvas"].style["cursor"] = UTF8ToString($0);
     }
   },
-  410203: () => {
+  411595: () => {
     if (Module["canvas"]) {
       Module["canvas"].style["cursor"] = "none";
     }
   },
-  410272: () => window.innerWidth,
-  410302: () => window.innerHeight
+  411664: () => window.innerWidth,
+  411694: () => window.innerHeight
 };
 
 // Imports from the Wasm binary.
-var _malloc, _ww_web_init, _ww_web_step, _ww_web_pixels, _ww_web_audio, _ww_web_sram, _ww_web_sram_size, _ww_web_state, _setThrew, __emscripten_stack_restore, __emscripten_stack_alloc, _emscripten_stack_get_current, memory, __indirect_function_table, wasmMemory, wasmTable;
+var _malloc, _ww_web_init, _ww_web_set_debug, _ww_web_step, _ww_web_pixels, _ww_web_audio, _ww_web_sram, _ww_web_sram_size, _ww_web_state, _setThrew, __emscripten_stack_restore, __emscripten_stack_alloc, _emscripten_stack_get_current, memory, __indirect_function_table, wasmMemory, wasmTable;
 
 function assignWasmExports(wasmExports) {
   _malloc = wasmExports["malloc"];
   _ww_web_init = Module["_ww_web_init"] = wasmExports["ww_web_init"];
+  _ww_web_set_debug = Module["_ww_web_set_debug"] = wasmExports["ww_web_set_debug"];
   _ww_web_step = Module["_ww_web_step"] = wasmExports["ww_web_step"];
   _ww_web_pixels = Module["_ww_web_pixels"] = wasmExports["ww_web_pixels"];
   _ww_web_audio = Module["_ww_web_audio"] = wasmExports["ww_web_audio"];
