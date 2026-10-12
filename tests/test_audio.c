@@ -11,7 +11,7 @@ static double energy(int frames) {
   }
   return total;
 }
-static void expect_sample(const char *name,FcMove move) {
+static void expect_sample(const char *name,FcMove move,float gain) {
   /* Compare the mixer with the actual imported clip: silence/energy alone
    * would miss an accidental mapping back to Spinning Bird Kick or a grunt. */
   char path[128];snprintf(path,sizeof(path),"local/sf2/audio/%s.wav",name);
@@ -25,7 +25,7 @@ static void expect_sample(const char *name,FcMove move) {
   fc_audio_play(FC_SND_SPECIAL);
   float actual[2048];fc_audio_mix(actual,1024);assert(size/4>=1024);
   for(int i=0;i<1024;i++) {
-    float v=fmaxf(-0.85f,fminf(0.85f,expected[i]))*0.5f;
+    float v=fmaxf(-0.85f,fminf(0.85f,expected[i]*gain))*0.5f;
     assert(fabsf(actual[i*2]-v)<0.00001f && actual[i*2]==actual[i*2+1]);
   }
   SDL_free(cvt.buf);energy(180);
@@ -48,9 +48,9 @@ int main(void) {
   fc_audio_play(FC_SND_SPECIAL);assert(energy(180)>1); /* Shinku release voice. */
   f.character=FC_CHUNLI;f.move=FC_PROJECTILE;fc_audio_context(&f);
   fc_audio_play(FC_SND_SPECIAL);assert(energy(180)>1);
-  expect_sample("kikoken",FC_PROJECTILE);
-  expect_sample("lightning_kick",FC_FLURRY);
-  expect_sample("bird",FC_SPIN);
+  expect_sample("kikoken",FC_PROJECTILE,0.45f);
+  expect_sample("lightning_kick",FC_FLURRY,0.45f);
+  expect_sample("bird",FC_SPIN,1.0f);
   f.character=FC_BISON;f.move=FC_SUPER_MOVE;fc_audio_context(&f);
   fc_audio_play(FC_SND_SPECIAL);assert(energy(180)>1);
   fc_audio_shutdown();SDL_Quit();puts("Audio: KO voice, fighter death, selection loop, continue music and stop passed.");

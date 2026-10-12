@@ -23,7 +23,7 @@ void fc_battle_hud(FcCanvas c,const FcFight *f,const FcOpponent *opponent,const 
 void fc_selection(FcCanvas c,int choice,unsigned tick,bool compact);
 void fc_title(FcCanvas c,unsigned tick,unsigned high_score);
 void fc_title_art(FcCanvas c,unsigned high_score);
-void fc_pause(FcCanvas c,int choice,bool boss_shortcut);
+void fc_pause(FcCanvas c,int choice,int item_count);
 void fc_continue(FcCanvas c,int character,int ticks);
 void fc_level_clear(FcCanvas c,int character,bool perfect);
 void fc_dim(FcCanvas c,int amount);

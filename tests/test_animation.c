@@ -24,8 +24,8 @@ int main(void) {
    * including the opposite horizontal sampling phase when mirrored. */
   for(int c=0;c<FC_ROSTER_COUNT;c++)for(int facing=-1;facing<=1;facing+=2) {
     int poses[]={FC_POSE_IDLE,FC_POSE_WALK,FC_POSE_DUCK,FC_POSE_PUNCH,FC_POSE_KICK,
-      FC_POSE_CROUCH_PUNCH,FC_POSE_CROUCH_KICK,FC_POSE_RUSH,FC_POSE_RISE};
-    for(int p=0;p<(c==FC_BALROG?9:7);p++)for(unsigned t=0;t<fc_sprite_duration(c,poses[p]);t++) {
+      FC_POSE_CROUCH_PUNCH,FC_POSE_CROUCH_KICK,FC_POSE_CROUCH_GUARD,FC_POSE_RUSH,FC_POSE_RISE};
+    for(int p=0;p<(c==FC_BALROG?10:8);p++)for(unsigned t=0;t<fc_sprite_duration(c,poses[p]);t++) {
       memset(pixels,0,sizeof(pixels));
       fc_sprite((FcCanvas){pixels,192,160,192},c,poses[p],t,96,130,facing,1,2,0);
       int bottom=0;
@@ -67,6 +67,14 @@ int main(void) {
       }
     }
     body.grounded=true;
+    FcFight low;fc_init(&low,c);int hp=low.hp;
+    for(int t=0;t<9;t++)fc_tick(&low,FC_DOWN|FC_GUARD,body,NULL,0);
+    assert(low.guarding && low.crouching_guard && fc_animation(&low).pose==FC_POSE_CROUCH_GUARD);
+    render(&low);assert(fc_hurt(&low,16,facing) && low.hp==hp-2);
+    for(int t=0;t<10;t++) {
+      assert(fc_animation(&low).pose==FC_POSE_CROUCH_GUARD);
+      fc_tick(&low,FC_DOWN|FC_GUARD,body,NULL,0);
+    }
     for(int move=0;move<4;move++) {
       FcFight f;fc_init(&f,c);f.meter=200;
       uint32_t buttons[]={FC_SPECIAL,FC_UP|FC_SPECIAL,FC_DOWN|FC_SPECIAL,FC_SUPER};
@@ -104,6 +112,24 @@ int main(void) {
   int air=f.air_tick,clock=f.animation_tick;f.hitstop=4;
   for(int i=0;i<4;i++)fc_tick(&f,0,body,NULL,0);
   assert(f.air_tick==air && f.animation_tick==(unsigned)clock && f.move_tick==2);
+  for(int facing=-1;facing<=1;facing+=2)for(int airborne=0;airborne<2;airborne++) {
+    body.facing=facing;body.grounded=!airborne;body.box.y=98;
+    fc_init(&f,FC_RYU);f.meter=300;
+    int charge=0,fire=0,recovery=0;
+    for(int t=0;t<150;t++) {
+      fc_tick(&f,t?0:FC_SUPER,body,NULL,0);
+      if(f.move!=FC_SUPER_MOVE)continue;
+      FcAnimation a=fc_animation(&f);assert(a.pose==FC_POSE_FIRE);render(&f);
+      if(f.move_tick<=30){assert(a.tick==2);charge++;}
+      if(f.move_tick>=33 && f.move_tick<=98){assert(a.tick==5);fire++;}
+      if(f.move_tick>=99){assert(a.tick>=18);recovery++;}
+      for(int i=0;i<FC_MAX_SHOTS;i++)if(f.shots[i].ttl) {
+        assert(f.shots[i].beam && a.tick==5);
+        assert(f.shots[i].box.y+f.shots[i].box.h/2==body.box.y+body.box.h-30);
+      }
+    }
+    assert(charge && fire && recovery && f.move==FC_IDLE);
+  }
   for(int super=0;super<2;super++) {
     fc_init(&f,FC_ZANGIEF);f.meter=300;body.grounded=true;
     for(int t=0;t<80;t++) {

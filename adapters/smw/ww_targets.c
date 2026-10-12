@@ -240,7 +240,7 @@ static int native_hp(int k,int maximum) {
   if(id==0xa9)return spr_table151c[k]?0:maximum;
   if(id==0xc5)return spr_table00c2[k]==6?0:maximum*(3-(spr_table1534[k]>3?3:spr_table1534[k]))/3;
   if(id==0xa0) {
-    if(ww_final_controls(k))return ww_final_phase()==WW_FINAL_END?0:maximum;
+    if(ww_final_controls(k))return ww_final_phase()>=WW_FINAL_END?0:maximum;
     int phase=spr_table151c[k];
     if(phase>=4 && phase<=6)return 0;
     if(phase>=7 && phase<=9 && spr_table187b[k]<=2)
@@ -449,6 +449,46 @@ static bool blast_tiles(FcFight *f,FcBox box,bool large) {
     }
   return false;
 }
+static bool strike_block(FcFight *f,int x,int y) {
+  unsigned tile=map_tile(x,y);
+  if(tile<0x100)return false;
+  /* An existing bounce owns this block until it restores its Map16 tile.
+   * Do not dispense its contents twice when another strike overlaps it. */
+  for(int i=0;i<4;i++)if(bounce_spr_spriteid[i] &&
+      ((bounce_spr_xpos_lo[i]|(bounce_spr_xpos_hi[i]<<8))&~15)==x &&
+      ((bounce_spr_ypos_lo[i]|(bounce_spr_ypos_hi[i]<<8))&~15)==y)return true;
+  uint16 old_x=blocks_xpos,old_y=blocks_ypos;
+  uint8 old_layer=misc_current_layer_being_processed,old_tile=blocks_map16_to_generate;
+  blocks_xpos=x;blocks_ypos=y;misc_current_layer_being_processed=0;
+  if(tile==0x130 || tile==0x132) {
+    SpawnBrickPieces(0);blocks_map16_to_generate=2;GenerateTile();
+    io_sound_ch3=7;
+  } else if((tile>=0x111 && tile<=0x12d) || tile==0x16a || tile==0x16b) {
+    /* The normal upward-hit path preserves coins, powerups, switches,
+     * vines and item memory. Side-bounce blocks use their native direction. */
+    CheckIfBlockWasHit((uint8)tile,tile==0x12a || tile==0x12b?(f->facing>0?1:2):0);
+  }
+  blocks_xpos=old_x;blocks_ypos=old_y;
+  misc_current_layer_being_processed=old_layer;blocks_map16_to_generate=old_tile;
+  fc_explode(f,x+8,y+8,false);f->events|=FC_SND_HIT;
+  return true;
+}
+static void normal_blocks(FcFight *f) {
+  bool kick=f->move==FC_ROUNDHOUSE;
+  int reach=kick?29:18;
+  if(f->character==FC_DHALSIM)reach=kick?(f->air_attack?88:f->crouching_attack?40:82):
+    f->air_attack?72:f->crouching_attack?88:96;
+  if(f->character==FC_VEGA)reach+=12;
+  int feet=(int)(f->body.box.y+f->body.box.h+f->sprite_y_offset);
+  int top=feet-(f->crouching_attack?(kick?9:14):32);
+  int edge=(int)(f->body.box.x+(f->facing>0?f->body.box.w:0));
+  int first=(edge+(f->facing>0?0:-1))&~15;
+  for(int distance=0;distance<reach;distance+=16) {
+    int x=first+f->facing*distance;bool solid=false;
+    for(int y=top&~15;y<feet-1;y+=16)solid=strike_block(f,x,y)||solid;
+    if(solid)break; /* A punch cannot collect items through a wall. */
+  }
+}
 void ww_scenery_hits(FcFight *f) {
   if(f->frozen)return;
   for(int i=0;i<FC_MAX_SHOTS;i++) {
@@ -459,7 +499,9 @@ void ww_scenery_hits(FcFight *f) {
     FcBox nose={p->box.x+(p->vx>0?p->box.w:0),p->box.y+p->box.h/2,1,1};
     p->scenery_hit=blast_tiles(f,nose,p->super);
   }
-  if(f->move && f->move!=FC_PROJECTILE && !fc_piledriver(f) && f->move_tick==4) {
+  if((f->move==FC_JAB && f->move_tick==4) || (f->move==FC_ROUNDHOUSE && f->move_tick==7))
+    normal_blocks(f);
+  else if(f->move>FC_ROUNDHOUSE && f->move!=FC_PROJECTILE && !fc_piledriver(f) && f->move_tick==4) {
     FcBox b=f->body.box;
     FcBox fist={b.x+(f->facing>0?b.w+16:-16),b.y+b.h/2,1,1};
     blast_tiles(f,fist,f->move==FC_SUPER_MOVE);

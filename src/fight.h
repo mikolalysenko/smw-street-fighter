@@ -63,7 +63,7 @@ typedef struct {
   int combo, combo_timer, ko_timer, buffer_timer;
   int charge_left, charge_right, charge_down, left_grace, right_grace, down_grace;
   int mash_count, mash_timer, rapid_timer, motion_count;
-  bool guarding, move_hit, frozen;
+  bool guarding, crouching_guard, move_hit, frozen;
   bool override_x, override_y;
   float velocity_x, velocity_y;
   uint64_t melee_mask;
@@ -100,6 +100,7 @@ bool fc_overlap(FcBox a, FcBox b);
 bool fc_motion(const FcFight *f, const uint8_t *sequence, int count, int window);
 bool fc_busy(const FcFight *f);
 bool fc_psycho_flight(const FcFight *f);
+FcBox fc_psycho_box(const FcFight *f);
 bool fc_piledriver(const FcFight *f);
 const char *fc_move_name(const FcFight *f);
 #endif

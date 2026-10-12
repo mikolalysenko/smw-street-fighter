@@ -13,6 +13,7 @@
 static int tick,map_ticks,level_ticks,selected,select_ticks,menu_ticks,action,action_tick;
 static int home_x,home_y,started,done,flight_ticks,flight_start,flight_end;
 static int saw_move,saw_hit,saw_shot,saw_air,selections;
+static int flight_prev_x,flight_prev_y,goal_jump,goal_jump_air;
 enum { ACTION_COUNT=17 };
 static const uint32_t actions[]={0,2,256,32|2,32|256,512,16|512,32|512,2048};
 int ww_upstream_main(int,char**);
@@ -51,6 +52,12 @@ uint32_t ww_test_input(void) {
       player_xspeed=player_yspeed=0;player_in_air_flag=0;flight_start=player_xpos;
     }
     ++flight_ticks;
+    if(flight_ticks>30 && !timer_end_level) {
+      int dx=(int)player_xpos-flight_prev_x,dy=(int)player_ypos-flight_prev_y;
+      assert(dx>=-8 && dx<=8 && dy>=-8 && dy<=8); /* No goal teleport. */
+      if(f->move==FC_IDLE){goal_jump++;goal_jump_air+=!!player_in_air_flag;}
+    }
+    flight_prev_x=player_xpos;flight_prev_y=player_ypos;
     if(flight_ticks%60==0) {
       printf("Flight %d: x=%d y=%d cam=%d screens=%d move=%d/%d boss=%d end=%d\n",flight_ticks,player_xpos,player_ypos,mirror_current_layer1_xpos,misc_screens_in_lvl,f->move,f->move_tick,ww_opponent()->active,timer_end_level);
     }
@@ -112,8 +119,8 @@ void ww_test_render(uint8_t *pixels,size_t pitch,int w,int h) {
   }
 }
 int main(void) {
-  setvbuf(stdout,NULL,_IONBF,0);char *args[]={"test-roster","--config","test-play.ini",NULL};
-  int result=ww_upstream_main(3,args);
+  setvbuf(stdout,NULL,_IONBF,0);char *args[]={"test-roster","--config","test-play.ini","--debug",NULL};
+  int result=ww_upstream_main(4,args);
   printf("Roster selected %d/12, Bison flew %d frames, native goal %d, world map %d\n",selections,flight_ticks,flight_end,done);
-  assert(selections==FC_ROSTER_COUNT && flight_end && done);return result;
+  assert(selections==FC_ROSTER_COUNT && flight_end && done && goal_jump>=25 && goal_jump_air>=25);return result;
 }

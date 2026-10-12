@@ -1,6 +1,7 @@
 /* Akuma steals the original Mode 7 clown car. The original Bowser loader,
  * roof, Peach power-ups, rescue, fireworks and credits still own progression. */
 #include "ww_finalboss.h"
+#include "ww_ending.h"
 #include "ww_smw.h"
 #include "ww_targets.h"
 #include "assets.h"
@@ -21,7 +22,7 @@ static float retreat_x;
 static int wave_damage,hurt_ticks,reflections,stomps,stomp_cooldown;
 static float target_x,charge_start;
 static bool active,captured,grappled;
-static float car_x,car_y,fall_x,fall_y;
+static float car_x,car_y,fall_x,fall_y,fall_vy;
 static uint32_t bowser[64*32];
 extern Ppu *g_ppu;
 
@@ -32,7 +33,7 @@ void ww_final_reset(void) {
   memset(shots,0,sizeof(shots));memset(bowser,0,sizeof(bowser));
 }
 bool ww_final_controls(unsigned k) { return active && slot==(int)k; }
-bool ww_final_cinematic(void) { return active && phase>=WW_FINAL_ARRIVAL && phase<=WW_FINAL_FALL; }
+bool ww_final_cinematic(void) { return active && ((phase>=WW_FINAL_ARRIVAL && phase<=WW_FINAL_FALL) || phase==WW_FINAL_KO); }
 int ww_final_phase(void) { return active?phase:-1; }
 int ww_final_tick(void) { return ticks; }
 int ww_final_attack(void) { return attack; }
@@ -291,7 +292,14 @@ void ww_final_hit_shot(unsigned i,bool reflect) {
   if(i>=12 || !shots[i].life || shots[i].reflected)return;
   if(reflect)reflect_shot(&shots[i]);else shots[i].life=0;
 }
-void ww_final_defeated(void) { if(active){next(WW_FINAL_END);memset(shots,0,sizeof(shots));} }
+void ww_final_defeated(void) {
+  if(!active || phase!=WW_FINAL_FIGHT)return;
+  next(WW_FINAL_KO);memset(shots,0,sizeof(shots));
+  fall_x=car_x+17;fall_y=car_y+22;fall_vy=-2.7f;
+  grappled=false;fire_pose=hurt_ticks=0;
+  FcFight *f=(FcFight*)ww_fight_state();
+  ww_ending_win(f->character);fc_clear_actions(f);
+}
 
 bool ww_final_step(unsigned k) {
   if(!ww_enabled())return false;
@@ -324,6 +332,11 @@ bool ww_final_step(unsigned k) {
   } else if(phase==WW_FINAL_FIGHT) {
     attack_step(k);
     if(phase==WW_FINAL_FIGHT)car_contact();
+  } else if(phase==WW_FINAL_KO) {
+    /* A short KO beat, then a Mario-style pop and gravity fall. The empty
+     * car stays put until Akuma is entirely below the screen. */
+    if(ticks>16) {fall_y+=fall_vy;fall_vy+=0.24f;fall_x+=car_x>128?-0.35f:0.35f;}
+    if(fall_y-mirror_current_layer1_ypos>260 || ticks>=150)next(WW_FINAL_END);
   }
   if(phase==WW_FINAL_END)return true;
   SetSprXYPos((uint8)k,(uint16)(int)car_x,(uint16)(int)car_y);
@@ -444,7 +457,10 @@ void ww_final_render(FcCanvas c) {
       /* Bison's stolen hat stays behind for one beat, then drops too. */
       if(ticks>12)fc_sprite(c,0,FC_POSE_BISON_HAT,0,left+30,top-8,1,1,1,0);
     }
-    if(!grappled && (phase!=WW_FINAL_END || !spra0_bowser_end_of_battle_flag)) {
+    if(phase==WW_FINAL_KO)
+      fc_sprite(c,0,FC_POSE_AKUMA_KO,0,(int)fall_x-mirror_current_layer1_xpos,
+        (int)fall_y-mirror_current_layer1_ypos,attack_facing,1,2,0);
+    if(!grappled && phase!=WW_FINAL_END && phase!=WW_FINAL_KO) {
       int pose=fire_pose?FC_POSE_AKUMA_FIRE:FC_POSE_AKUMA_PILOT;
       unsigned frame=fire_pose?20-fire_pose:ticks;
       int facing=phase==WW_FINAL_FIGHT?attack_facing:player_xpos<x?-1:1;

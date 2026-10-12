@@ -29,14 +29,19 @@ export async function createPresenter(canvas, onStatus) {
         {binding:0,resource:texture.createView()},
         {binding:1,resource:device.createSampler({magFilter:'nearest',minFilter:'nearest'})},
       ]});
-      let failure = null;
+      let failure = null,fallback=null;
       device.addEventListener('uncapturederror', event => { failure = event.error.message; });
       device.lost.then(info => { failure = info.message || 'WebGPU device lost'; });
       onStatus('WebGPU');
       return {
-        kind:'WebGPU',
+        get kind(){return fallback?'Canvas fallback':'WebGPU';},
         draw(bytes) {
-          if (failure) throw new Error(failure);
+          if(failure && !fallback) {
+            console.warn('WebGPU interrupted; switching to pixel canvas.',failure);
+            const replacement=canvas.cloneNode();canvas.replaceWith(replacement);canvas=replacement;
+            fallback=canvasPresenter(canvas,onStatus);
+          }
+          if(fallback){fallback.draw(bytes);return;}
           device.queue.writeTexture({texture},bytes,{bytesPerRow:1024,rowsPerImage:224},[256,224]);
           const encoder=device.createCommandEncoder();
           const pass=encoder.beginRenderPass({colorAttachments:[{
@@ -53,6 +58,9 @@ export async function createPresenter(canvas, onStatus) {
       const replacement=canvas.cloneNode();canvas.replaceWith(replacement);canvas=replacement;
     }
   }
+  return canvasPresenter(canvas,onStatus);
+}
+function canvasPresenter(canvas,onStatus) {
   const context=canvas.getContext('2d',{alpha:false});
   const bitmap=new ImageData(256,224);
   onStatus('Canvas fallback');

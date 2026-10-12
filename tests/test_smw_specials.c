@@ -7,7 +7,8 @@
 #include <assert.h>
 #include <stdio.h>
 static int tick,map_ticks,level_ticks,started,home_x,home_y,action,n,done,shots,beam,hits;
-static int chars[]={FC_HONDA,FC_CHUNLI,FC_BLANKA,FC_HONDA,FC_RYU,FC_KEN,FC_CHUNLI,FC_RYU,FC_RYU};
+static int chars[]={FC_HONDA,FC_CHUNLI,FC_BLANKA,FC_HONDA,FC_RYU,FC_KEN,FC_CHUNLI,FC_RYU,FC_RYU,
+  FC_DHALSIM,FC_DHALSIM,FC_DHALSIM,FC_DHALSIM};
 int ww_upstream_main(int,char**);
 uint32_t ww_test_input(void) {
   ++tick;FcFight *f=(FcFight*)ww_fight_state();
@@ -23,6 +24,10 @@ uint32_t ww_test_input(void) {
     player_in_air_flag=player_ducking_flag=player_blocked_flags=0;player_facing_direction=1;
     for(int k=0;k<12;k++)spr_current_status[k]=0;
     if(action==3){player_ypos-=60;player_in_air_flag=11;}
+    if(action>=9) {
+      player_facing_direction=action%2;
+      if(action>=11){player_ypos-=60;player_in_air_flag=11;}
+    }
     shots=beam=hits=0;
   }
   for(int k=0;k<12;k++)spr_current_status[k]=0;
@@ -35,14 +40,14 @@ uint32_t ww_test_input(void) {
   }
   if(n==(action<3?440:180)) {
     assert(f->move==FC_IDLE);
-    if(action>=4)assert(shots);
+    if(action>=4 && action<=8)assert(shots);
     if(action==8)assert(beam);
     printf("%s scenario %d complete: shots=%d beam=%d\n",fc_roster[f->character].name,action,shots,beam);
-    n=0;if(++action==9)done=1;return 0;
+    n=0;if(++action==(int)(sizeof(chars)/sizeof(chars[0])))done=1;return 0;
   }
   ++n;
   if(action<3 && n<360) return n%8==1?(action==0?2:action==1?256:32|512):action==2?32:0;
-  return n==2?(action>=7?2048:512):0;
+  return n==2?(action>=9?16|512:action>=7?2048:512):0;
 }
 void ww_test_render(uint8_t *pixels,size_t pitch,int w,int h) {
   if(!started || (n!=11 && n!=24 && n!=78 && n!=98 && n!=300))return;

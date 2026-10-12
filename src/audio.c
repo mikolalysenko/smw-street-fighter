@@ -93,6 +93,10 @@ void fc_audio_init(const char *directory) {
   for(int i=0;i<SOUND_COUNT;i++) {
     if(!directory && i<8)samples[i]=synth(i);
     load_sample(directory,names[i],&samples[i]);
+    /* These SND rips arrive about 6–9 dB hotter than the other voices.
+     * Trim before summing so they neither dominate nor hit the limiter. */
+    float gain=i==38?0.45f:i==39?0.45f:i==40?0.38f:1.0f;
+    if(gain!=1.0f)for(int j=0;j<samples[i].length;j++)samples[i].data[j]*=gain;
   }
   loaded=true;
 #if !defined(__EMSCRIPTEN__) && !defined(FC_AUDIO_MANUAL)

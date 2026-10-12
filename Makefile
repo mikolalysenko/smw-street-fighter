@@ -9,7 +9,7 @@ SDL_LIBS = $(shell $(SDL_CONFIG) --libs)
 CORE = src/fight.c
 MEDIA = src/draw.c src/audio.c src/assets.c
 
-.PHONY: all dojo run tv test sanitize smoke capture smw test-smw test-play test-bosses test-final-depth test-movement test-presentation test-hud test-audio test-animations audit-animations test-roster test-scroll test-collision test-pipes test-specials test-entrances test-grapple test-carry test-wallrun assets original-assets package clean web serve-web test-web pages-branch
+.PHONY: all dojo run tv test sanitize smoke capture smw test-smw test-play test-bosses test-final-depth test-movement test-presentation test-hud test-audio test-animations audit-animations test-roster test-scroll test-collision test-pipes test-specials test-entrances test-grapple test-carry test-wallrun test-features assets original-assets package clean web serve-web test-web pages-branch
 all: smw
 dojo: build/world-warrior-dojo
 build:
@@ -91,6 +91,8 @@ test-carry: smw
 	$(PYTHON) scripts/test_smw_play.py --carry
 test-wallrun: smw
 	$(PYTHON) scripts/test_smw_play.py --wallrun
+test-features: smw
+	$(PYTHON) scripts/test_smw_play.py --features
 test-audio: | build
 	$(CC) $(CPPFLAGS) $(CFLAGS) -DFC_AUDIO_MANUAL $(SDL_CFLAGS) src/audio.c tests/test_audio.c -o build/test-audio $(SDL_LIBS) -lm
 	SDL_AUDIODRIVER=dummy ./build/test-audio

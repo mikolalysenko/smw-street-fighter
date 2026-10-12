@@ -77,9 +77,11 @@ static void test_roster(void) {
     }
   }
   FcFight f;fc_init(&f,FC_BISON);f.meter=300;
-  FcTarget targets[]={{{10,20,16,16},99,true,false,0,0},{{220,190,16,16},99,true,false,0,0}};
-  tick(&f,FC_SUPER,targets,2);frames(&f,30,targets,2);
-  assert(fc_psycho_flight(&f) && !targets[0].hp && !targets[1].hp && !f.hitstop);
+  FcTarget targets[]={{{10,100,16,16},99,true,false,0,0},{{220,190,16,16},99,true,false,0,0},
+    {{90,30,16,16},99,true,false,0,0},{{90,160,16,16},99,true,false,0,0}};
+  tick(&f,FC_SUPER,targets,4);frames(&f,30,targets,4);
+  assert(fc_psycho_flight(&f) && !targets[0].hp && targets[1].hp==99 &&
+    targets[2].hp==99 && targets[3].hp==99 && !f.hitstop);
   assert(!fc_hurt(&f,999,1));frames(&f,500,NULL,0);assert(fc_psycho_flight(&f));
   fc_init(&f,FC_DHALSIM);tick(&f,FC_DOWN|FC_SPECIAL,NULL,0);assert(f.move==FC_TELEPORT);
   fc_init(&f,FC_BLANKA);tick(&f,FC_DOWN|FC_SPECIAL,NULL,0);assert(f.move==FC_ELECTRIC);
@@ -92,6 +94,15 @@ static void test_hits(void) {
   tick(&f,FC_PUNCH,&t,1);frames(&f,10,&t,1);assert(t.hp==8);
   FcTarget friendly={{118,110,16,20},4,false,false,0,0};
   fc_init(&f,0);tick(&f,FC_PUNCH,&friendly,1);frames(&f,30,&friendly,1);assert(friendly.hp==4);
+  for(int facing=-1;facing<=1;facing+=2) {
+    player.facing=facing;fc_init(&f,FC_DHALSIM);
+    int x=facing>0?155:50;
+    FcTarget flame[]={{{x,95,8,8},20,true,false,0,0},{{x,124,8,8},20,true,false,0,0},
+      {{100,116,8,8},20,true,false,0,0}};
+    tick(&f,FC_UP|FC_SPECIAL,flame,3);frames(&f,50,flame,3);
+    assert(flame[0].hp<20 && flame[1].hp==20 && flame[2].hp==20);
+  }
+  player.facing=1;
 }
 static void test_projectiles(void) {
   FcFight f;fc_init(&f,0);
@@ -184,6 +195,7 @@ static void test_air_attacks_and_animation(void) {
   for(int character=0;character<FC_ROSTER_COUNT;character++)for(int a=0;a<5;a++) {
     fc_init(&f,character);f.meter=300;
     FcTarget target={{116,100,24,32},30,true,false,0,0};
+    if(character==FC_DHALSIM && a==3)target.box.x=148; /* Flame begins at his mouth. */
     int impulse=0,shots=0,hits=0;
     for(int t=0;t<100;t++) {
       b.grounded=character==FC_ZANGIEF && (a==3 || a==4) && t>=60;

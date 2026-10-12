@@ -8,10 +8,18 @@ HTTPS; Canvas 2D is available as a fallback.
 Preparing the branch is local. It does not create a remote, push commits, or
 change GitHub settings.
 
-## First push
+## Repository
 
-The local `main` and `gh-pages` branches are prepared. Sign into GitHub CLI when
-ready. If Homebrew's `gh` is installed but not on PATH, first run
+Source: https://github.com/mikolalysenko/smw-street-fighter
+
+Demo: https://mikolalysenko.github.io/smw-street-fighter/
+
+The demo deploys from **gh-pages → /(root)**. Downloadable browser builds are
+attached to GitHub releases.
+
+## First push to a new repository
+
+For a fresh fork, sign into GitHub CLI when ready. If Homebrew's `gh` is installed but not on PATH, first run
 `export PATH="$(brew --prefix gh)/bin:$PATH"`.
 
 Run these commands from the repository root:

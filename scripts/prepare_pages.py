@@ -8,7 +8,7 @@ import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
 SITE_FILES = (
-    'index.html', 'style.css', 'app.mjs', 'input.mjs', 'presenter.mjs',
+    'index.html', 'style.css', 'app.mjs', 'input.mjs', 'presenter.mjs', 'touch.mjs',
     'game.mjs', 'game.wasm', 'game.data', 'build.json', '.nojekyll',
     'README.txt', 'LICENSE.txt', 'SMW-LICENSE.txt', 'ASSETS.md',
 )

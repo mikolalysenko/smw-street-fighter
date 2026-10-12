@@ -98,7 +98,7 @@ def pack_frame(sprites, character, pose, frame):
         order = (0,1,5,3,4,2,6,7,10,11,9,8)
         standing, _, ground_y = sprites[0, order[character]*100]
         ay += standing.height-ground_y
-        if (pose in (0, 1, 3, 4, 5, 6, 10, 13, 20, 23, 24)
+        if (pose in (0, 1, 3, 4, 5, 6, 10, 13, 20, 23, 24, 52)
                 or (character == 8 and pose in (7, 9))
                 or (character == 6 and pose in (8, 37))):
             # Grounded art is sampled at half size by the game. A toe that

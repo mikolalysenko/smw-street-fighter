@@ -10,6 +10,7 @@ from urllib.request import urlopen
 from concurrent.futures import ThreadPoolExecutor
 from PIL import Image, ImageSequence
 from alpha_assets import append_alpha
+from ending_assets import append_endings
 from chunli_audio import import_chunli_audio
 from sf2_motion_assets import load_sprites, pack_frame
 
@@ -50,7 +51,7 @@ def main():
         animations=list(enumerate(entry['poses']))
         animations += [(20,entry['victory']),(21,entry['air_punch']),(22,entry['air_kick']),
                        (23,entry['crouch_punch']),(24,entry['crouch_kick']),(25,entry['continue_portrait'])]
-        animations += [(pose,entry[name]) for pose,name in ((37,'throw'),(38,'teleport'),(39,'dive'),(43,'jump_forward')) if name in entry]
+        animations += [(pose,entry[name]) for pose,name in ((37,'throw'),(38,'teleport'),(39,'dive'),(43,'jump_forward'),(52,'crouch_guard')) if name in entry]
         for pose, animation in animations:
             name = animation['sheet']
             if name == 'sf2ww.sff':
@@ -145,6 +146,7 @@ def main():
     ui(28,'logo2.png',(20,1484,261,1496))
     ui(41,'fight_ui.png',(63,38,80,58))
     append_alpha(records,out)
+    append_endings(records)
     (out / 'sprites.dat').write_bytes(b'WWA1'+struct.pack('<H',len(records))+b''.join(records))
     # These are original ripped effects, including the FM menu sound.
     sounds = {
@@ -184,7 +186,7 @@ def main():
         music=source/'Game/assets/music'/f'{name}.ogg'
         subprocess.run(['ffmpeg','-y','-hide_banner','-loglevel','error','-i',str(music),
                         '-ac','1','-ar','48000',str(out/'audio'/f'{name}.wav')],check=True)
-    print(f'Packed {len(records)} original sprite frames, {len(sounds)+10} effects/voices and SF2 menu music into {out}')
+    print(f'Packed {len(records)} sprite/UI frames, {len(sounds)+10} effects/voices and SF2 menu music into {out}')
 
 
 if __name__ == '__main__':

@@ -186,7 +186,7 @@ static void render(Dojo *g,FcCanvas c) {
     fc_center(c,109,"DINOSAUR LAND IS NEXT",0xb4e8e8,1);
     fc_center(c,135,"START TO PLAY AGAIN",0xf0e8ce,1);
   }
-  if(g->screen==2)fc_pause(c,g->pause_choice,false);
+  if(g->screen==2)fc_pause(c,g->pause_choice,3);
 }
 static SDL_GameController *controller;
 static const SDL_GameControllerButton physical_buttons[]={

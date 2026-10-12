@@ -4,6 +4,7 @@
 #include "ww_smw.h"
 #include "ww_targets.h"
 #include "ww_finalboss.h"
+#include "ww_ending.h"
 #include "smw_rtl.h"
 #include "variables.h"
 #include "funcs.h"
@@ -16,6 +17,7 @@ static int tick,map_ticks,base_frames,room_frames,level,warped,entered;
 static int hadouken_hits,super_hits,ko_seen,end_seen,last_mode=-1,last_hp;
 static int rise_hits,phases,peach_mushrooms,demon_shots;
 static int patterns,attack_mask,last_serial,last_attack=-1,quiet_frames,downward_shots;
+static int ko_frames,ending_seen,credits_frames,ending_fighter;
 int ww_upstream_main(int argc,char **argv);
 uint32_t ww_test_input(void) {
   ++tick;FcFight *f=(FcFight*)ww_fight_state();const FcOpponent *boss=ww_opponent();
@@ -25,7 +27,13 @@ uint32_t ww_test_input(void) {
   }
   if(f->events&FC_SND_BOSS_KO)ko_seen++;
   if(entered && (timer_end_level || spra0_bowser_end_of_battle_flag))end_seen=1;
-  if(tick>11000 || end_seen) {
+  if(level==0x1c7 && ww_ending_character()>=0) {
+    assert(ww_ending_character()==ending_fighter && misc_game_mode==0x1b);
+    assert(misc_currently_active_boss_end_cutscene==8); /* Native credits loader ran. */
+    return ++ending_seen>125?8:0;
+  }
+  if(ending_seen && misc_game_mode==0x1b)credits_frames++;
+  if(tick>16000 || (end_seen && (level!=0x1c7 || credits_frames>120))) {
     SDL_Event event={0};event.type=SDL_QUIT;SDL_PushEvent(&event);return 0;
   }
   if(!warped) {
@@ -53,8 +61,13 @@ uint32_t ww_test_input(void) {
   }
   if(misc_game_mode!=0x14)return 0;
   ++room_frames;entered=1;
+  if(room_frames==2 && level==0x1c7)fc_init(f,ending_fighter);
   if(level==0x1c7) {
     int phase=ww_final_phase();if(phase>=0)phases|=1<<phase;
+    if(phase==WW_FINAL_KO) {
+      ko_frames++;assert(ww_final_cinematic() && !ww_final_vulnerable());
+      for(int i=0;i<12;i++){FcTarget t;assert(!ww_final_target(i,&t));}
+    }
     for(int k=0;k<12;k++)if(spr_current_status[k]>=8 && spr_spriteid[k]==0x74)peach_mushrooms=1;
     for(int k=0;k<12;k++){FcTarget shot;if(ww_final_target(k,&shot))demon_shots=1;}
     if(patterns && phase==WW_FINAL_FIGHT && ww_final_tick()<5600) {
@@ -86,7 +99,7 @@ uint32_t ww_test_input(void) {
   if(room_frames%120==0)printf("room %d hp %d/%d mode %d locked %d state %d msg %d move %d\n",
     room_frames,boss->hp,boss->max_hp,misc_game_mode,flag_sprites_locked,player_current_state,misc_display_message,f->move);
   if(boss->active && boss->hp==0) {
-    player_xpos=mirror_current_layer1_xpos+48;player_ypos=mirror_current_layer1_ypos+64;player_yspeed=0;player_in_air_flag=1;return 0;
+    return 0; /* Let native landing and Peach's rescue finish unassisted. */
   }
   if(level==0x1c7 && ww_final_phase()==WW_FINAL_FIGHT && ww_final_tick()<480) {
     player_xpos=24;player_ypos=160;player_yspeed=0;
@@ -116,6 +129,11 @@ uint32_t ww_test_input(void) {
   return 0;
 }
 void ww_test_render(uint8_t *pixels,size_t pitch,int w,int h) {
+  if(ending_seen==2) {
+    char name[64];snprintf(name,sizeof(name),"ending-rescue-%02d.bmp",ending_fighter);
+    SDL_Surface *s=SDL_CreateRGBSurfaceFrom(pixels,w,h,32,(int)pitch,0xff0000,0xff00,0xff,0xff000000);
+    assert(s && !SDL_SaveBMP(s,name));SDL_FreeSurface(s);
+  }
   if(patterns && ww_final_phase()==WW_FINAL_FIGHT && (ww_final_attack_tick()==20 || ww_final_attack_tick()==40 || ww_final_attack_tick()==55)) {
     char name[80];snprintf(name,sizeof(name),"akuma-stage-%d-wave-%d-%d.bmp",ww_final_stage(),ww_final_attack(),ww_final_attack_tick());
     SDL_Surface *s=SDL_CreateRGBSurfaceFrom(pixels,w,h,32,(int)pitch,0xff0000,0xff00,0xff,0xff000000);
@@ -139,11 +157,13 @@ int main(void) {
   setvbuf(stdout,NULL,_IONBF,0);
   level=(int)strtol(getenv("WW_TEST_BOSS")?getenv("WW_TEST_BOSS"):"1f6",NULL,16);
   patterns=getenv("WW_TEST_PATTERNS")!=NULL;
-  char *args[]={"test-smw-bosses","--config","test-play.ini",NULL};
-  int result=ww_upstream_main(3,args);
+  ending_fighter=getenv("WW_TEST_ENDING_FIGHTER")?atoi(getenv("WW_TEST_ENDING_FIGHTER")):FC_RYU;
+  char *args[]={"test-smw-bosses","--debug","--config","test-play.ini",NULL};
+  int result=ww_upstream_main(4,args);
   printf("Boss %03x: uppercut hits %d, hadouken hits %d, super hits %d, KO %d, native ending %d\n",level,rise_hits,hadouken_hits,super_hits,ko_seen,end_seen);
   assert(entered && rise_hits && hadouken_hits && super_hits && ko_seen==1 && end_seen);
-  if(level==0x1c7)assert((phases&31)==31 && peach_mushrooms && demon_shots);
+  if(level==0x1c7)assert((phases&127)==127 && ko_frames>=45 && ending_seen>125 && credits_frames>120 && peach_mushrooms && demon_shots);
+  if(level==0x1c7)printf("Ending %s: rescue, illustration, input debounce and original credits passed.\n",fc_roster[ending_fighter].name);
   if(patterns){printf("Akuma waves %x, quiet frames %d, air volleys %d\n",attack_mask,quiet_frames,downward_shots);assert((attack_mask&2047)==2047 && quiet_frames>1800 && downward_shots>2);}
   return result;
 }

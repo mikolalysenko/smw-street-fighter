@@ -4,6 +4,7 @@
 #include "ww_score.h"
 #include "ww_hud.h"
 #include "ww_finalboss.h"
+#include "ww_ending.h"
 #include "fight.h"
 #include "draw.h"
 #include "audio.h"
@@ -17,6 +18,7 @@
 
 static FcFight fight;
 static bool initialized,chosen,was_level;
+static bool debug_enabled;
 static int menu,choice,pause_choice;
 static uint32_t previous;
 static bool death_prompt,continue_pending,death_transition,map_confirm_held;
@@ -26,10 +28,15 @@ static bool level_hurt,perfect_announced;
 static bool tongue_pressed;
 static bool psycho_was_active,psycho_safe;
 static uint16 psycho_safe_x,psycho_safe_y;
+static int psycho_exit_tick,psycho_exit_from_x,psycho_exit_from_y,psycho_exit_x,psycho_exit_y;
 static bool boss_practice;
 static uint8 practice_map,practice_lives;
 static uint32_t practice_score;
 void WW_OriginalPlayerDraw(void);
+
+void ww_set_debug(bool enabled) { debug_enabled=enabled;pause_choice=0; }
+bool ww_debug_enabled(void) { return debug_enabled; }
+int ww_menu_state(void) { return menu; }
 
 void ww_init(void) {
   fc_init(&fight,FC_RYU);fight.meter=100;initialized=true;
@@ -37,8 +44,9 @@ void ww_init(void) {
   death_prompt=continue_pending=death_transition=map_confirm_held=fighter_drawn=false;death_ticks=clear_ticks=0;
   level_hurt=perfect_announced=tongue_pressed=false;
   psycho_was_active=psycho_safe=false;
+  psycho_exit_tick=0;
   boss_practice=false;
-  ww_targets_reset();ww_title_reset();ww_final_reset();ww_hud_reset();
+  ww_targets_reset();ww_title_reset();ww_final_reset();ww_hud_reset();ww_ending_reset();
   const char *sprites=getenv("WW_SPRITES");
   fc_assets_load(sprites?sprites:"sf2/sprites.dat");
   const char *audio=getenv("WW_AUDIO_DIR");
@@ -49,6 +57,7 @@ const FcFight *ww_fight_state(void) { return &fight; }
 bool ww_enabled(void) { return initialized && chosen && misc_game_mode==0x14; }
 bool ww_practicing(void) { return boss_practice; }
 static void start_akuma(void) {
+  ww_ending_reset();
   if(!boss_practice) {
     practice_map=ow_players_map[0];practice_lives=player_current_life_count;
     practice_score=ww_score()/10;boss_practice=true;
@@ -61,6 +70,7 @@ static void start_akuma(void) {
   misc_game_mode=0x0f;menu=0;was_level=false;
   fc_clear_actions(&fight);fight.hp=fc_roster[fight.character].vitality;fight.meter=300;
   ww_targets_reset();ww_final_reset();
+  psycho_exit_tick=0;
 }
 bool ww_hide_native_hud(void) {
   return initialized && chosen && misc_game_mode>=0x0f && misc_game_mode<=0x17;
@@ -90,6 +100,7 @@ bool ww_before_frame(uint32_t *inputs) {
   if(!initialized)return true;
   ww_title_tick();
   uint32_t b=decode(*inputs),edge=b&~previous;previous=b;
+  if(ww_ending_tick(edge)){*inputs=0;return false;}
   bool in_level=misc_game_mode==0x14;
   if(chosen)player_current_item_box=players_item_box[0]=players_item_box[1]=0;
   if(death_prompt) {
@@ -164,15 +175,17 @@ bool ww_before_frame(uint32_t *inputs) {
     continue_pending=death_transition=false;clear_ticks=0;fc_audio_music(FC_MUSIC_NONE);
     level_hurt=perfect_announced=false;
     psycho_was_active=psycho_safe=false;
+    psycho_exit_tick=0;
     int meter=fight.hp>0?fight.meter:100;
     fc_init(&fight,choice);fight.meter=meter;
     if(boss_practice){ow_players_map[0]=practice_map;fight.meter=300;}
   }
   if(menu==2) {
-    if(edge&(FC_UP|FC_DOWN))pause_choice=(pause_choice+((edge&FC_DOWN)?1:3))%4;
+    int count=debug_enabled?4:2;
+    if(edge&(FC_UP|FC_DOWN))pause_choice=(pause_choice+((edge&FC_DOWN)?1:count-1))%count;
     if(edge&FC_BACK)menu=0;
     if(edge&(FC_START|FC_JUMP|FC_PUNCH)) {
-      if(pause_choice==3)quit();else if(pause_choice==2)start_akuma();
+      if(pause_choice==count-1)quit();else if(debug_enabled && pause_choice==2)start_akuma();
       else menu=pause_choice==1?1:0;
     }
     fight.previous=b;return false;
@@ -186,7 +199,11 @@ bool ww_before_frame(uint32_t *inputs) {
     return true;
   }
   if(ww_final_cinematic()) {
-    *inputs=0;fight.previous=b;timer_player_hurt=2;return true;
+    *inputs=0;fight.previous=b;fight.events=0;timer_player_hurt=2;return true;
+  }
+  if(psycho_exit_tick) {
+    fc_tick(&fight,0,body(),NULL,0);fight.previous=b;
+    *inputs=0;return true;
   }
   if(player_current_state==0x0a) {
     /* Entrance scenes drive Mario themselves. Animate their real movement
@@ -237,7 +254,7 @@ bool ww_before_frame(uint32_t *inputs) {
    * Guard can grab an item, and carried items stay held until Guard+Punch. */
   if(carrying || (b&FC_GUARD))*inputs|=2u;
   if(release)*inputs&=~2u;
-  if(fight.crouching_attack && player.grounded)*inputs|=1u<<5;
+  if((fight.crouching_attack || (fight.guarding && fight.crouching_guard)) && player.grounded)*inputs|=1u<<5;
   /* Held jump still controls SMW's variable jump arc during air attacks. */
   if(fight.stun)*inputs&=~1u;
   return !fight.frozen;
@@ -280,7 +297,7 @@ static bool teleport_clear(int x,int y) {
 }
 static bool psycho_scrolling(void) { return l1_l2_scroll_spr_spriteid[0]!=0; }
 bool ww_fast_scroll(void) {
-  if(!ww_psycho_collision() || !psycho_scrolling() || flag_sprites_locked)return false;
+  if(!fc_psycho_flight(&fight) || !ww_psycho_collision() || !psycho_scrolling() || flag_sprites_locked)return false;
   PointU16 origin=misc_layer1_pos[0];
   bool linked=l1_l2_scroll_spr_spriteid[1]==1;
   /* Advance the original path controller in small steps. Its stop points,
@@ -340,9 +357,21 @@ static bool psycho_land(void) {
   return true;
 }
 bool ww_psycho_collision(void) {
-  return ww_enabled() && fc_psycho_flight(&fight) && !fight.flash && !ww_opponent()->active && !timer_end_level;
+  return ww_enabled() && (psycho_exit_tick ||
+    (fc_psycho_flight(&fight) && !fight.flash && !ww_opponent()->active && !timer_end_level));
 }
 bool ww_psycho_position(void) {
+  if(psycho_exit_tick) {
+    /* Leave the beam at the exact flight position, then jump to the goal's
+     * floor. Cross the tape only on the last frame of the continuous arc. */
+    float t=psycho_exit_tick/32.0f;
+    player_xpos=(uint16)(psycho_exit_from_x+(psycho_exit_x-psycho_exit_from_x)*t);
+    player_ypos=(uint16)(psycho_exit_from_y+(psycho_exit_y-psycho_exit_from_y)*t-96*t*(1-t));
+    player_in_air_flag=1;player_blocked_flags=0;player_xspeed=player_yspeed=0;
+    fight.override_x=fight.override_y=false;
+    if(++psycho_exit_tick>32){psycho_exit_tick=0;player_in_air_flag=0;}
+    return true;
+  }
   if(!ww_psycho_collision()) {
     if(!psycho_was_active || timer_end_level || player_current_state || psycho_land())return false;
   }
@@ -377,10 +406,13 @@ bool ww_psycho_position(void) {
   for(int k=0;k<12;k++)if(spr_current_status[k]>=8 && spr_spriteid[k]==0x7b && !spr_table1602[k]) {
     int goal=spr_table00c2[k]+256*spr_table151c[k];
     if(x>=goal-32 && x<=goal+48) {
-      if(!psycho_land())return true;
-      player_xpos=(uint16)(goal+1);
       int bottom=spr_table1528[k]+256*(spr_table1534[k]&1);
-      if(player_ypos>=bottom)player_ypos=(uint16)(bottom-32);
+      psycho_safe=false;remember_landing(goal+1);
+      psycho_exit_from_x=x;psycho_exit_from_y=y;psycho_exit_x=goal+1;
+      psycho_exit_y=psycho_safe?psycho_safe_y:bottom-32;
+      psycho_exit_tick=1;psycho_was_active=false;
+      fc_clear_actions(&fight);fight.invuln=90;timer_player_hurt=90;
+      player_xspeed=player_yspeed=0;player_in_air_flag=1;
       return true;
     }
   }
@@ -517,6 +549,7 @@ void ww_player_draw(void) {
 void ww_render(uint8_t *pixels,size_t pitch,int width,int height) {
   if(!initialized)return;
   FcCanvas c={(uint32_t*)pixels,width,height,(int)(pitch/4)};
+  if(ww_ending_render(c))return;
   if(ww_title_render(c,ww_high_score()))return;
   if((death_prompt && death_ticks>=30) || death_transition){fc_continue(c,fight.character,death_ticks);return;}
   if(menu==1){fc_selection(c,choice,fight.tick,true);return;}
@@ -571,5 +604,5 @@ void ww_render(uint8_t *pixels,size_t pitch,int width,int height) {
   FcStageHud hud=ww_stage_hud();
   fc_battle_hud(c,&fight,ww_opponent(),&hud);
   if(timer_end_level && !misc_currently_active_boss_end_cutscene)fc_level_clear(c,fight.character,ww_perfect_clear());
-  if(menu==2)fc_pause(c,pause_choice,true);
+  if(menu==2)fc_pause(c,pause_choice,debug_enabled?4:2);
 }

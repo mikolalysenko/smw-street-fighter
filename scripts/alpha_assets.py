@@ -88,6 +88,8 @@ def append_alpha(records, output):
     for i in range(1,9):
         im=original(f'r-fb-projectile-{i}.png')
         pack(49,im,3,(im.width//2,im.height//2))
+    im=original('r-hit-air-0.png').transpose(Image.Transpose.FLIP_TOP_BOTTOM)
+    pack(50,im,60,(im.width//2,im.height//2))
     # Original Alpha Psycho Crusher spin, used only for Bison's level 3.
     # The reference clip's enormous wake is composed around these pixels.
     metadata=(root/'script/player-mbison-spritedata.js').read_text()

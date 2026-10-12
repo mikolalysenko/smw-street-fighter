@@ -202,6 +202,10 @@ static void test_psycho_camera(void) {
   }
 }
 static void test_practice_menu(void) {
+  assert(!ww_debug_enabled());enter();
+  frame(8);frame(0);frame(32);frame(0);frame(32);frame(0);frame(8);
+  assert(!ww_practicing() && !fc_audio_selection_active() && frame(0)); /* Two choices: wraps to Resume. */
+  ww_set_debug(true);
   enter();player_mario_score_lo=12;player_current_life_count=4;
   frame(8);frame(0);frame(32);frame(0);frame(32);frame(0);frame(8);
   assert(ww_practicing() && misc_game_mode==0x0f && ww_fight_state()->meter==300);
@@ -218,6 +222,7 @@ static void test_practice_menu(void) {
   DamagePlayer_Kill();for(int i=0;i<32;i++)frame(0);frame(4);
   misc_game_mode=0x0e;frame(0);
   assert(!ww_practicing() && ww_score()==120 && player_current_life_count==4);
+  ww_set_debug(false);
 }
 static void test_meter_pickups(void) {
   const int sprites[]={0x74,0x75,0x77},gains[]={100,200,300},meters[]={0,75,250,300};

@@ -40,6 +40,8 @@ void fc_text(FcCanvas c,int x,int y,const char *s,uint32_t color,int scale) {
       fc_rect(c,x,y+3*scale,5*scale,scale,color);
       if(ch=='+')fc_rect(c,x+2*scale,y+scale,scale,5*scale,color);
       if(ch=='=')fc_rect(c,x,y+5*scale,5*scale,scale,color);
+    } else if(ch=='\'') {fc_rect(c,x+2*scale,y,scale,2*scale,color);
+    } else if(ch==',') {fc_rect(c,x+2*scale,y+5*scale,scale,2*scale,color);fc_rect(c,x+scale,y+7*scale,scale,scale,color);
     } else if(ch=='.' || ch==':') {
       fc_rect(c,x+2*scale,y+6*scale,scale,scale,color);
       if(ch==':')fc_rect(c,x+2*scale,y+2*scale,scale,scale,color);
@@ -68,8 +70,11 @@ void fc_dim(FcCanvas c,int amount) {
 static unsigned super_tick(const FcFight *f,int pose,unsigned t) {
   unsigned end=44+f->super_level*8;
   if(f->character==FC_RYU) {
-    if(t<30)return t<3?t:4;
-    return t<end+30?5+(t-30)%13:18+(t-end-30)*7/8;
+    /* Cup the hands through "Shinku", extend for two frames, then hold
+     * the firing pose until the blast ends. The projectile spawns at 33. */
+    if(t<30)return 2;
+    if(t<32)return 4;
+    return t<end+30?5:18+(t-end-30)*7/8;
   }
   if(f->character==FC_GUILE) {
     unsigned last=f->super_level>1?30:16;
@@ -88,10 +93,11 @@ static unsigned super_tick(const FcFight *f,int pose,unsigned t) {
 }
 FcAnimation fc_animation(const FcFight *f) {
   int pose=FC_POSE_IDLE;unsigned tick=f->animation_tick;
+  int guard=f->crouching_guard?FC_POSE_CROUCH_GUARD:FC_POSE_GUARD;
   if(f->hp<=0){pose=FC_POSE_KO;tick=(unsigned)f->ko_timer;}
-  else if(f->stun){pose=f->guarding?FC_POSE_GUARD:FC_POSE_HURT;tick=(unsigned)(22-f->stun);}
+  else if(f->stun){pose=f->guarding?guard:FC_POSE_HURT;tick=(unsigned)(22-f->stun);}
   else if(f->victory){pose=FC_POSE_WIN;tick=f->move_tick;}
-  else if(f->guarding || (f->parry_flash && f->move==FC_IDLE && f->body.grounded))pose=FC_POSE_GUARD;
+  else if(f->guarding || (f->parry_flash && f->move==FC_IDLE && f->body.grounded))pose=guard;
   else if(f->move!=FC_IDLE) {
     static const int poses[]={FC_POSE_IDLE,FC_POSE_PUNCH,FC_POSE_KICK,FC_POSE_FIRE,
       FC_POSE_RISE,FC_POSE_SPIN,FC_POSE_RUSH,FC_POSE_FLURRY,FC_POSE_FIRE,
@@ -107,7 +113,7 @@ FcAnimation fc_animation(const FcFight *f) {
       static const int super_pose[]={FC_POSE_FIRE,FC_POSE_RUSH,FC_POSE_FLURRY,FC_POSE_FIRE,
         FC_POSE_RISE,FC_POSE_RUSH,FC_POSE_SPIN,FC_POSE_FLURRY,FC_POSE_RUSH,FC_POSE_RUSH,FC_POSE_RISE,FC_POSE_RUSH};
       pose=super_pose[f->character];
-      tick=f->flash?0:super_tick(f,pose,tick);
+      tick=f->flash?(f->character==FC_RYU?2:0):super_tick(f,pose,tick);
     }
     if(fc_piledriver(f)) {
       pose=FC_POSE_THROW;
@@ -136,7 +142,7 @@ void fc_fighter(FcCanvas c,const FcFight *f,int x,int feet,int scale,uint32_t ti
   if(fc_psycho_flight(f) && !f->flash) {
     /* The level-three joke from Psycho Crusher, FTW: a blue-white comet
      * whose wake stretches offscreen, with the original Alpha spin at its tip. */
-    int length=f->move_tick*12;if(length>c.w)length=c.w;
+    int length=(int)fc_psycho_box(f).w-14;
     int cy=feet-26,pulse=(f->tick/4)%3;
     for(int dy=-22;dy<=22;dy++) {
       int a=dy<0?-dy:dy;if(a>20+pulse)continue;
@@ -180,23 +186,32 @@ void fc_effects(FcCanvas c,const FcFight *f,float camx,float camy) {
     int w=(int)p->box.w,h=(int)p->box.h;
     if(p->beam) {
       int cy=y+h/2,tail=p->vx>0?x:x+w,tip=p->vx>0?x+w:x;
-      int fade=p->ttl<10?p->ttl:10,r=h*fade/20;
-      /* Pixel bands form a widening blue-white blast, with the original
-       * Hadouken at its source and nose. Clip the length before drawing. */
+      int direction=p->vx>0?1:-1;
+      int strength=p->age<6?p->age:6;
+      if(p->ttl<10)strength=strength*p->ttl/10;
+      int radius=h*strength/12;
+      /* The blast starts narrow at the palms and flares outward. Its own
+       * clock freezes on impact, and the envelope grows/fades with the shot. */
       int left=x<0?0:x,right=x+w>c.w?c.w:x+w;
       if(left>=right)continue;
-      for(int dy=-r;dy<=r;dy++) {
-        int a=dy<0?-dy:dy;
-        uint32_t color=a>r-3?0x5364ec:a>r-8?0x3aafff:a>r-13?0x9befff:0xf1ffff;
-        fc_rect(c,left,cy+dy,right-left,1,color);
+      for(int px=left;px<right;px++) {
+        int distance=(px-tail)*direction;
+        int r=3+distance*radius/40;if(r>radius)r=radius;
+        int nose=(tip-px)*direction;if(nose<r)r=(r+nose)/2;
+        if(r<1)continue;
+        int ripple=((distance-p->age*9)%19+19)%19;
+        for(int dy=-r;dy<=r;dy++) {
+          int a=dy<0?-dy:dy;
+          uint32_t color=a*10>r*9?0x5364ec:a*10>r*7?0x3aafff:
+            a*10>r*5?0x9befff:0xf1ffff;
+          if(ripple<3 && a*10<r*7 && a*10>r*4)color=0xffffff;
+          fc_rect(c,px,cy+dy,1,1,color);
+        }
       }
-      for(int j=0;j<6;j++) {
-        int streak=(int)((f->tick*13+j*47)%((unsigned)c.w+80))-40;
-        int begin=streak<left?left:streak,finish=streak+22>right?right:streak+22;
-        if(begin<finish)fc_rect(c,begin,cy-r+4+j*(r>12?(r*2-8)/6:2),finish-begin,2,0xc7ffff);
+      if(strength>0) {
+        fc_sprite(c,f->character,FC_POSE_SHOT,p->age,tail+direction*7,cy,direction,1,2,0);
+        fc_sprite(c,f->character,FC_POSE_SHOT,p->age,tip,cy,direction,strength>3?3:1,2,0);
       }
-      fc_sprite(c,f->character,FC_POSE_SHOT,f->tick,tail,cy,p->vx>0?1:-1,2,2,0);
-      fc_sprite(c,f->character,FC_POSE_SHOT,f->tick,tip,cy,p->vx>0?1:-1,4,2,0);
     } else fc_sprite(c,f->character,FC_POSE_SHOT,f->tick,x+w/2,y+h/2,p->vx>0?1:-1,p->super?3:1,2,0);
   }
   for(int i=0;i<FC_MAX_SPARKS;i++)if(f->sparks[i].ttl) {
@@ -368,14 +383,14 @@ void fc_selection(FcCanvas c,int choice,unsigned tick,bool compact) {
   arcade_center(c,94,fc_roster[choice].name,false);
   fc_center(c,c.h-12,"DPAD SELECT  A / START CONFIRM",0xffffd5,1);
 }
-void fc_pause(FcCanvas c,int choice,bool boss_shortcut) {
+void fc_pause(FcCanvas c,int choice,int item_count) {
   fc_dim(c,70);fc_rect(c,c.w/2-99,c.h/2-65,198,139,0x0c155c);
   frame(c,c.w/2-99,c.h/2-65,198,139,0xffd52b);
   arcade_center(c,c.h/2-52,"PAUSE",true);
   const char *items[]={"RESUME","PLAYER SELECT","AKUMA BATTLE","QUIT GAME"};
-  for(int i=0;i<(boss_shortcut?4:3);i++) {
+  for(int i=0;i<item_count;i++) {
     if(choice==i)fc_rect(c,c.w/2-90,c.h/2-12+i*21,180,16,0x274ba1);
-    arcade_center(c,c.h/2-9+i*21,items[!boss_shortcut && i==2?3:i],false);
+    arcade_center(c,c.h/2-9+i*21,items[i==item_count-1?3:i],false);
     if(choice==i)fc_text(c,c.w/2-87,c.h/2-8+i*21,">",0xffff55,1);
   }
 }

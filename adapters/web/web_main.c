@@ -69,6 +69,7 @@ EMSCRIPTEN_KEEPALIVE int ww_web_init(void) {
   PpuBeginDrawing(g_my_ppu,other_pixels,256*4,0);
   mkdir("saves",0777);RtlReadSram();ww_init();running=true;return 1;
 }
+EMSCRIPTEN_KEEPALIVE void ww_web_set_debug(int enabled) { ww_set_debug(enabled!=0); }
 EMSCRIPTEN_KEEPALIVE int ww_web_step(uint32 inputs) {
   SDL_Event event;while(SDL_PollEvent(&event))if(event.type==SDL_QUIT)running=false;
   if(!running)return 0;
@@ -106,6 +107,8 @@ EMSCRIPTEN_KEEPALIVE int ww_web_state(int field) {
     case 17:return f->crouching_attack;
     case 18:return ww_score();case 19:return ww_high_score();
     case 20:return f->character;case 21:return ww_practicing();case 22:return ww_final_phase();
+    case 23:return ww_debug_enabled();
+    case 24:return ww_menu_state();case 25:return f->guarding;case 26:return f->crouching_guard;
     default:return 0;
   }
 }

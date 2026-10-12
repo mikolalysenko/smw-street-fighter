@@ -7,6 +7,7 @@ const wasm=await readFile(new URL('../dist/web/game.wasm',import.meta.url));
 const g=await createGame({wasmBinary:wasm,getPreloadedPackage:()=>pkg.buffer.slice(pkg.byteOffset,pkg.byteOffset+pkg.byteLength)});
 assert.equal(g._ww_web_init(),1);
 const state=i=>g._ww_web_state(i);
+assert.equal(state(23),0,'Debug menus are off by default');
 let map=0,level=0,selectTicks=0,selected=false,title=false,selection=false,walking=false,airShot=false,rising=false,superSeen=false,crouchPunch=false,crouchKick=false,audioEnergy=0,baseX;
 for(let tick=1;tick<4200;tick++) {
   const mode=state(0);let input=0;
@@ -73,6 +74,9 @@ console.log('WASM: title, early selection/music, real level, movement, crouching
 const step=b=>assert.equal(g._ww_web_step(b),1);
 const tap=b=>{step(b);step(0);};
 for(let i=0;i<100;i++)step(0);
+tap(8);tap(32);tap(32);tap(8); // Default two-entry menu wraps to Resume.
+assert(!state(16) && !state(21),'No player/practice shortcuts without debug');
+g._ww_web_set_debug(1);assert.equal(state(23),1);
 for(let fighter=1;fighter<12;fighter++) {
   tap(8);tap(32);tap(8);assert(state(16),'Pause → Player Select');
   tap(128);tap(8);assert.equal(state(20),fighter);

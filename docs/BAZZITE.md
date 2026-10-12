@@ -6,7 +6,11 @@ first playtest. Prepared builds do not need the NAS at runtime.
 
 ## Browser build
 
-Copy the complete `dist/web/` directory from this Mac to the Bazzite machine.
+Open the [hosted demo](https://mikolalysenko.github.io/smw-street-fighter/) on the
+Bazzite machine, or download `super-mario-world-ii-web.zip` from
+[Releases](https://github.com/mikolalysenko/smw-street-fighter/releases) and unzip it.
+For an offline local server, use the complete `web/` folder from that download
+(or copy `dist/web/` from this Mac).
 In that directory, run:
 
 ```sh
@@ -29,7 +33,7 @@ a physical playtest.
 Bazzite supports Distrobox for development packages; see its
 [official guide](https://docs.bazzite.gg/Installing_and_Managing_Software/Distrobox/).
 Copy this repository (including `.git` and the reference submodules) to the
-Bazzite machine, or clone it once a Git remote exists. In Desktop Mode:
+Bazzite machine, or clone `https://github.com/mikolalysenko/smw-street-fighter.git`. In Desktop Mode:
 
 ```sh
 distrobox create --name world-warrior-dev --image docker.io/library/ubuntu:24.04
@@ -59,7 +63,8 @@ enter --name world-warrior-dev -- /absolute/path/to/smw-street-fighter/scripts/p
 Quote the script path if it contains spaces. Keep execution in the Distrobox so
 it finds the SDL library used for compilation. Use Steam's Gamepad layout and
 Steam Input for controllers that require it. Button assignments are in the
-[README](../README.md). Start opens Resume, Character Select, Akuma Battle and Quit Game.
+[README](../README.md). Start opens Resume and Quit Game. Add `--debug` to the launch options to include
+Character Select and Akuma Battle shortcuts.
 On the overworld, Start + Back quits.
 
 The original 256×224 SMW framebuffer is scaled with nearest-neighbor filtering

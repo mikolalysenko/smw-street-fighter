@@ -11,10 +11,14 @@ a combat test fixture. The native and browser builds share the same game engine.
 Original levels, twelve fighters, aerial specials, Alpha-style supers, an SF2
 HUD, persistent scores, and an Akuma finale in Bowser's clown car. Keyboard and
 controller support are included, with fullscreen play for Linux/Bazzite and TVs.
+Phones also get a multi-touch direction pad and attack buttons; desktop and
+tablet browsers keep the keyboard/controller layout.
 
-The `main` branch contains the source. The `gh-pages` branch contains the compiled
-WASM demo, ready for GitHub Pages. See [publishing instructions](docs/PUBLISHING.md)
-to create the GitHub repository and enable hosting.
+[Play the browser demo](https://mikolalysenko.github.io/smw-street-fighter/) ·
+[Download a build](https://github.com/mikolalysenko/smw-street-fighter/releases)
+
+The `main` branch contains the source. The `gh-pages` branch hosts the compiled
+WASM demo. See [publishing instructions](docs/PUBLISHING.md) to rebuild it.
 
 ## Play in a browser
 
@@ -29,6 +33,13 @@ framebuffer; Canvas 2D is the fallback. Fullscreen is available below the game.
 Reload the page after rebuilding; the status shows the loaded build timestamp.
 Original SMW save points and your high score persist in browser storage, with an Export Save button.
 This saves normal game progress, not an instant snapshot of the current room.
+
+On iPhone, tap **Play** to enable sound. Turn sideways and tap **Expand** for a
+larger play area; this works even without Safari's fullscreen API. The touch pad
+supports diagonals and simultaneous jump/attack inputs. **Start** opens menus,
+**Jump** confirms, and **Back** cancels. Returning from another app shows **Resume**
+so Safari can restart audio from a tap. WebGPU is optional; Canvas 2D uses the
+same WASM game. Progress is stored separately on each device/browser.
 
 Copy `dist/web/` to Linux/Bazzite and serve that folder on localhost to play
 without recompiling. See [BAZZITE.md](docs/BAZZITE.md) for the TV setup.
@@ -49,7 +60,7 @@ This also applies when resuming an existing save. Use the normal SMW overworld t
 enter a level. Each life starts
 with one super bar. Hits refill it; supers spend one to three complete bars.
 Health refills on level entry and meter carries between levels. Start opens
-Resume / Character Select / Akuma Battle / Quit Game during play. On death, the SF2 continue
+Resume / Quit Game during play. On death, the SF2 continue
 screen shows the defeated fighter and a ten-second countdown. Start/Jump opens
 character select, then returns to the world map with the chosen fighter at full
 health and one super bar. Enter a level when ready. Back or letting the countdown
@@ -58,8 +69,18 @@ Character selection plays the original SF2 selection music. The title combines
 SMW's original lettering, scenery, demo and music with SF2's gold/red II and
 blue “The World Warrior” subtitle. Course clear shows the selected fighter.
 Clearing without taking damage displays PERFECT with the original announcer voice.
+Defeated Akuma flips upside down, pops upward, then falls offscreen before the
+original Peach rescue. Each fighter gets a distinct ending screen after the
+rescue; Start/Jump continues into the original credits. Seven endings have new
+pixel-art illustrations; Ryu, Chun-Li, Guile, Ken and Vega currently use original
+arcade sprites in custom pixel scenery.
 
-**Jump to the final fight:** enter any level, press Enter/Start, choose
+**Debug shortcuts:** open the browser demo with `?debug=1`, or launch the native
+game with `./scripts/play-smw.sh --debug` (combine with `--fullscreen` for TV play).
+Only debug mode adds **PLAYER SELECT** and **AKUMA BATTLE** to the pause menu;
+normal starting/continuing character selection always remains available.
+
+**Jump to the final fight in debug mode:** enter any level, press Enter/Start, choose
 **AKUMA BATTLE**, then confirm. You start with full health and three super bars.
 Bowser makes his entrance wearing Bison's hat before Akuma takes over the clown
 car. Continue opens character select and returns to the world map here too.
@@ -86,6 +107,13 @@ levels, and hit combos show their current points or extra-life award.
 
 ## Controls
 
+Punches and kicks activate item/turn blocks next to you and shatter cement or
+used blocks. Crouching attacks hit low blocks; Dhalsim's extended limbs reach
+farther. Pipes, doors and level terrain remain usable. Down + Guard holds a low
+block; a fresh guard can parry, while sustained guard takes reduced damage.
+Bison's level-three Psycho Crusher damages enemies touching its visible beam.
+At the goal he leaves the beam and jumps down continuously to the finish floor.
+
 | Action | Xbox/Steam gamepad | Keyboard |
 | --- | --- | --- |
 | Move / menu | D-pad or left stick | Arrows |
@@ -98,6 +126,7 @@ levels, and hit combos show their current points or extra-life award.
 | Extra special / Hurricane Kick | Down + Y | Down + A |
 | Super | RB | S |
 | Guard | LB | D |
+| Crouch block | Down + LB | Down + D |
 | Pause / confirm | Start | Enter |
 | Back / pause | Back | Escape |
 | Fullscreen | Launcher option | F11 |
@@ -330,6 +359,7 @@ make test-roster # All twelve fighters: 17 ground/air actions, Bison's stage exi
 make test-collision # Pipe walls, both camera edges, rolls and slides
 make test-pipes     # Original bonus-room return entrances
 make test-specials  # Sustained attacks, horizontal headbutt, fireballs and beam
+make test-features  # Adjacent blocks, low guard and all twelve ending screens
 make test-scroll # Bison in the original scrolling smasher room, through its door
 make test-animations # Packed art: both facings, strike timing, landing and freeze
 make audit-animations # Sprite contact sheets and loops in build/animation-audit
@@ -340,3 +370,16 @@ make test-web    # Built WASM module through the original game flow
 The replay produces `selection.bmp`, `original-level.bmp`, `super.bmp` and
 `ko.bmp` under `build/smw/`. Source submodules stay unmodified; the patch script
 creates a separate build tree and refuses missing or ambiguous hook matches.
+
+Optional real-browser checks (start `make serve-web` first):
+
+```sh
+npm install --prefix build/browser-tools playwright@1.58.2
+build/browser-tools/node_modules/.bin/playwright install chromium webkit
+node tests/test_browser.mjs
+```
+
+These run the actual WASM build in WebKit and Chromium with phone, tablet and
+desktop profiles, including touch-only game startup/combat, multi-touch,
+rotation-friendly layouts, expansion, audio resume and the debug query flag.
+They emulate phone browsers; physical iPhone testing remains separate.

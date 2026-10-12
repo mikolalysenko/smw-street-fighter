@@ -1,0 +1,150 @@
+{
+  "art_tool": "Built-in image_gen",
+  "art_prompt": "Use case: illustration-story. Create one original ending illustration for the fan game Super Mario World II - The World Warrior, combining classic Street Fighter II character designs with Super Mario World's Dinosaur Land. Landscape 16:9 composition. Authentic 1990s arcade pixel art: chunky deliberate pixel clusters, crisp stepped outlines, limited colors, flat cel-shaded sprites and layered SNES scenery. Compose as if on a 256 by 144 pixel canvas, enlarged with nearest-neighbor pixels. Character is large and clearly recognizable. A complete narrative illustration, edge to edge, with no lettering, no logos, no interface, no border, no watermark, no blur, no CRT scanlines, no photorealism. Keep the entire scene readable at small resolution. Scene: ",
+  "characters": [
+    {
+      "id": 0,
+      "file": "ryu.png",
+      "title": "THE NEXT CHALLENGE",
+      "lines": [
+        "WITH THE KINGDOM SAFE, RYU",
+        "SET OUT BEYOND THE HILLS.",
+        "SOMEWHERE, A NEW RIVAL WAITS."
+      ],
+      "scene": "Ryu in his white sleeveless karate gi, black belt, red headband and red gloves stands barefoot on a grassy Dinosaur Land cliff at sunrise, a travel sack over his shoulder. His headband streams in the wind. A friendly green Yoshi watches him leave. Distant rounded hills, clouds with eyes and a winding path lead into the golden horizon. Reflective, heroic ending.",
+      "art_mode": "sprite_scene"
+    },
+    {
+      "id": 1,
+      "file": "honda.png",
+      "title": "SUMO FEAST",
+      "lines": [
+        "HONDA OPENED A SUMO KITCHEN.",
+        "THE YOSHIS ATE EVERYTHING.",
+        "HE CALLED THAT A PERFECT."
+      ],
+      "scene": "E. Honda, the large Japanese sumo wrestler with a black topknot, blue face markings and blue-and-white striped sumo wrap, enthusiastically cooks an enormous mushroom stew outside a cozy Dinosaur Land house. Several colorful Yoshis sit waiting with bowls. Steam curls from the pot, mushrooms and berries fill baskets, warm afternoon colors. A funny celebratory arcade ending.",
+      "art_mode": "illustration"
+    },
+    {
+      "id": 2,
+      "file": "chunli.png",
+      "title": "PEACE AT LAST",
+      "lines": [
+        "CHUN-LI BROUGHT PEACE BACK",
+        "TO DINOSAUR LAND. TODAY,",
+        "EVERYONE COULD PLAY AGAIN."
+      ],
+      "scene": "Chun-Li in her classic blue qipao, white boots, spiked black bracelets and white-ribbon hair buns celebrates with Princess Peach and two small Yoshis in a bright flower garden beside a Super Mario World castle. Chun-Li leaps joyfully with a victory smile while Peach applauds. Colorful confetti, mushrooms and rounded green hills; warm cheerful ending, clearly recognizable classic character designs.",
+      "art_mode": "sprite_scene"
+    },
+    {
+      "id": 3,
+      "file": "guile.png",
+      "title": "MISSION COMPLETE",
+      "lines": [
+        "GUILE'S MISSION WAS OVER.",
+        "HE FIXED THE AIRSHIP AND",
+        "FINALLY HEADED HOME."
+      ],
+      "scene": "Guile with his very tall blond flat-top haircut, green tank top, camouflage trousers, dog tags and combat boots stands on the wooden deck of a repaired Mario-style airship, giving a confident salute. A tiny friendly Yoshi waves from the dock below. Broad blue sky, Dinosaur Land islands and white clouds recede into the distance. Clear heroic military-pilot homecoming mood, no weapons.",
+      "art_mode": "sprite_scene"
+    },
+    {
+      "id": 4,
+      "file": "ken.png",
+      "title": "A WELL EARNED BREAK",
+      "lines": [
+        "KEN FOUND THE HOT SPRINGS.",
+        "ONE MORE ROUND COULD WAIT.",
+        "THIS VACATION WAS ON HIM."
+      ],
+      "scene": "Ken Masters with shaggy blond hair and a red karate gi sits barefoot on a smooth rock beside a steaming Dinosaur Land hot spring, laughing and holding a mug. His black belt and red gi remain recognizable. A happy green Yoshi splashes in the water nearby, rounded mountains and yellow autumn trees behind. Relaxed humorous victory vacation; fully clothed, bright arcade pixel art.",
+      "art_mode": "sprite_scene"
+    },
+    {
+      "id": 5,
+      "file": "blanka.png",
+      "title": "A GREEN FAMILY",
+      "lines": [
+        "BLANKA FOUND NEW FRIENDS.",
+        "WHEN NIGHT FELL, HE MADE",
+        "THE WHOLE FOREST SPARKLE."
+      ],
+      "scene": "Blanka, the muscular green-skinned fighter with wild orange hair and torn brown shorts, crouches happily in a Dinosaur Land forest surrounded by curious colorful Yoshis. Gentle electric sparks light glowing berries and illuminate friendly faces like fairy lights. Large tropical leaves, blue night sky and fireflies, affectionate playful ending rather than combat.",
+      "art_mode": "illustration"
+    },
+    {
+      "id": 6,
+      "file": "zangief.png",
+      "title": "WORLD'S STRONGEST",
+      "lines": [
+        "ZANGIEF KEPT THE CLOWN CAR.",
+        "IT MADE AN EXCELLENT WEIGHT.",
+        "THE YOSHIS ASKED FOR A TURN."
+      ],
+      "scene": "Zangief, the enormous bearded wrestler with a mohawk, red trunks, red boots and gold wristbands, triumphantly presses Bowser's empty smiling white-and-green flying clown car above his head like a barbell. A group of Yoshis cheer from a grassy platform. Bright Dinosaur Land hills, mushrooms and a blue sky. Exaggerated strength and broad comedy, warm original arcade sprite art.",
+      "art_mode": "illustration"
+    },
+    {
+      "id": 7,
+      "file": "dhalsim.png",
+      "title": "A QUIET KINGDOM",
+      "lines": [
+        "DHALSIM ASKED FOR NO PRIZE.",
+        "HE SAT BENEATH THE BIG TREE.",
+        "AT LAST, THE WORLD WAS STILL."
+      ],
+      "scene": "Dhalsim, the very lean bald Indian fighter with red face markings, gold cuffs, a skull necklace and saffron shorts, floats peacefully in a cross-legged meditation pose beneath a huge Dinosaur Land tree. A green Yoshi naps curled up on the grass below him. Small flowers, a clear pond reflecting the tree and soft dawn mountains create a tranquil ending.",
+      "art_mode": "illustration"
+    },
+    {
+      "id": 8,
+      "file": "balrog.png",
+      "title": "THE BIG PAYDAY",
+      "lines": [
+        "BALROG DEMANDED HIS REWARD.",
+        "ONE HUNDRED COINS LATER...",
+        "AN EXTRA LIFE? WHERE'S CASH?"
+      ],
+      "scene": "Balrog, the muscular dark-skinned American boxer with short black hair, blue boxing vest and trunks, red boxing gloves and white boots, sits beside an enormous pile of Mario gold coins in a castle treasure room. He looks comically puzzled at a single green 1-Up mushroom resting on his huge glove. Open wooden chests and warm gold light, funny expressive arcade ending, no lettering on the mushroom.",
+      "art_mode": "illustration"
+    },
+    {
+      "id": 9,
+      "file": "vega.png",
+      "title": "A PERFECT FINISH",
+      "lines": [
+        "VEGA SAVED THE ROSE GARDEN.",
+        "HE LEFT HIS MASK BEHIND.",
+        "SOME THINGS NEED NO ARMOR."
+      ],
+      "scene": "Vega, the handsome Spanish fighter with long blond braided hair, bare muscular torso, red-and-yellow matador trousers, purple sash and a metal three-pronged claw on one hand, kneels in a lush rose garden in Dinosaur Land. He gently offers a red rose to a curious little Yoshi. His white mask rests visibly on a stone bench. Elegant sunset light, flower petals, pink castle towers in distance.",
+      "art_mode": "sprite_scene"
+    },
+    {
+      "id": 10,
+      "file": "sagat.png",
+      "title": "TIGER ON THE SUMMIT",
+      "lines": [
+        "SAGAT FOUND A HIGHER PEAK.",
+        "THE LITTLE YOSHIS FOLLOWED.",
+        "A NEW DOJO HAD ITS MASTER."
+      ],
+      "scene": "Sagat, the very tall bald Muay Thai master with an eyepatch, diagonal chest scar, blue boxing shorts, wrapped fists and wrapped ankles, teaches a fighting stance to three tiny Yoshis on a broad grassy mountain summit in Dinosaur Land. Distant layered rounded mountains and drifting white clouds, dawn orange light. Proud but patient expression and warm humorous mentor ending.",
+      "art_mode": "illustration"
+    },
+    {
+      "id": 11,
+      "file": "bison.png",
+      "title": "NEW MANAGEMENT",
+      "lines": [
+        "BISON CLAIMED THE CASTLE.",
+        "THE KOOPAS ASKED FOR A RAISE.",
+        "CONQUEST WAS THE EASY PART."
+      ],
+      "scene": "M. Bison in his classic red military uniform and red peaked cap, silver shoulder plates, black cape and silver shin guards sits grandly on a throne inside Bowser's castle. Beside him sits the empty smiling flying clown car. Two small Koopa Troopas present him an absurdly long blank scroll, and Bison looks annoyed by paperwork. Violet psycho-power glow, red banners, theatrical comic villain ending, no writing anywhere.",
+      "art_mode": "illustration"
+    }
+  ]
+}

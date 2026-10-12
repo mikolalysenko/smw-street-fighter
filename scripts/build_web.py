@@ -21,7 +21,7 @@ def main():
     sources=[p for folder in ('src','src/snes','smb1','smbll') for p in sorted((tree/folder).glob('*.c'))
              if p.name not in excluded and not p.name.startswith('main-')]
     exports=['ww_web_init','ww_web_step','ww_web_pixels','ww_web_audio',
-             'ww_web_sram','ww_web_sram_size','ww_web_state']
+             'ww_web_sram','ww_web_sram_size','ww_web_state','ww_web_set_debug']
     cmd=[emcc,'-O2','-g1','-fno-strict-aliasing','-I'+str(tree),'-I'+str(tree/'src'),
          '-sUSE_SDL=2','-sALLOW_MEMORY_GROWTH=1','-sINITIAL_MEMORY=33554432','-sSTACK_SIZE=1048576',
          '-sMODULARIZE=1','-sEXPORT_ES6=1','-sEXPORT_NAME=createWorldWarrior',
@@ -36,9 +36,9 @@ def main():
     build=datetime.now(timezone.utc).strftime('%Y%m%d-%H%M%S')
     # Version every module and the asset package together; a reload must
     # never combine an old WASM module with a new sprite/audio bundle.
-    for name in ('app.mjs','index.html'):
+    for name in ('app.mjs','index.html','touch.mjs'):
         p=out/name;s=p.read_text().replace('__BUILD__',build)
-        for module in ('game.mjs','app.mjs','input.mjs','presenter.mjs'):
+        for module in ('game.mjs','app.mjs','input.mjs','presenter.mjs','touch.mjs'):
             s=s.replace(module, module+'?v='+build)
         p.write_text(s)
     revision=subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip()

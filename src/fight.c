@@ -57,7 +57,7 @@ void fc_explode(FcFight *f,float x,float y,bool large) {
 }
 void fc_ko(FcFight *f) {
   if(f->ko_timer) return;
-  f->hp=0; f->move=FC_IDLE; f->guarding=false; f->buffered=FC_IDLE;
+  f->hp=0; f->move=FC_IDLE; f->guarding=f->crouching_guard=false; f->buffered=FC_IDLE;
   f->ko_timer=1; f->hitstop=12; f->stun=0;
   f->parry_flash=f->landing_tick=0;
   f->override_x=f->override_y=true;
@@ -76,6 +76,8 @@ bool fc_hurt(FcFight *f,int damage,int from_direction) {
     sparks(f,f->body.box.x+8+f->facing*10,f->body.box.y+8,0x8ef5ff,12);
     return true;
   }
+  f->guarding=blocked;
+  if(!blocked)f->crouching_guard=false;
   if(blocked) damage=imax(1,damage/8);
   f->hp=imax(0,f->hp-damage);
   f->combo=f->combo_timer=f->combo_award=0;
@@ -215,7 +217,7 @@ static void start(FcFight *f,FcMove move) {
   f->crouching_attack=f->buffered_crouch && !f->air_attack && (move==FC_JAB || move==FC_ROUNDHOUSE);
   f->move=move; f->move_tick=0; f->move_hit=false;
   f->grabbed=-1;f->grab_tick=0;f->grab_airborne=f->grab_slam=false;
-  f->melee_mask=0; f->guarding=false; f->buffered=FC_IDLE; f->buffer_timer=0;
+  f->melee_mask=0; f->guarding=f->crouching_guard=false; f->buffered=FC_IDLE; f->buffer_timer=0;
   f->motion_count=0;
   f->rapid_timer=(move==FC_FLURRY || move==FC_ELECTRIC)?24:0;
   if(move==FC_SUPER_MOVE) {
@@ -253,6 +255,7 @@ static void shot(FcFight *f,bool super) {
     float x=f->body.box.x+f->body.box.w/2;
     float feet=f->body.box.y+f->body.box.h+f->sprite_y_offset;
     float hand_x=x+f->facing*(shoto?38:24),hand_y=feet-(shoto?30:25);
+    if(f->character==FC_DHALSIM){hand_x=x+f->facing*36;hand_y=feet-28;}
     f->shots[i]=(FcShot){.box={hand_x-(f->facing<0?w:0),hand_y-h/2,w,h},
       .vx=f->facing*(super?7.0f:3.8f),.ttl=beam?66:95,
       .damage=super?3*f->super_level:1,.pierce=super?64:1,.super=super,.beam=beam};
@@ -262,6 +265,12 @@ static void shot(FcFight *f,bool super) {
 bool fc_busy(const FcFight *f) { return f->move!=FC_IDLE || f->stun || f->hp<=0; }
 bool fc_psycho_flight(const FcFight *f) {
   return f->character==FC_BISON && f->move==FC_SUPER_MOVE && f->super_level==3 && f->hp>0;
+}
+FcBox fc_psycho_box(const FcFight *f) {
+  float x=f->body.box.x+f->body.box.w/2;
+  float y=f->body.box.y+f->body.box.h+f->sprite_y_offset-26;
+  int length=imin(256,f->move_tick*12);
+  return (FcBox){x-(f->facing>0?length:14),y-22,length+14,44};
 }
 const char *fc_move_name(const FcFight *f) {
   if(f->hp<=0) return "K.O.";
@@ -383,6 +392,7 @@ void fc_tick(FcFight *f,uint32_t buttons,FcBody body,FcTarget *targets,int count
       else {f->buffer_timer=0;f->buffered=FC_IDLE;}
     }
     f->guarding=(buttons&FC_GUARD) && f->move==FC_IDLE && body.grounded;
+    f->crouching_guard=f->guarding && (buttons&FC_DOWN);
     if(f->flash) { f->frozen=true; return; }
     if(f->move) {
       ++f->move_tick;
@@ -541,7 +551,11 @@ void fc_tick(FcFight *f,uint32_t buttons,FcBody body,FcTarget *targets,int count
           body.box.y+body.box.h-height,reach,height+(super?12:4)};
         if(f->move==FC_ELECTRIC || (f->character==FC_ZANGIEF &&
             (f->move==FC_SPIN || f->move==FC_SUPER_MOVE || f->move==FC_THROW)))box.x=body.box.x+body.box.w/2-reach/2;
-        if(fc_psycho_flight(f))box=(FcBox){body.box.x-130,body.box.y-100,280,260};
+        if(fc_psycho_flight(f))box=fc_psycho_box(f);
+        if(f->character==FC_DHALSIM && f->move==FC_FLAME) {
+          float x=body.box.x+body.box.w/2,feet=body.box.y+body.box.h+f->sprite_y_offset;
+          box=(FcBox){x+(f->facing>0?35:-75),feet-48,40,29};
+        }
         for(int i=0;i<count && i<FC_MAX_TARGETS;i++) {
           uint64_t bit=UINT64_C(1)<<i;
           if(targets[i].active && targets[i].hp>0 && !(f->melee_mask&bit) && fc_overlap(box,targets[i].box)) {

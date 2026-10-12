@@ -27,14 +27,14 @@ def prepare():
         target = dest / name
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(source / name, target)
-    for file in ('fight.c', 'fight.h', 'draw.c', 'draw.h', 'audio.c', 'audio.h', 'assets.c', 'assets.h'):
+    for file in ('fight.c', 'fight.h', 'draw.c', 'draw.h', 'audio.c', 'audio.h', 'assets.c', 'assets.h', 'ending_text.h'):
         # Upstream Make does not track header dependencies. Refresh shared
         # source timestamps too, so new pose IDs cannot leave a stale reader.
         shutil.copyfile(ROOT / 'src' / file, dest / 'src' / file)
     for file in ('ww_smw.c', 'ww_smw.h', 'ww_targets.c', 'ww_targets.h',
                  'ww_title.c', 'ww_title.h', 'ww_score.c', 'ww_score.h',
                  'ww_hud.c', 'ww_hud.h',
-                 'ww_finalboss.c', 'ww_finalboss.h'):
+                 'ww_finalboss.c', 'ww_finalboss.h', 'ww_ending.c', 'ww_ending.h'):
         shutil.copyfile(ROOT / 'adapters/smw' / file, dest / 'src' / file)
     def patch(file, changes):
         path = dest / file
@@ -50,6 +50,14 @@ def prepare():
          '  char *ww_base = SDL_GetBasePath();\n'
          '  if (ww_base) { chdir(ww_base); SDL_free(ww_base); }'),
         ('#include <stdio.h>', '#include "ww_smw.h"\n#include "audio.h"\n#include <stdio.h>'),
+        ('  argc--, argv++;',
+         '  // Strip our option before the original --config/ROM parser.\n'
+         '  for (int i=1;i<argc;) {\n'
+         '    if (strcmp(argv[i], "--debug")) { ++i; continue; }\n'
+         '    ww_set_debug(true);\n'
+         '    memmove(argv+i,argv+i+1,(argc-i)*sizeof(*argv)); --argc;\n'
+         '  }\n'
+         '  argc--, argv++;'),
         ('static uint32 g_input_state;', 'static uint32 g_input_state, ww_pending_buttons;'),
         ('    uint32 m = 1 << kKbdRemap[j - kKeys_Controls];',
          '    uint32 m = 1 << kKbdRemap[j - kKeys_Controls];\n    if (pressed) ww_pending_buttons |= m;'),
@@ -74,7 +82,10 @@ def prepare():
         ('uint8 g_runmode = RM_BOTH;', 'uint8 g_runmode = RM_MINE; // Combat deliberately diverges from the original ROM.')
     ])
     patch('src/smw_00.c', [
-        ('#include "consts.h"', '#include "ww_smw.h"\n#include "consts.h"'),
+        ('#include "consts.h"', '#include "ww_smw.h"\n#include "ww_ending.h"\n#include "consts.h"'),
+        ('  if (misc_currently_active_boss_end_cutscene) {\n    uint8 v2 = 8;',
+         '  if (ww_ending_finish_level()) j = 24;\n'
+         '  else if (misc_currently_active_boss_end_cutscene) {\n    uint8 v2 = 8;'),
         ('void SmwRunOneFrameOfGame_Internal() {',
          'void SmwRunOneFrameOfGame_Internal() {\n  ww_begin_frame();'),
         ('void DamagePlayer_Hurt() {  // 00f5b7', 'void DamagePlayer_Hurt() {  // 00f5b7\n  if (ww_damage()) return;'),
