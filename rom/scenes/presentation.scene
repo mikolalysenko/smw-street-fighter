@@ -1,0 +1,37 @@
+# Verify the native title and web-style roster presentation before gameplay.
+until 0100 == 07 2000
+wait 45
+dump ww-title
+press start
+until 0100 == 08 500
+wait 10
+press b
+until 0100 == 0a 500
+press start
+until 0100 == 0b 500
+wait 45
+dump roster-ryu
+press right 2
+wait 5
+dump roster-honda
+press right 2
+wait 5
+dump roster-chunli
+press down 2
+wait 5
+dump roster-balrog
+press b 2
+until 0100 == 14 3000
+wait 90
+until 1df5 == 00 4000
+press b 12
+until 1426 == 00 1000
+until 0100 == 0e 2000
+wait 60
+press right 30
+wait 60
+press a
+until 0100 == 14 3000
+wait 90
+dump gameplay
+quit

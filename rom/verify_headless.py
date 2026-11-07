@@ -42,6 +42,8 @@ def main() -> None:
                         help="check native carrying, power-up meter, and Map16 attacks")
     parser.add_argument("--performance", action="store_true",
                         help="check profiler captures against steady-combat scanline budgets")
+    parser.add_argument("--presentation", action="store_true",
+                        help="compare native title, roster, and gameplay presentation captures")
     args = parser.parse_args()
     if not args.carry:
         play = ROOT / "local/rom-play"
@@ -116,6 +118,31 @@ def main() -> None:
                     vram[0xF000:0xF000 + len(tilemap)] == tilemap and
                     cgram[:32] == palettes[index * 32:(index + 1) * 32],
                     f"{name} ending: exact native tiles, tilemap, and palette")
+    if args.presentation:
+        folder = ROOT / "local/rom-presentation"
+        tiles = (ROOT / "rom/generated/menu_tiles.chr").read_bytes()
+        maps = (ROOT / "rom/generated/menu_tilemaps.bin").read_bytes()
+        for tag, choice in (("ww-title", None), ("roster-ryu", 0), ("roster-honda", 1),
+                            ("roster-chunli", 2), ("roster-balrog", 8)):
+            vram = (folder / f"{tag}.vram.bin").read_bytes()
+            data = wram(folder, tag)
+            require(vram[0x2000:0x2000 + len(tiles)] == tiles,
+                    f"{tag}: exact native menu tileset")
+            if choice is None:
+                page = 0
+            else:
+                require(data[0x10D14] == choice, f"{tag}: correct roster choice")
+                page = data[0x10E11]
+                require(page in (choice * 2 + 1, choice * 2 + 2),
+                        f"{tag}: correct selection and blink page")
+            offset = page * 1792 + (0x200 if page >= 18 else 0)
+            expected = maps[offset:offset + 1792]
+            require(vram[0xF000:0xF000 + 1792] == expected,
+                    f"{tag}: exact native tilemap without native overwrite")
+        data = wram(folder, "gameplay")
+        require(data[0x0100] == 0x14 and data[0x10D15] == 0 and
+                data[0x10D16] == 1 and data[0x10D13] == 8,
+                "Menu exit restores the selected fighter and native gameplay")
     if args.performance:
         for tag in ("ryu-punch", "hadouken-start", "shinku"):
             data = wram(ROOT / "local/rom-perf-play", tag)

@@ -8,6 +8,9 @@ until 0100 == 08 500
 press start
 until 0100 == 0a 500
 press start
+until 0100 == 0b 500
+wait 40
+press b 2
 until 0100 == 14 3000
 until 1df5 == 00 4000
 press b 12

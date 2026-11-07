@@ -5,6 +5,9 @@ until 0100 == 08 500
 press start
 until 0100 == 0a 500
 press start
+until 0100 == 0b 500
+wait 40
+press b 2
 until 0100 == 14 3000
 wait 90
 until 1df5 == 00 4000
@@ -52,9 +55,9 @@ dump boss-shot
 # rectangle connects with the real melee box and reverses to +3.
 poke 10D82 7600
 poke 10D84 a600
-press y 1
+press y 12
 wait 4
-until 10D81 == 06 30
+until 10D81 == 06 90
 dump boss-reflect
 until 10D32 != 00 90
 until16 10D29 == 01d6 30

@@ -43,6 +43,7 @@ endif
     STA.L !WWMenu
     JMP .mask_all
 .pause_roster:
+    JSR WW_SaveNativeScreen
     LDA.B #!MenuSelect
     STA.L !WWMenu
     LDA.B #!WW_SND_PLAYER_SELECT
@@ -182,7 +183,16 @@ WW_Initialize:
     SEP #$20
     LDA.L !WWInitialized
     CMP.B #$5A
-    BNE .first
+    BEQ .check_level
+    LDA.L !WWSelectedBackup
+    BEQ .first
+    STA.L !WWSelected
+    LDA.L !WWChoiceBackup
+    STA.L !WWChoice
+    LDA.L !WWCharacterBackup
+    STA.L !WWCharacter
+    BRA .reset
+.check_level:
     LDA.L !WWDeath
     BNE .reset
     REP #$20
@@ -251,6 +261,7 @@ WW_Initialize:
     STA.L !WWInitialized
     LDA.L !WWSelected
     BNE .done
+    JSR WW_SaveNativeScreen
     LDA.B #!MenuSelect
     STA.L !WWMenu
     LDA.B #30                        ; native level music/sample uploads run first
@@ -1272,6 +1283,8 @@ endif
     JSR WW_DrawBoss
     JML $00A2F0
 .normal:
+    LDA.B #$13
+    STA.W $212C                   ; custom HUD; no native BG3/status layer
     REP #$20
     LDA.B !PlayerX
     JML $00A2F7

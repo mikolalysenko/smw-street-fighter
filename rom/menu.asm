@@ -1,3 +1,52 @@
+; Native title mode and post-file-menu interception. Custom menus run without
+; advancing native scene simulation; the original routines resume on exit.
+WW_TitleMode:
+    SEP #$30
+    LDA.L !WWMenu
+    CMP.B #!MenuTitle
+    BEQ .active
+    JSR WW_SaveNativeScreen
+    LDA.B #$01
+    STA.L !WWTitleBoot
+    LDA.B #!MenuTitle
+    STA.L !WWMenu
+.active:
+    JSR WW_ReadInput
+    JSR WW_MenuTitleTick
+    LDA.L !WWTitleBoot
+    CMP.B #$02
+    BEQ .file_select
+    JML $009F6E
+.file_select:
+    LDA.B #$00
+    STA.L !WWTitleBoot
+    JSR WW_RestoreNativeScreen
+    JML $009C9F
+
+WW_MapMode:
+    SEP #$30
+    LDA.W !GameMode
+    CMP.B #$0B
+    BNE .native
+    LDA.L !WWMenu
+    CMP.B #!MenuSelect
+    BEQ .select
+    LDA.L !WWSelected
+    BNE .native
+    JSR WW_SaveNativeScreen
+    LDA.B #!MenuSelect
+    STA.L !WWMenu
+.select:
+    JSR WW_ReadInput
+    JSR WW_MenuSelectTick
+    JML $009F6E
+.native:
+    DEC.W $0DB1                     ; KeepModeActive, then the original BPL.
+    BPL .return
+    JML $009F74
+.return:
+    JML $009F6E
+
 ; Roster selection, continue, ending and finale state transitions.
 
 WW_MenuTick:
@@ -5,6 +54,8 @@ WW_MenuTick:
     LDA.L !WWMenu
     CMP.B #!MenuSelect
     BEQ WW_MenuSelectTick
+    CMP.B #!MenuTitle
+    BEQ WW_MenuTitleTick
     CMP.B #!MenuContinue
     BNE .not_continue
     JMP WW_MenuContinueTick
@@ -19,7 +70,42 @@ WW_MenuTick:
 .not_finale:
     RTS
 
+WW_MenuAnimate:
+    LDA.L !WWMenuAnim
+    INC A
+    CMP.B #40
+    BCC .store
+    LDA.B #$00
+.store:
+    STA.L !WWMenuAnim
+    RTS
+
+WW_MenuTitleTick:
+    JSR WW_MenuAnimate
+    LDA.B !Press1
+    AND.B #$B0
+    BNE .accept
+    LDA.B !Press2
+    AND.B #$80
+    BNE .accept
+    RTS
+.accept:
+    LDA.L !WWTitleBoot
+    BEQ .roster
+    LDA.B #$02
+    STA.L !WWTitleBoot
+    LDA.B #$00
+    STA.L !WWMenu
+    RTS
+.roster:
+    LDA.B #!MenuSelect
+    STA.L !WWMenu
+    LDA.B #!WW_SND_PLAYER_SELECT
+    JSL WW_AudioRequest
+    RTS
+
 WW_MenuSelectTick:
+    JSR WW_MenuAnimate
     LDA.B !Press1
     AND.B #$01
     BEQ .not_right
@@ -51,6 +137,7 @@ WW_MenuSelectTick:
     BNE .accept
     RTS
 .accept:
+    JSR WW_RestoreNativeScreen
     LDA.L !WWSelected
     BNE .keep_resources
     LDA.L !WWChoice
@@ -74,6 +161,11 @@ WW_MenuSelectTick:
     JSR WW_ClearShots
     LDA.B #$01
     STA.L !WWSelected
+    STA.L !WWSelectedBackup
+    LDA.L !WWChoice
+    STA.L !WWChoiceBackup
+    LDA.L !WWCharacter
+    STA.L !WWCharacterBackup
     LDA.B #$00
     STA.L !WWMenu
     STA.B !SpriteLock

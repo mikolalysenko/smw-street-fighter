@@ -420,11 +420,18 @@ WW_UploadPalette:
     RTS
 
 WW_DMA:
-    SEP #$10
+    SEP #$30
+    LDA.L !WWMenu
+    CMP.B #!MenuTitle
+    BEQ .custom_menu
+    CMP.B #!MenuSelect
+    BEQ .custom_menu
     LDA.W !GameMode
     CMP.B #$14
     BEQ .in_level
     JMP .fallback
+.custom_menu:
+    JMP .native_upload_done
 .in_level:
     LDA.L !WWInitialized
     CMP.B #$5A
@@ -452,7 +459,7 @@ WW_DMA:
     BNE .roster_menu
     JML WW_UploadEnding
 .roster_menu:
-    JMP WW_UploadSelection
+    JML WW_UploadMenu
 .gameplay:
     ; Action frame pointer is resolved outside NMI.
     LDA.L !WWLastGfxPointer
@@ -561,48 +568,5 @@ WW_DMA:
     LDY.W $0D84
     JML $00A306
 
-; Compact selection art stays inside the native OBJ page.
-WW_UploadSelection:
-    SEP #$20
-    LDA.L !WWUploadSet
-    AND.B #$02
-    BNE .done
-    LDA.B #$00
-    STA.L !WWUploadChar
-.palette_loop:
-    LDA.L !WWUploadChar
-    ASL A
-    ADC.L !WWUploadChar
-    TAX
-    LDA.L WW_RosterPalettePointers,X
-    STA.B $F7
-    LDA.L WW_RosterPalettePointers+1,X
-    STA.B $F8
-    LDA.L WW_RosterPalettePointers+2,X
-    STA.B $F9
-    LDA.L !WWUploadChar
-    ASL #4
-    ORA.B #$80
-    STA.W $2121
-    JSR WW_UploadPalette
-    SEP #$20
-    LDA.L !WWUploadChar
-    INC A
-    STA.L !WWUploadChar
-    CMP.B #8
-    BNE .palette_loop
-    %WW_DMAWord(WW_SelectGraphics, $6000, 1536)
-    SEP #$20
-    LDA.L !WWUploadSet
-    ORA.B #$02
-    STA.L !WWUploadSet
-.done:
-    REP #$20
-    LDX.B #$0A
-    LDY.B #$04
-    LDA.W #$0040
-    JML $00A38D
-
-WW_SelectGraphics: incbin "rom/generated/roster_select.chr"
 WW_HUDGraphics: incbin "rom/generated/hud.chr"
 WW_Palette: incbin "rom/generated/palette.bin"

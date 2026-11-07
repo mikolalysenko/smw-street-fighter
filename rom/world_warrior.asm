@@ -20,6 +20,24 @@ org $0080E8
     LDA.B #WW_SPCImage>>16
     STA.W $0002
 
+; Reapply custom menu registers after native NMI controller/register handling.
+org $008246
+    JML WW_MenuLateNMI
+    NOP
+
+; Custom title and selection own VRAM; skip only native StripeImage uploads.
+org $0085D2
+    JML WW_MenuStripe
+    NOP #3
+
+; Native title and post-file-menu fighter selection.
+org $009C64
+    JML WW_TitleMode
+    NOP #2
+org $009F6F
+    JML WW_MapMode
+    NOP
+
 ; GM14: run combat before vanilla player/sprite simulation.
 org $00A1DA
     JML WW_Main
@@ -56,6 +74,7 @@ incsrc "rom/render.asm"
 incsrc "rom/graphics.asm"
 incsrc "rom/boss_gfx.asm"
 incsrc "rom/select_gfx.asm"
+incsrc "rom/menu_gfx.asm"
 incsrc "rom/perf.asm"
 incsrc "rom/roster_assets.asm"
 incsrc "rom/ending.asm"
@@ -64,3 +83,5 @@ incsrc "rom/audio.asm"
 ; Keep the patch self-identifying in the SNES header without changing the title.
 org $00FFD5
     db $20                      ; SlowROM, LoROM (explicitly no SA-1/SuperFX).
+org $00FFD7
+    db $0C                      ; 4 MiB expanded ROM, not the 512 KiB base.

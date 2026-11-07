@@ -119,6 +119,23 @@
 !WWPerfAudioMax = $7F0D78
 !WWPerfAudioEnd = $7F0D7A
 !WWAudioBootDelay = $7F0E0E ; wait for native level-music upload before streaming
+!WWMenuGfxState = $7F0E10
+!WWMenuGfxPage = $7F0E11
+!WWMenuGfxRow = $7F0E12
+!WWMenuNativeMode = $7F0E13
+!WWMenuNativeBG1Map = $7F0E14
+!WWMenuNativeBG1Chr = $7F0E15
+!WWMenuNativeMain = $7F0E16
+!WWMenuNativeSub = $7F0E17
+!WWMenuNativeNMI = $7F0E18
+!WWMenuNativeHDMA = $7F0E19
+!WWMenuNativeColor = $7F0E1A
+!WWMenuNativeBrightness = $7F0E1B
+!WWTitleBoot = $7F0E1C
+!WWMenuAnim = $7F0E1D
+!WWChoiceBackup = $7F0E20
+!WWCharacterBackup = $7F0E21
+!WWSelectedBackup = $7F0E22
 
 ; Four 16-byte projectile records at $7F0D80 + slot*16.
 ; +0 active, +1 type, +2 X word, +4 Y word, +6 VX word,
@@ -177,5 +194,6 @@
 !MenuContinue = 2
 !MenuEnding = 3
 !MenuFinale = 4
+!MenuTitle = 5
 
 incsrc "rom/sound_ids.asm"

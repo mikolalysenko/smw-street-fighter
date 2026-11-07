@@ -5,6 +5,14 @@ until 0100 == 08 500
 press start
 until 0100 == 0a 500
 press start
+until 0100 == 0b 500
+wait 45
+press right 2
+wait 3
+press right 2
+wait 3
+dump roster-select
+press b 2
 until 0100 == 14 3000
 wait 90
 until 1df5 == 00 4000
@@ -16,13 +24,6 @@ press right 30
 wait 60
 press a
 until 0100 == 14 3000
-wait 30
-dump roster-select
-wait 30
-press right 12
-wait 10
-press right 12
-press b 12
 wait 30
 dump chunli-ready
 press right 120
@@ -44,7 +45,7 @@ press right 10
 poke 10D01 2c
 poke 10D02 01
 press r 60
-wait 10
+wait 2
 dump chunli-super
 wait 60
 quit

@@ -108,6 +108,24 @@ python3 -I rom/verify_headless.py --roster
 These scenes also leave APURAM, OAM, CGRAM, framebuffer and WAV captures for
 inspection. They exercise native CPU/PPU/SPC execution rather than an overlay.
 
+## Title and roster presentation
+
+`presentation.scene` runs the native title, file menu, six-by-two roster,
+selection blink/navigation, intro, overworld, and gameplay return. The verifier
+compares the exact menu tileset and every captured tilemap, including the
+LoROM-bank-padded second-row pages, and checks that the selected fighter persists
+into gameplay:
+
+```sh
+mkdir -p local/rom-presentation
+SNESREF_HEADLESS=1 SNESREF_WRAM_FILL=0 \
+SNESREF_SCRIPT=rom/scenes/presentation.scene \
+SNESREF_DUMP_DIR=local/rom-presentation \
+  build/snesref build/snes9x-libretro/libretro/snes9x_libretro.dylib \
+  local/smw-world-warrior.sfc
+python3 -I rom/verify_headless.py --presentation
+```
+
 ## Native carrying, power-ups, and Map16
 
 The carry scene uses an independent input event to keep Guard+Punch held through

@@ -63,7 +63,8 @@ class ROMTests(unittest.TestCase):
     def test_only_hooks_and_header_change_in_vanilla_area(self):
         allowed = set()
         for start, size in ((0x21DA, 4), (0x22F3, 4), (0x62BD, 4), (0x75B7, 4), (0x2300, 4),
-                            (0x1A279, 4), (0x9FE0, 4), (0xAA42, 4), (0xC538, 4), (0xE6CE, 5),
+                            (0x0246, 5), (0x05D2, 7), (0x1C64, 6), (0x1F6F, 5),
+                           (0x1A279, 4), (0x9FE0, 4), (0xAA42, 4), (0xC538, 4), (0xE6CE, 5),
                             (0xE8, 18), (0x80E8, 18), (0x7FD5, 1), (0x7FD7, 1), (0x7FDC, 4)):
             allowed.update(range(start, start + size))
         unexpected = [i for i in range(len(self.source))

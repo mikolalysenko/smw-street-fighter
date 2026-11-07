@@ -46,6 +46,8 @@ def build(base_path: Path, output_path: Path, patch_path: Path,
                     "-I", "rom/make_select_assets.py"], cwd=ROOT, check=True)
     subprocess.run([str(asset_python if asset_python.exists() else sys.executable),
                     "-I", "rom/make_ending_pages.py"], cwd=ROOT, check=True)
+    subprocess.run([str(asset_python if asset_python.exists() else sys.executable),
+                    "-I", "rom/make_menu_pages.py"], cwd=ROOT, check=True)
     subprocess.run([sys.executable, "-I", "rom/make_audio.py"], cwd=ROOT, check=True)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     patch_path.parent.mkdir(parents=True, exist_ok=True)
