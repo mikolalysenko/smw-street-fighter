@@ -1,0 +1,61 @@
+# Reach a new game through the real SMW menus, then exercise Ryu.
+until 0100 == 07 2000
+press start
+until 0100 == 08 500
+press start
+until 0100 == 0a 500
+press start
+until 0100 == 14 3000
+wait 90
+until 1df5 == 00 4000
+press b 12
+until 1426 == 00 1000
+until 0100 == 0e 2000
+wait 60
+dump overworld
+press right 30
+wait 60
+press a
+until 0100 == 14 3000
+wait 90
+press b
+wait 30
+dump ryu-idle
+press right 120
+wait 30
+dump ryu-ready
+# Profiler-only addresses are unused in the normal build. Exclude setup from
+# steady-combat measurements; the finale scene does the same after arena entry.
+poke 10D74 0000
+poke 10D78 0000
+press y 12
+wait 4
+dump y-held
+dump ryu-punch
+wait 30
+press a 60
+wait 5
+dump hadouken-start
+wait 25
+dump hadouken
+wait 70
+press up+a
+wait 5
+dump shoryuken
+wait 45
+press down+a
+wait 8
+dump hurricane
+wait 50
+press right 10
+poke 10D01 2c
+poke 10D02 01
+press r
+wait 35
+dump shinku
+wait 60
+press b
+wait 8
+dump jump
+wait 60
+quit

@@ -9,7 +9,7 @@ SDL_LIBS = $(shell $(SDL_CONFIG) --libs)
 CORE = src/fight.c
 MEDIA = src/draw.c src/audio.c src/assets.c
 
-.PHONY: all dojo run tv test sanitize smoke capture smw test-smw test-play test-bosses test-final-depth test-movement test-presentation test-hud test-audio test-animations audit-animations test-roster test-scroll test-collision test-pipes test-specials test-entrances test-grapple test-carry test-wallrun test-features assets original-assets package clean web serve-web test-web pages-branch
+.PHONY: all dojo run tv test sanitize smoke capture smw test-smw test-play test-bosses test-final-depth test-movement test-presentation test-hud test-audio test-animations audit-animations test-roster test-scroll test-collision test-pipes test-specials test-entrances test-grapple test-carry test-wallrun test-features assets original-assets package clean web serve-web test-web pages-branch rom rom-perf test-rom
 all: smw
 dojo: build/world-warrior-dojo
 build:
@@ -49,6 +49,12 @@ smw:
 	$(MAKE) -C build/smw smw CC="$(CC)" CFLAGS="-O2 -g -fno-strict-aliasing $(SDL_CFLAGS) -I. -DSYSTEM_VOLUME_MIXER_AVAILABLE=0"
 assets:
 	$(PYTHON) scripts/import_smw.py "$(ROM)"
+rom:
+	$(PYTHON) rom/build.py --base "$(if $(SMW_ROM),$(SMW_ROM),local/smw-rebuilt.sfc)"
+rom-perf:
+	$(PYTHON) rom/build.py --base "$(if $(SMW_ROM),$(SMW_ROM),local/smw-rebuilt.sfc)" --performance --output local/smw-world-warrior-perf.sfc --patch local/smw-world-warrior-perf.ips
+test-rom: rom
+	$(PYTHON) -m unittest discover -s rom -p 'test_*.py' -v
 build/asset-tools/bin/python3: requirements-assets.txt | build
 	$(PYTHON) -m venv build/asset-tools
 	build/asset-tools/bin/pip install -r requirements-assets.txt

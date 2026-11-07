@@ -1,0 +1,78 @@
+# Verify native carrying and power-up meter behavior.
+# Use SNESREF_INPUT_FILE=rom/scenes/carry.input. The independent event keeps
+# L+Y held through native contact, then releases before the same slot is
+# reconfigured as a mushroom.
+until 0100 == 07 2000
+press start
+until 0100 == 08 500
+press start
+until 0100 == 0a 500
+press start
+until 0100 == 14 3000
+until 1df5 == 00 4000
+press b 12
+until 1426 == 00 1000
+until 0100 == 0e 2000
+wait 60
+press right 30
+wait 60
+press a
+until 0100 == 14 3000
+wait 90
+press b 12
+wait 30
+press right 120
+wait 30
+# Place a normal carryable sprite on the player.
+poke 00ed a8
+poke 14e9 00
+poke 00e1 60
+poke 14dd 01
+forcepoke 0094 a8
+forcepoke 0095 00
+forcepoke 0096 60
+forcepoke 0097 01
+poke 15a9 00
+poke 1875 00
+forcepoke 00bf 00
+poke 00a7 04
+poke 165f 10
+poke 166b 40
+poke 1677 0a
+poke 1683 20
+poke 168f 02
+poke 1918 a0
+poke 14d1 09
+poke 1555 10
+poke 1585 01
+press l+y 10
+dump carrying
+wait 30
+# Reconfigure the same slot as a mushroom and collect it.
+poke 00a7 74
+poke 165f 00
+poke 166b 00
+poke 1677 08
+poke 1683 c2
+poke 168f 28
+poke 1918 40
+poke 14d1 08
+poke 00ed a8
+poke 14e9 00
+poke 00e1 60
+poke 14dd 01
+forcepoke 0094 a8
+forcepoke 0095 00
+forcepoke 0096 60
+forcepoke 0097 01
+poke 15a9 00
+poke 1875 00
+forcepoke 00bf 00
+forcepoke 1549 00
+forcepoke 1555 00
+forcepoke 1525 00
+forcepoke 00cb 00
+wait 60
+dump powerup
+wait 30
+quit

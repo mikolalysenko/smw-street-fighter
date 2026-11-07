@@ -1,0 +1,4 @@
+# Boot the actual patched ROM and capture the title screen.
+wait 600
+dump title
+quit

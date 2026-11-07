@@ -1,0 +1,50 @@
+# Select Chun-Li through the native roster, then use her distinct moves.
+until 0100 == 07 2000
+press start
+until 0100 == 08 500
+press start
+until 0100 == 0a 500
+press start
+until 0100 == 14 3000
+wait 90
+until 1df5 == 00 4000
+press b 12
+until 1426 == 00 1000
+until 0100 == 0e 2000
+wait 60
+press right 30
+wait 60
+press a
+until 0100 == 14 3000
+wait 30
+dump roster-select
+wait 30
+press right 12
+wait 10
+press right 12
+press b 12
+wait 30
+dump chunli-ready
+press right 120
+dump moving
+wait 30
+press a
+wait 30
+dump kikoken
+wait 60
+press up+a 12
+wait 10
+dump spinning-bird
+wait 50
+press down+a 12
+wait 12
+dump lightning-legs
+wait 60
+press right 10
+poke 10D01 2c
+poke 10D02 01
+press r 60
+wait 10
+dump chunli-super
+wait 60
+quit

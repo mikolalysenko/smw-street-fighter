@@ -1,0 +1,43 @@
+# Exercise a real Yoshi's Island 1 Map16 coin block through a native melee hit.
+until 0100 == 07 2000
+press start
+until 0100 == 08 500
+press start
+until 0100 == 0a 500
+press start
+until 0100 == 14 3000
+until 1df5 == 00 4000
+press b 12
+until 1426 == 00 1000
+until 0100 == 0e 2000
+wait 60
+press right 30
+wait 60
+press a
+until 0100 == 14 3000
+wait 90
+press b 12
+wait 30
+press right 120
+wait 30
+# Ryu's left-facing punch box starts at PlayerX-32, PlayerY+6.
+# That is exactly X=$0CB0/Y=$0030, a native coin block in Yoshi's Island 1.
+forcepoke 0094 d0
+forcepoke 0095 0c
+forcepoke 0096 2a
+forcepoke 0097 00
+forcepoke 0076 01
+poke 10D05 01
+forcepoke 0072 00
+forcepoke 007b 00
+forcepoke 007d 00
+poke 10D21 00
+wait 2
+dump map16-before
+press y
+dump map16-start
+wait 8
+dump map16-hit
+wait 30
+dump map16-after
+quit

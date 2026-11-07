@@ -10,6 +10,15 @@ Akuma finale that gets completely out of hand.
 
 [![Super Mario World II — The World Warrior gameplay](media/cover.jpg)](https://mikolalysenko.github.io/smw-street-fighter/)
 
+## Actual SNES ROM hack
+
+A separate native SMW/65c816 port is now in **[`rom/`](rom/README.md)**. All
+twelve fighters, imported graphics and SPC700 audio, special moves and supers,
+native selection and combat, carrying, power-ups, Map16 attacks, twelve ending
+pages, and the custom Akuma finale run inside a real USA SMW ROM using Asar.
+See the native build instructions, controls, verification results, hardware
+profiler, and remaining real-console testing limits in the ROM guide.
+
 ## Pick a fighter. Break the rules.
 
 - **The original world.** Mario’s levels, secrets, enemies, Yoshi, music and overworld, with Street Fighter sprites, voices and hit reactions.

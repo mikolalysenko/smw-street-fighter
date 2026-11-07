@@ -1,0 +1,102 @@
+# Enter the real native 1C7 Mode 7 arena through the C7 practice exit.
+until 0100 == 07 2000
+press start
+until 0100 == 08 500
+press start
+until 0100 == 0a 500
+press start
+until 0100 == 14 3000
+wait 90
+until 1df5 == 00 4000
+press b 12
+until 1426 == 00 1000
+until 0100 == 0e 2000
+wait 60
+press right 30
+wait 60
+press a
+until 0100 == 14 3000
+wait 90
+press b 12
+wait 30
+poke 10D15 04
+wait 2
+dump finale-menu
+wait 30
+press b 12
+until16 010b == 01c7 3000
+until 0d9b == c1 3000
+until 0100 == 14 3000
+wait 120
+dump akuma
+# Diagnostic-only counters are unused by the normal build. Reset them after
+# arena setup so profiler captures measure the fight rather than initialization.
+poke 10D74 0000
+poke 10D78 0000
+
+# Hold attacks briefly while aligning a real AI-spawned shot for reflection.
+poke 10D2D 7f
+poke 0094 5000
+poke 0096 9000
+poke 10D2E a000
+poke 10D30 b000
+poke 10D05 00
+poke 0076 00
+poke 10D65 00
+poke 10D2D 80
+poke 10D2B 5900
+wait 2
+dump boss-shot
+
+# The shot travels left at -3 while punch reaches its active frames.  Its
+# rectangle connects with the real melee box and reverses to +3.
+poke 10D82 7600
+poke 10D84 a600
+press y 1
+wait 4
+until 10D81 == 06 30
+dump boss-reflect
+until 10D32 != 00 90
+until16 10D29 == 01d6 30
+dump boss-reflect-hit
+
+# A separate aligned punch deals 10 more HP of actual collision damage.
+poke 10D2D 7f
+poke 0094 8000
+poke 0096 a000
+poke 10D2E 8000
+poke 10D30 a000
+poke 0076 00
+until 10D03 == 00 120
+press y 12
+until16 10D29 == 01cc 60
+dump boss-punch
+
+# Exercise the custom super projectile path and verify 40 HP of real damage.
+poke 10D01 6400
+press r 12
+until16 10D29 == 01a4 60
+dump boss-super-early
+wait 26
+dump boss-super
+wait 50
+
+# Lower only the fixture's starting HP, then land the KO with a real punch.
+# Never poke HP to zero: WW_BossTick must perform the ending transition itself.
+poke 10D2D 7f
+poke 10D29 0a00
+poke 0094 8000
+poke 0096 a000
+poke 10D2E 8000
+poke 10D30 a000
+poke 0076 00
+until 10D03 == 00 120
+press y 12
+until16 10D29 == 0000 60
+dump boss-defeated
+until 10D15 == 03 60
+wait 60
+dump ending
+press b 12
+wait 30
+quit

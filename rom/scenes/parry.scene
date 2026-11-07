@@ -1,0 +1,22 @@
+# Used with a test-only build that invokes WW_Hurt on a fresh L press.
+until 0100 == 07 2000
+press start
+until 0100 == 08 500
+press start
+until 0100 == 0a 500
+press start
+until 0100 == 14 3000
+until 1df5 == 00 4000
+press b 12
+until 1426 == 00 1000
+until 0100 == 0e 2000
+wait 60
+press right 30
+wait 60
+press a
+until 0100 == 14 3000
+wait 90
+press l
+wait 10
+dump direct-parry
+quit

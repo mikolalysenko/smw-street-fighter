@@ -1,0 +1,85 @@
+# Deterministic native-sprite combat checks after the real menu/intro flow.
+until 0100 == 07 2000
+press start
+until 0100 == 08 500
+press start
+until 0100 == 0a 500
+press start
+until 0100 == 14 3000
+until 1df5 == 00 4000
+press b 12
+until 1426 == 00 1000
+until 0100 == 0e 2000
+wait 60
+press right 30
+wait 60
+press a
+until 0100 == 14 3000
+wait 90
+press b 12
+wait 30
+press right 120
+wait 30
+press right 10
+# Keep slot 9's loaded identity; move the stationary target into the shot path.
+poke 00ed d0
+poke 14e9 00
+poke 00e1 60
+poke 14dd 01
+poke 15a9 00
+poke 1875 00
+forcepoke 1555 00
+poke 1585 01
+poke 00bf 00
+forcepoke 14d1 09
+dump target-before
+press a 12
+wait 4
+dump target-active
+wait 16
+dump projectile-hit
+wait 30
+# A stationary forced fixture also exercises the melee active window.
+forcepoke 00ed d0
+forcepoke 14e9 00
+forcepoke 00e1 60
+forcepoke 14dd 01
+poke 15a9 00
+poke 1875 00
+forcepoke 00bf 00
+forcepoke 1555 ff
+press y 12
+wait 12
+dump melee-hit
+wait 30
+press right 10
+# Reconfigure the same sprite to its valid normal state, overlapping the player.
+forcepoke 14d1 08
+forcepoke 00ed a8
+forcepoke 14e9 00
+forcepoke 00e1 60
+forcepoke 14dd 01
+poke 15a9 00
+poke 1875 00
+forcepoke 1555 00
+poke 1585 01
+poke 00bf 00
+wait 90
+dump unblocked-hit
+# Restore vitality and exercise a guarded contact sequence.
+press right 10
+poke 10D00 64
+forcepoke 14d1 08
+forcepoke 00ed a8
+forcepoke 14e9 00
+forcepoke 00e1 60
+forcepoke 14dd 01
+poke 15a9 00
+poke 1875 00
+forcepoke 1555 00
+poke 1585 01
+poke 00bf 00
+press l 120
+dump guarded-hit
+wait 60
+quit

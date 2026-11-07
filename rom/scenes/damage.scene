@@ -1,0 +1,28 @@
+# Used only with a test-only WW_Hurt trigger inserted in a debug build.
+until 0100 == 07 2000
+press start
+until 0100 == 08 500
+press start
+until 0100 == 0a 500
+press start
+until 0100 == 14 3000
+until 1df5 == 00 4000
+press b 12
+until 1426 == 00 1000
+until 0100 == 0e 2000
+wait 60
+press right 30
+wait 60
+press a
+until 0100 == 14 3000
+wait 90
+poke 10D1C 01
+wait 10
+dump direct-unblocked
+wait 70
+poke 10D00 64
+poke 10D01 00
+forcepoke 10D1C 01
+press l 120
+dump direct-guarded
+quit

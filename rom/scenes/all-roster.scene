@@ -1,0 +1,594 @@
+# Exercise every fighter's neutral, up, down, and buffered super in one run.
+until 0100 == 07 2000
+press start
+until 0100 == 08 500
+press start
+until 0100 == 0a 500
+press start
+until 0100 == 14 3000
+wait 90
+until 1df5 == 00 4000
+press b 12
+until 1426 == 00 1000
+until 0100 == 0e 2000
+wait 60
+press right 30
+wait 60
+press a
+until 0100 == 14 3000
+wait 90
+press b 12
+wait 30
+
+# 0 Ryu
+press a 12
+wait 5
+dump ryu-special
+wait 120
+poke 0094 80
+poke 0095 00
+poke 0096 60
+poke 0097 01
+poke 0072 00
+poke 007b 00
+poke 007d 00
+poke 10D0A 00
+press up+a 12
+wait 5
+dump ryu-up
+wait 120
+poke 0094 80
+poke 0095 00
+poke 0096 60
+poke 0097 01
+poke 0072 00
+poke 007b 00
+poke 007d 00
+poke 10D0A 00
+press down+a 12
+wait 5
+dump ryu-down
+wait 120
+poke 0094 80
+poke 0095 00
+poke 0096 60
+poke 0097 01
+poke 0072 00
+poke 007b 00
+poke 007d 00
+poke 10D0A 00
+poke 10D01 2c
+poke 10D02 01
+press r 30
+wait 30
+dump ryu-super
+
+# 1 E. Honda
+press start 12
+wait 30
+poke 10D14 01
+press b 12
+wait 30
+press a 12
+wait 5
+dump honda-special
+wait 120
+poke 0094 80
+poke 0095 00
+poke 0096 60
+poke 0097 01
+poke 0072 00
+poke 007b 00
+poke 007d 00
+poke 10D0A 00
+press up+a 12
+wait 5
+dump honda-up
+wait 120
+poke 0094 80
+poke 0095 00
+poke 0096 60
+poke 0097 01
+poke 0072 00
+poke 007b 00
+poke 007d 00
+poke 10D0A 00
+press down+a 12
+wait 5
+dump honda-down
+wait 120
+poke 0094 80
+poke 0095 00
+poke 0096 60
+poke 0097 01
+poke 0072 00
+poke 007b 00
+poke 007d 00
+poke 10D0A 00
+poke 10D01 2c
+poke 10D02 01
+press r 30
+wait 30
+dump honda-super
+
+# 2 Chun-Li
+press start 12
+wait 30
+poke 10D14 02
+press b 12
+wait 30
+press a 12
+wait 5
+dump chunli-special
+wait 120
+poke 0094 80
+poke 0095 00
+poke 0096 60
+poke 0097 01
+poke 0072 00
+poke 007b 00
+poke 007d 00
+poke 10D0A 00
+press up+a 12
+wait 5
+dump chunli-up
+wait 120
+poke 0094 80
+poke 0095 00
+poke 0096 60
+poke 0097 01
+poke 0072 00
+poke 007b 00
+poke 007d 00
+poke 10D0A 00
+press down+a 12
+wait 5
+dump chunli-down
+wait 120
+poke 0094 80
+poke 0095 00
+poke 0096 60
+poke 0097 01
+poke 0072 00
+poke 007b 00
+poke 007d 00
+poke 10D0A 00
+poke 10D01 2c
+poke 10D02 01
+press r 30
+wait 30
+dump chunli-super
+
+# 3 Guile
+press start 12
+wait 30
+poke 10D14 03
+press b 12
+wait 30
+press a 12
+wait 5
+dump guile-special
+wait 120
+poke 0094 80
+poke 0095 00
+poke 0096 60
+poke 0097 01
+poke 0072 00
+poke 007b 00
+poke 007d 00
+poke 10D0A 00
+press up+a 12
+wait 5
+dump guile-up
+wait 120
+poke 0094 80
+poke 0095 00
+poke 0096 60
+poke 0097 01
+poke 0072 00
+poke 007b 00
+poke 007d 00
+poke 10D0A 00
+press down+a 12
+wait 5
+dump guile-down
+wait 120
+poke 0094 80
+poke 0095 00
+poke 0096 60
+poke 0097 01
+poke 0072 00
+poke 007b 00
+poke 007d 00
+poke 10D0A 00
+poke 10D01 2c
+poke 10D02 01
+press r 30
+wait 30
+dump guile-super
+
+# 4 Ken
+press start 12
+wait 30
+poke 10D14 04
+press b 12
+wait 30
+press a 12
+wait 5
+dump ken-special
+wait 120
+poke 0094 80
+poke 0095 00
+poke 0096 60
+poke 0097 01
+poke 0072 00
+poke 007b 00
+poke 007d 00
+poke 10D0A 00
+press up+a 12
+wait 5
+dump ken-up
+wait 120
+poke 0094 80
+poke 0095 00
+poke 0096 60
+poke 0097 01
+poke 0072 00
+poke 007b 00
+poke 007d 00
+poke 10D0A 00
+press down+a 12
+wait 5
+dump ken-down
+wait 120
+poke 0094 80
+poke 0095 00
+poke 0096 60
+poke 0097 01
+poke 0072 00
+poke 007b 00
+poke 007d 00
+poke 10D0A 00
+poke 10D01 2c
+poke 10D02 01
+press r 30
+wait 30
+dump ken-super
+
+# 5 Blanka
+press start 12
+wait 30
+poke 10D14 05
+press b 12
+wait 30
+press a 12
+wait 5
+dump blanka-special
+wait 120
+poke 0094 80
+poke 0095 00
+poke 0096 60
+poke 0097 01
+poke 0072 00
+poke 007b 00
+poke 007d 00
+poke 10D0A 00
+press up+a 12
+wait 5
+dump blanka-up
+wait 120
+poke 0094 80
+poke 0095 00
+poke 0096 60
+poke 0097 01
+poke 0072 00
+poke 007b 00
+poke 007d 00
+poke 10D0A 00
+press down+a 12
+wait 5
+dump blanka-down
+wait 120
+poke 0094 80
+poke 0095 00
+poke 0096 60
+poke 0097 01
+poke 0072 00
+poke 007b 00
+poke 007d 00
+poke 10D0A 00
+poke 10D01 2c
+poke 10D02 01
+press r 30
+wait 30
+dump blanka-super
+
+# 6 Zangief
+press start 12
+wait 30
+poke 10D14 06
+press b 12
+wait 30
+press a 12
+wait 5
+dump zangief-special
+wait 120
+poke 0094 80
+poke 0095 00
+poke 0096 60
+poke 0097 01
+poke 0072 00
+poke 007b 00
+poke 007d 00
+poke 10D0A 00
+press up+a 12
+wait 5
+dump zangief-up
+wait 120
+poke 0094 80
+poke 0095 00
+poke 0096 60
+poke 0097 01
+poke 0072 00
+poke 007b 00
+poke 007d 00
+poke 10D0A 00
+press down+a 12
+wait 5
+dump zangief-down
+wait 120
+poke 0094 80
+poke 0095 00
+poke 0096 60
+poke 0097 01
+poke 0072 00
+poke 007b 00
+poke 007d 00
+poke 10D0A 00
+poke 10D01 2c
+poke 10D02 01
+press r 30
+wait 30
+dump zangief-super
+
+# 7 Dhalsim
+press start 12
+wait 30
+poke 10D14 07
+press b 12
+wait 30
+press a 12
+wait 5
+dump dhalsim-special
+wait 120
+poke 0094 80
+poke 0095 00
+poke 0096 60
+poke 0097 01
+poke 0072 00
+poke 007b 00
+poke 007d 00
+poke 10D0A 00
+press up+a 12
+wait 5
+dump dhalsim-up
+wait 120
+poke 0094 80
+poke 0095 00
+poke 0096 60
+poke 0097 01
+poke 0072 00
+poke 007b 00
+poke 007d 00
+poke 10D0A 00
+press down+a 12
+wait 5
+dump dhalsim-down
+wait 120
+poke 0094 80
+poke 0095 00
+poke 0096 60
+poke 0097 01
+poke 0072 00
+poke 007b 00
+poke 007d 00
+poke 10D0A 00
+poke 10D01 2c
+poke 10D02 01
+press r 30
+wait 30
+dump dhalsim-super
+
+# 8 Balrog
+press start 12
+wait 30
+poke 10D14 08
+press b 12
+wait 30
+press a 12
+wait 5
+dump balrog-special
+wait 120
+poke 0094 80
+poke 0095 00
+poke 0096 60
+poke 0097 01
+poke 0072 00
+poke 007b 00
+poke 007d 00
+poke 10D0A 00
+press up+a 12
+wait 5
+dump balrog-up
+wait 120
+poke 0094 80
+poke 0095 00
+poke 0096 60
+poke 0097 01
+poke 0072 00
+poke 007b 00
+poke 007d 00
+poke 10D0A 00
+press down+a 12
+wait 5
+dump balrog-down
+wait 120
+poke 0094 80
+poke 0095 00
+poke 0096 60
+poke 0097 01
+poke 0072 00
+poke 007b 00
+poke 007d 00
+poke 10D0A 00
+poke 10D01 2c
+poke 10D02 01
+press r 30
+wait 30
+dump balrog-super
+
+# 9 Vega
+press start 12
+wait 30
+poke 10D14 09
+press b 12
+wait 30
+press a 12
+wait 5
+dump vega-special
+wait 120
+poke 0094 80
+poke 0095 00
+poke 0096 60
+poke 0097 01
+poke 0072 00
+poke 007b 00
+poke 007d 00
+poke 10D0A 00
+press up+a 12
+wait 5
+dump vega-up
+wait 120
+poke 0094 80
+poke 0095 00
+poke 0096 60
+poke 0097 01
+poke 0072 00
+poke 007b 00
+poke 007d 00
+poke 10D0A 00
+press down+a 12
+wait 5
+dump vega-down
+wait 120
+poke 0094 80
+poke 0095 00
+poke 0096 60
+poke 0097 01
+poke 0072 00
+poke 007b 00
+poke 007d 00
+poke 10D0A 00
+poke 10D01 2c
+poke 10D02 01
+press r 30
+wait 30
+dump vega-super
+
+# 10 Sagat
+press start 12
+wait 30
+poke 10D14 0a
+press b 12
+wait 30
+press a 12
+wait 5
+dump sagat-special
+wait 120
+poke 0094 80
+poke 0095 00
+poke 0096 60
+poke 0097 01
+poke 0072 00
+poke 007b 00
+poke 007d 00
+poke 10D0A 00
+press up+a 12
+wait 5
+dump sagat-up
+wait 120
+poke 0094 80
+poke 0095 00
+poke 0096 60
+poke 0097 01
+poke 0072 00
+poke 007b 00
+poke 007d 00
+poke 10D0A 00
+press down+a 12
+wait 5
+dump sagat-down
+wait 120
+poke 0094 80
+poke 0095 00
+poke 0096 60
+poke 0097 01
+poke 0072 00
+poke 007b 00
+poke 007d 00
+poke 10D0A 00
+poke 10D01 2c
+poke 10D02 01
+press r 30
+wait 30
+dump sagat-super
+
+# 11 M. Bison
+press start 12
+wait 30
+poke 10D14 0b
+press b 12
+wait 30
+press a 12
+wait 5
+dump bison-special
+wait 120
+poke 0094 80
+poke 0095 00
+poke 0096 60
+poke 0097 01
+poke 0072 00
+poke 007b 00
+poke 007d 00
+poke 10D0A 00
+press up+a 12
+wait 5
+dump bison-up
+wait 120
+poke 0094 80
+poke 0095 00
+poke 0096 60
+poke 0097 01
+poke 0072 00
+poke 007b 00
+poke 007d 00
+poke 10D0A 00
+press down+a 12
+wait 5
+dump bison-down
+wait 120
+poke 0094 80
+poke 0095 00
+poke 0096 60
+poke 0097 01
+poke 0072 00
+poke 007b 00
+poke 007d 00
+poke 10D0A 00
+poke 10D01 2c
+poke 10D02 01
+press r 30
+wait 30
+dump bison-super
+wait 60
+quit

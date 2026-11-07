@@ -1,0 +1,85 @@
+# Upload and inspect every native ending illustration page.
+until 0100 == 07 2000
+press start
+until 0100 == 08 500
+press start
+until 0100 == 0a 500
+press start
+until 0100 == 14 3000
+wait 90
+until 1df5 == 00 4000
+press b 12
+until 1426 == 00 1000
+until 0100 == 0e 2000
+wait 60
+press right 30
+wait 60
+press a
+until 0100 == 14 3000
+wait 90
+press b 12
+wait 30
+
+poke 10D13 00
+poke 10D15 03
+poke 10D34 00
+wait 300
+dump ryu-ending
+poke 10D13 01
+poke 10D15 03
+poke 10D34 00
+wait 300
+dump honda-ending
+poke 10D13 02
+poke 10D15 03
+poke 10D34 00
+wait 300
+dump chunli-ending
+poke 10D13 03
+poke 10D15 03
+poke 10D34 00
+wait 300
+dump guile-ending
+poke 10D13 04
+poke 10D15 03
+poke 10D34 00
+wait 300
+dump ken-ending
+poke 10D13 05
+poke 10D15 03
+poke 10D34 00
+wait 300
+dump blanka-ending
+poke 10D13 06
+poke 10D15 03
+poke 10D34 00
+wait 300
+dump zangief-ending
+poke 10D13 07
+poke 10D15 03
+poke 10D34 00
+wait 300
+dump dhalsim-ending
+poke 10D13 08
+poke 10D15 03
+poke 10D34 00
+wait 300
+dump balrog-ending
+poke 10D13 09
+poke 10D15 03
+poke 10D34 00
+wait 300
+dump vega-ending
+poke 10D13 0a
+poke 10D15 03
+poke 10D34 00
+wait 300
+dump sagat-ending
+poke 10D13 0b
+poke 10D15 03
+poke 10D34 00
+wait 300
+dump bison-ending
+press b 12
+wait 30
+quit
